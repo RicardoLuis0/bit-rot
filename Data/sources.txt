@@ -1,0 +1,11 @@
+MUSIC
+
+forest - https://opengameart.org/content/creepy-forest-f
+lost - https://opengameart.org/content/lost-in-a-bad-place-horror-ambience-loop
+tension - https://opengameart.org/content/tension-0
+loop - https://opengameart.org/content/loading-screen-loop
+
+SFX
+
+fan loop/start - https://freesound.org/people/greatsoundstube/sounds/628606/
+beep/error - made by me with bfxr/audacity/etc

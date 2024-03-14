@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="ComputerGame" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/ComputerGame" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
+				<Compiler>
+					<Add option="-g" />
+					<Add option="-DDEBUG_BUILD" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/ComputerGame" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add option="-mwindows" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wnon-virtual-dtor" />
+			<Add option="-Winit-self" />
+			<Add option="-Winline" />
+			<Add option="-Wextra" />
+			<Add option="-Wall" />
+			<Add option="-std=gnu++23" />
+			<Add option="-fexceptions" />
+			<Add option="-no-pie" />
+			<Add option="-Wno-unused-parameter" />
+			<Add option="-Wno-inline" />
+			<Add option="-Wno-literal-suffix" />
+			<Add directory="include" />
+		</Compiler>
+		<Linker>
+			<Add option="-lSDL2" />
+			<Add option="-lbacktrace" />
+			<Add option="-lglew32" />
+			<Add option="-lopengl32" />
+			<Add option="-lglu32" />
+			<Add option="-lSDL2_mixer" />
+		</Linker>
+		<Unit filename="ComputerGame.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
+		<Unit filename="fx/frag.glsl" />
+		<Unit filename="fx/text.glsl" />
+		<Unit filename="fx/vertex.glsl" />
+		<Unit filename="include/Bitmap.h" />
+		<Unit filename="include/Command.h" />
+		<Unit filename="include/Common.h" />
+		<Unit filename="include/Config.h" />
+		<Unit filename="include/Exceptions.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="include/Font.h" />
+		<Unit filename="include/Game.h" />
+		<Unit filename="include/Input.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="include/Json.h" />
+		<Unit filename="include/Log.h" />
+		<Unit filename="include/Menu.h" />
+		<Unit filename="include/Preprocessor.h" />
+		<Unit filename="include/Renderer.h" />
+		<Unit filename="include/Renderer/GLFrameBuffer.h" />
+		<Unit filename="include/Renderer/GLProgram.h" />
+		<Unit filename="include/Renderer/GLQuad.h" />
+		<Unit filename="include/Renderer/GLTexture.h" />
+		<Unit filename="include/Renderer/GLUniformBuffer.h" />
+		<Unit filename="include/Renderer/Internal.h" />
+		<Unit filename="include/SDL2Util.h" />
+		<Unit filename="include/System.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/Bitmap.cpp" />
+		<Unit filename="src/Command.cpp" />
+		<Unit filename="src/Common.cpp" />
+		<Unit filename="src/Config.cpp" />
+		<Unit filename="src/Exceptions.cpp" />
+		<Unit filename="src/Font.cpp" />
+		<Unit filename="src/Game.cpp" />
+		<Unit filename="src/GameIntro.cpp" />
+		<Unit filename="src/Input.cpp" />
+		<Unit filename="src/Json.cpp" />
+		<Unit filename="src/Log.cpp" />
+		<Unit filename="src/Menu.cpp" />
+		<Unit filename="src/Renderer.cpp" />
+		<Unit filename="src/Renderer/GLFrameBuffer.cpp" />
+		<Unit filename="src/Renderer/GLProgram.cpp" />
+		<Unit filename="src/Renderer/GLQuad.cpp" />
+		<Unit filename="src/Renderer/GLTexture.cpp" />
+		<Unit filename="src/Renderer/GLUniformBuffer.cpp" />
+		<Unit filename="src/System.cpp" />
+		<Unit filename="src/main.cpp" />
+		<Extensions>
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

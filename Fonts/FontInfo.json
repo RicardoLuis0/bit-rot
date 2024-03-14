@@ -1,0 +1,30 @@
+{
+    "DefaultFont":"IBM CGA (thick)",
+    "FontList":
+    {
+        "IBM CGA (thick)":
+        {
+            "Path":"IBM_CGA_thick.bmp",
+            "CharWidth":8,
+            "CharHeight":8,
+            "Cols":16,
+            "Rows":16,
+        },
+        "IBM CGA (thin)":
+        {
+            "Path":"IBM_CGA_thin.bmp",
+            "CharWidth":8,
+            "CharHeight":8,
+            "Cols":16,
+            "Rows":16,
+        },
+        "IBM EGA":
+        {
+            "Path":"IBM_EGA.bmp",
+            "CharWidth":8,
+            "CharHeight":8,
+            "Cols":16,
+            "Rows":16,
+        },
+    }
+}

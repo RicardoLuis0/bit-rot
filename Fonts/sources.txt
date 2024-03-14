@@ -1,0 +1,2 @@
+charsets:
+ http://dwarffortresswiki.org/index.php/Tileset_repository
