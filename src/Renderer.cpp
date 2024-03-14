@@ -158,7 +158,7 @@ void Renderer::Init()
     LogDebug("OpenGL version set to 4.6 Core");
     
     if(!(
-            win = SDL_CreateWindow("Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE)
+            win = SDL_CreateWindow("Bit Rot", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE)
     )) {
         throw std::runtime_error(errMsg());
     }
