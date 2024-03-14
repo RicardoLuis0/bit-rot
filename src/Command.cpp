@@ -159,7 +159,7 @@ void Command::Read(const std::vector<std::string> &args)
         AddConsoleLine("Too many Arguments passed to DIR");
         return;
     }
-    else if(args.size() < 1)
+    else if(args.size() < 2)
     {
         AddConsoleLine("Too few Arguments passed to DIR");
         return;
@@ -234,7 +234,7 @@ void Command::Install(const std::vector<std::string> &args)
         AddConsoleLine("Too many Arguments passed to INSTALL");
         return;
     }
-    else if(args.size() < 1)
+    else if(args.size() < 2)
     {
         AddConsoleLine("Too few Arguments passed to INSTALL");
         return;
