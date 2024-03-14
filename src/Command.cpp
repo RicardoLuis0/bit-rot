@@ -156,12 +156,12 @@ void Command::Read(const std::vector<std::string> &args)
 {
     if(args.size() > 2)
     {
-        AddConsoleLine("Too many Arguments passed to DIR");
+        AddConsoleLine("Too many Arguments passed to READ");
         return;
     }
     else if(args.size() < 2)
     {
-        AddConsoleLine("Too few Arguments passed to DIR");
+        AddConsoleLine("Too few Arguments passed to READ");
         return;
     }
     
