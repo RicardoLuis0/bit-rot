@@ -13,6 +13,8 @@
 #include "Game.h"
 #include "SDL2Util.h"
 
+#undef main
+
 bool RunGame = true;
 
 bool InGame = false;
@@ -49,14 +51,16 @@ int doGame()
                 UseSubsystem(Audio);
                 LogDebug("Starting Main Loop");
                 
-                if(Config::getStringOr("SawIntro1", "no") == "yes")
-                {
-                    Audio::PlayMusic("tension");
-                }
-                else
-                {
-                    Audio::PlayMusic("loop");
-                }
+                #ifndef DEBUG_BUILD
+                    if(Config::getStringOr("SawIntro1", "no") == "yes")
+                    {
+                        Audio::PlayMusic("tension");
+                    }
+                    else
+                    {
+                        Audio::PlayMusic("loop");
+                    }
+                #endif
                 
                 int vol = std::clamp<int>(Config::getIntOr("Volume", 100), 0, 100);
                 Mix_MasterVolume(vol);

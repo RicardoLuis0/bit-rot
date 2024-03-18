@@ -352,34 +352,26 @@ char toUppercase(char c)
 
 void runCommand(std::string command)
 {
-    Game::AddConsoleLine(">"+command);
-    commandHistory.insert(commandHistory.begin(), command);
     
     std::vector<std::string> programsList = Game::ListPrograms();
     
     std::vector<std::string> args = Util::SplitString(command, ' ', true, true);
-    std::string cmd = Util::StrToUpper(args[0]);
-    
-    if(std::find(programsList.begin(), programsList.end(), cmd) != programsList.end())
+    if(args.size() > 0)
     {
-        programs[cmd](args);
+        Game::AddConsoleLine(">"+command);
+        commandHistory.insert(commandHistory.begin(), command);
+        
+        std::string cmd = Util::StrToUpper(args[0]);
+        
+        if(std::find(programsList.begin(), programsList.end(), cmd) != programsList.end())
+        {
+            programs[cmd](args);
+        }
+        else
+        {
+            Game::AddConsoleLine("Could not find program "+Util::QuoteString(cmd));
+        }
     }
-    else
-    {
-        Game::AddConsoleLine("Could not find program "+Util::QuoteString(cmd));
-    }
-    /*
-    if(cmd == "dir")
-    {
-        LogDebug("Dir Command, args: "+Util::JoinOr(Util::Map(args, std::bind(Util::QuoteString, std::placeholders::_1, '\'')), ", ", " and "));
-        //TODO
-    }
-    else if(cmd == "cls" || cmd == "clear")
-    {
-        LogDebug("Cls Command, args: "+Util::JoinOr(Util::Map(args, std::bind(Util::QuoteString, std::placeholders::_1, '\'')), ", ", " and "));
-        //TODO
-    }
-    */
 }
 
 void Game::Responder(SDL_Event *e)
