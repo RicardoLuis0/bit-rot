@@ -248,7 +248,9 @@ void runCommand(std::string command)
         }
         else
         {
+            Game::AddConsoleLine("");
             Game::AddConsoleLine("Could not find program "+Util::QuoteString(cmd));
+            Game::AddConsoleLine("");
         }
     }
 }
