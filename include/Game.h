@@ -15,13 +15,14 @@ using CommandProc = void(*)(const std::vector<std::string>&);
 
 enum class dir_entry_type : uint8_t
 {
-    FOLDER    = 0x01,
-    TEXT      = 0x02,
-    DATA      = 0x04,
-    PROGRAM   = 0x08,
-    DRIVER    = 0x10,
+    FOLDER          = 0x01,
+    TEXT            = 0x02,
+    DATA            = 0x04,
+    PROGRAM         = 0x08,
+    PROGRAM_ALIAS   = 0x10,
+    DRIVER          = 0x20,
     //
-    ENTRY_ANY = 0xFF,
+    ENTRY_ANY       = 0xFF,
 };
 
 enum class hide_type : uint8_t

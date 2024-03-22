@@ -49,11 +49,12 @@ void Command::Cd(const std::vector<std::string> &args)
 
 std::map<dir_entry_type, std::string> dir_type_strings
 {
-    {FOLDER,    "FOLDER"},
-    {TEXT,      " TEXT "},
-    {DATA,      " BIN  "},
-    {PROGRAM,   " EXE  "},
-    {DRIVER,    " SYS  "},
+    {FOLDER,        "FOLDER"},
+    {TEXT,          " TEXT "},
+    {DATA,          " BIN  "},
+    {PROGRAM,       " EXE  "},
+    {PROGRAM_ALIAS, "ALIAS "},
+    {DRIVER,        " SYS  "},
 };
 
 void Command::Dir(const std::vector<std::string> &args)

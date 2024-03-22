@@ -30,7 +30,7 @@ std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string pat
     {
         for(auto &entry : entries->second)
         {
-            if(entry.second.type == PROGRAM && entry.second.hidden == VISIBLE)
+            if((entry.second.type == PROGRAM || entry.second.type == PROGRAM_ALIAS) && entry.second.hidden == VISIBLE)
             {
                 programs.push_back(entry.second.name);
             }

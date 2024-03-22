@@ -85,7 +85,7 @@ std::map<std::string, std::map<std::string, std::map<std::string, dir_entry>>> d
     {"C", {
         {"\\", {
             {"SYSTEM", {"SYSTEM", FOLDER}},
-            {"BIN", {"BIN", FOLDER, FORBIDDEN}},
+            {"BIN", {"BIN", FOLDER}},
             {"HOME", {"HOME", FOLDER}},
             //{"DELETEME", {"DELETEME", TEXT, DELETED}},
         }},
@@ -115,13 +115,13 @@ std::map<std::string, std::map<std::string, std::map<std::string, dir_entry>>> d
         }},
         {"\\BIN\\",{
             {"CD", {"CD", PROGRAM}},
-            {"CLS", {"CLS", PROGRAM}},
+            {"CLS", {"CLS", PROGRAM_ALIAS}},
             {"CLEAR", {"CLEAR", PROGRAM}},
-            {"DIR", {"DIR", PROGRAM}},
+            {"DIR", {"DIR", PROGRAM_ALIAS}},
             {"LS", {"LS", PROGRAM}},
             {"HELP", {"HELP", PROGRAM}},
             //{"MAN", {"MAN", PROGRAM}},
-            {"READ", {"READ", PROGRAM}},
+            {"READ", {"READ", PROGRAM_ALIAS}},
             {"CAT", {"CAT", PROGRAM}},
             {"INSTALL", {"INSTALL", PROGRAM}},
             //{"UNLOCK", {"UNLOCK", PROGRAM}},
