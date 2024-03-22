@@ -11,7 +11,6 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option use_console_runner="0" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-DDEBUG_BUILD" />
@@ -79,6 +78,10 @@
 		<Unit filename="include/Log.h" />
 		<Unit filename="include/Menu.h" />
 		<Unit filename="include/Preprocessor.h" />
+		<Unit filename="include/Preprocessor/Bool.h" />
+		<Unit filename="include/Preprocessor/ForEach.h" />
+		<Unit filename="include/Preprocessor/If.h" />
+		<Unit filename="include/Preprocessor/Switch.h" />
 		<Unit filename="include/Renderer.h" />
 		<Unit filename="include/Renderer/GLFrameBuffer.h" />
 		<Unit filename="include/Renderer/GLProgram.h" />
@@ -97,6 +100,7 @@
 		<Unit filename="src/Exceptions.cpp" />
 		<Unit filename="src/Font.cpp" />
 		<Unit filename="src/Game.cpp" />
+		<Unit filename="src/GameData.cpp" />
 		<Unit filename="src/GameIntro.cpp" />
 		<Unit filename="src/Input.cpp" />
 		<Unit filename="src/Json.cpp" />

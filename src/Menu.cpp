@@ -13,16 +13,7 @@ constexpr bool canSave = false;
 constexpr FakeString<80> BorderTop =    fixString(U"┌──────────────────────────────────────────────────────────────────────────────┐");
 constexpr FakeString<80> BorderMid =    fixString(U"│                                                                              │");
 constexpr FakeString<80> BorderBottom = fixString(U"└──────────────────────────────────────────────────────────────────────────────┘");
-/*
-constexpr FakeString<78> Title[] {
-    fixString(U"┌─┐  ┌─┐                                    ┌─┐  ┌──────┐                     "),
-    fixString(U"│ │  │ ├─────┬─────┬─────┬─────────┬────┐   │ │  │ ┌────┼─────┬─────────┬────┐"),
-    fixString(U"│ │  │ │ ┌─┐ │ ┌─┐ │ ┌─┐ │ ┌─┐ ┌─┐ │  ─┬┼───┘ │  │ │ ┌──┤ ┌─┐ │ ┌─┐ ┌─┐ │  ─┬┘"),
-    fixString(U"│ │  │ │ │ │ │ │ │ │ └─┘ │ │ │ │ │ │ ┌─┘│ ┌─┐ │  │ │ └┐ │ └─┘ │ │ │ │ │ │ ┌─┘ "),
-    fixString(U"│ └──┘ │ │ │ │ │ │ │ ┌─┐ │ │ │ │ │ │ └──┤ └─┘ │  │ └──┘ │ ┌─┐ │ │ │ │ │ │ └──┐"),
-    fixString(U"└──────┴─┘ └─┴─┘ └─┴─┘ └─┴─┘ └─┘ └─┴────┴─────┘  └──────┴─┘ └─┴─┘ └─┘ └─┴────┘"),
-};
-*/
+
 constexpr FakeString<42> Title[] {
     fixString(U"┌─────┐               ┌─────┐             "),
     fixString(U"│ ┌─┐ │  ┌─┐┌─────┐   │ ┌─┐ │┌─────┬─────┐"),

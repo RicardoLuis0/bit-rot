@@ -75,26 +75,31 @@ FakeString<80*40> randPrintErr;
 void Game::ToIntro()
 {
     currentScreen = DEBUG_START_SCREEN;
-    if(Config::getStringOr("SawIntro1", "no") == "yes")
+    
+    if constexpr(DEBUG_START_SCREEN == 4)
     {
-        introStage = DEBUG_START_STAGE2;
-        Audio::FadeMusic(500);
-        Audio::StartFan();
-        Audio::PlayMusic("lost");
+        ToGame();
     }
     else
     {
-        introStage = DEBUG_START_STAGE;
-        Audio::FadeMusic(500);
-        Audio::PlayMusic("forest");
+        if(Config::getStringOr("SawIntro1", "no") == "yes")
+        {
+            introStage = DEBUG_START_STAGE2;
+            Audio::FadeMusic(500);
+            Audio::StartFan();
+            Audio::PlayMusic("lost");
+        }
+        else
+        {
+            introStage = DEBUG_START_STAGE;
+            Audio::FadeMusic(500);
+            Audio::PlayMusic("forest");
+        }
     }
-    
-    if constexpr(DEBUG_START_SCREEN == 4) { ToGame(); }
 }
 
 void Game::IntroResponder(SDL_Event *e)
 {
-    //TODO
     if(introStage == 0 && e->type == SDL_KEYDOWN)
     {
         introStartMs = Util::MsTime();

@@ -2,6 +2,11 @@
 #include "Game.h"
 #include "Common.h"
 
+#include <cstdint>
+#include <map>
+#include <vector>
+#include <utility>
+
 using namespace Game;
 
 extern int currentScreen;
@@ -23,19 +28,23 @@ void Unimplemented(const std::string &command_name, const std::vector<std::strin
 
 void Command::Cd(const std::vector<std::string> &args)
 {
+    AddConsoleLine("");
     if(args.size() > 2)
     {
         AddConsoleLine("Too many Arguments passed to CD");
+        AddConsoleLine("");
         return;
     }
     else if(args.size() > 1)
     {
         if(!HasAccess(args[1], "CD", &currentFolder, nullptr, FOLDER, VISIBLE, false))
         {
+            AddConsoleLine("");
             return;
         }
     }
     AddConsoleLine("Current Directory: " + currentDrive + ":" + currentFolder);
+    AddConsoleLine("");
 }
 
 std::map<dir_entry_type, std::string> dir_type_strings
@@ -51,15 +60,18 @@ void Command::Dir(const std::vector<std::string> &args)
 {
     std::string folder;
     
+    AddConsoleLine("");
     if(args.size() > 2)
     {
         AddConsoleLine("Too many Arguments passed to DIR");
+        AddConsoleLine("");
         return;
     }
     else if(args.size() > 1)
     {
         if(!HasAccess(args[1], "DIR", &folder, nullptr, FOLDER, VISIBLE, false))
         {
+            AddConsoleLine("");
             return;
         }
     }
@@ -102,7 +114,7 @@ void Command::Dir(const std::vector<std::string> &args)
             }
         }
     }
-    //TODO
+    AddConsoleLine("");
 }
 
 void Command::Clear(const std::vector<std::string> &args)
@@ -117,51 +129,127 @@ void Command::Clear(const std::vector<std::string> &args)
     }
 }
 
-std::vector<std::string> helpLines
-{
-    "Default Commands:",
-    " * CD - Change directories or show the path of the current directory (use '..' to go back to the previous directory)",
-    " * DIR / LS - List entries of the current directory",
-    " * CLS / CLEAR - Clear screen",
-    " * CAT / READ - Read text documents",
-    " * INSTALL - Install a program to your \\BIN\\ directory, allowing you to use it anywhere",
-    "Other Commands:",
-    " * UNLOCK - Pass it a path and a password to unlock encrypted folders/files",
-    " * RECOVERY - This can recover deleted files",
-    
-};
-
-/*
-std::map<std::string, std::vector<std::string>> programHelp
-{
-    //TODO
-};
-*/
-
 void Command::Help(const std::vector<std::string> &args)
 {
-    
+    AddConsoleLine("");
     if(args.size() == 1)
     {
-        AddConsoleLines(helpLines);
-        //DEFAULT HELP
+        std::vector<std::string> programs = Game::ListPrograms();
+        AddConsoleLine("Installed Programs: (use HELP <PROGRAM> for usage info)");
+        AddConsoleLine("");
+        for(const std::pair<const std::vector<std::string>, program_help> &cmd : programHelp)
+        {
+            if(cmd.second.hidden) continue;
+            
+            std::vector<std::string> found;
+            
+            for(const std::string &f : cmd.first)
+            {
+                if(std::find(programs.begin(), programs.end(), f) != programs.end())
+                {
+                    found.push_back(f);
+                }
+            }
+            if(found.size() == 0) continue;
+            
+            std::string start = " \07 "+Util::Join(found, " / ")+" - ";
+            
+            if(cmd.second.help[0].second.size() > 0)
+            {
+                AddConsoleLine(start+cmd.second.help[0].first, Util::Concat(std::vector<uint8_t>(start.size(), 0),cmd.second.help[0].second));
+            }
+            else
+            {
+                AddConsoleLine(start+cmd.second.help[0].first);
+            }
+        }
+        AddConsoleLine("");
+    }
+    else if(args.size() == 2)
+    {
+        std::vector<std::string> programs = Game::ListPrograms();
+        std::string command = Util::StrToUpper(args[1]);
+        
+        if(std::find(programs.begin(), programs.end(), command) != programs.end())
+        {
+            for(const std::pair<const std::vector<std::string>, program_help> &cmd : programHelp)
+            {
+                if(std::find(cmd.first.begin(), cmd.first.end(), command) != cmd.first.end())
+                {
+                    std::vector<std::string> found;
+                    
+                    for(const std::string &f : cmd.first)
+                    {
+                        if(std::find(programs.begin(), programs.end(), f) != programs.end())
+                        {
+                            found.push_back(f);
+                        }
+                    }
+                    
+                    AddConsoleLine("Help for "+Util::Join(found, " / ")+":");
+                    AddConsoleLine("");
+                    
+                    for(auto &line : cmd.second.help)
+                    {
+                        std::string start = "  ";
+                        
+                        if(line.second.size() > 0)
+                        {
+                            AddConsoleLine(start+line.first, Util::Concat(std::vector<uint8_t>(start.size(), 0),line.second));
+                        }
+                        else
+                        {
+                            AddConsoleLine(start+line.first);
+                        }
+                    }
+                    
+                    AddConsoleLine("");
+                    AddConsoleLine("Usage:");
+                    AddConsoleLine("");
+                    
+                    for(auto &line : cmd.second.usage)
+                    {
+                        std::string start = " \07 ";
+                        
+                        if(line.second.size() > 0)
+                        {
+                            AddConsoleLine(start+line.first, Util::Concat(std::vector<uint8_t>(start.size(), 0),line.second));
+                        }
+                        else
+                        {
+                            AddConsoleLine(start+line.first);
+                        }
+                    }
+                    AddConsoleLine("");
+                    
+                    return;
+                }
+            }
+            
+        }
+        AddConsoleLine("No HELP found for "+Util::QuoteString(args[1]));
+        AddConsoleLine("");
     }
     else
     {
         AddConsoleLine("Too many Arguments passed to HELP");
+        AddConsoleLine("");
     }
 }
 
 void Command::Read(const std::vector<std::string> &args)
 {
+    AddConsoleLine("");
     if(args.size() > 2)
     {
         AddConsoleLine("Too many Arguments passed to READ");
+        AddConsoleLine("");
         return;
     }
     else if(args.size() < 2)
     {
         AddConsoleLine("Too few Arguments passed to READ");
+        AddConsoleLine("");
         return;
     }
     
@@ -178,13 +266,16 @@ void Command::Read(const std::vector<std::string> &args)
             AddConsoleLine(textFiles[filepath]);
         }
     }
+    AddConsoleLine("");
 }
 
 void Command::Recovery(const std::vector<std::string> &args)
 {
+    AddConsoleLine("");
     if(args.size() > 1)
     {
         AddConsoleLine("Too many Arguments passed to RECOVERY");
+        AddConsoleLine("");
         return;
     }
     
@@ -219,6 +310,7 @@ void Command::Recovery(const std::vector<std::string> &args)
     {
         AddConsoleLine("Could not recover any files");
     }
+    AddConsoleLine("");
 }
 
 void Command::Decrypt(const std::vector<std::string> &args)
@@ -229,14 +321,17 @@ void Command::Decrypt(const std::vector<std::string> &args)
 
 void Command::Install(const std::vector<std::string> &args)
 {
+    AddConsoleLine("");
     if(args.size() > 2)
     {
         AddConsoleLine("Too many Arguments passed to INSTALL");
+        AddConsoleLine("");
         return;
     }
     else if(args.size() < 2)
     {
         AddConsoleLine("Too few Arguments passed to INSTALL");
+        AddConsoleLine("");
         return;
     }
     
@@ -263,18 +358,22 @@ void Command::Install(const std::vector<std::string> &args)
             AddConsoleLine(Util::QuoteString(entry->name, '\'', false)+" is not a Program");
         }
     }
+    AddConsoleLine("");
 }
 
 void Command::Unlock(const std::vector<std::string> &args)
 {
+    AddConsoleLine("");
     if(args.size() > 3)
     {
         AddConsoleLine("Too many Arguments passed to UNLOCK");
+        AddConsoleLine("");
         return;
     }
     else if(args.size() < 2)
     {
         AddConsoleLine("Too few Arguments passed to UNLOCK");
+        AddConsoleLine("");
         return;
     }
     
@@ -296,6 +395,7 @@ void Command::Unlock(const std::vector<std::string> &args)
             entry->hidden = VISIBLE;
         }
     }
+    AddConsoleLine("");
 }
 
 void Command::EndJamBuild(const std::vector<std::string> &args)

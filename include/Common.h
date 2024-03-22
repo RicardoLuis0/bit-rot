@@ -222,6 +222,10 @@ inline constexpr std::string operator"" _s(const char * s,size_t n){
     return {s,n};
 }
 
+inline constexpr std::string_view operator"" _sv(const char * s,size_t n){
+    return {s,n};
+}
+
 inline consteval unsigned long long int operator"" _K(unsigned long long int n){
     return n*1024;
 }
@@ -352,25 +356,6 @@ namespace Util
     {
         return invoke_all<R, Fn2, Fns...>(std::invoke(fn1, std::forward<R>(val)));
     }
-    
-    template<typename R, typename... Fns>
-    using invoke_all_result = std::remove_cvref_t<decltype(
-                                       invoke_all(
-                                                  std::declval<std::remove_reference_t<R>>(),
-                                                  std::declval<std::remove_reference_t<Fns>>()...))>; // can't handle static array types ("extents")
-    /*
-    template<typename R,typename... Fns>
-    std::vector< invoke_all_result<typename std::remove_cvref_t<R>::value_type, Fns...> > Map(R &&r,Fns&&... fns)
-    {
-        std::vector< invoke_all_result<typename std::remove_cvref_t<R>::value_type, Fns...> > v;
-        v.reserve(std::size(r));
-        for(auto &e:r)
-        {
-            v.emplace_back(invoke_all(e, fns...));
-        }
-        return v;
-    }
-    */
     
     template<typename R,typename... Fns>
     auto Map(R &&r,Fns&&... fns)

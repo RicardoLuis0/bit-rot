@@ -2,6 +2,7 @@
 #include <cstdlib>
 
 #include "Common.h"
+
 #include "Log.h"
 #include "Font.h"
 #include "Input.h"
@@ -14,6 +15,8 @@
 #include "SDL2Util.h"
 
 #undef main
+
+static_assert(PP_SWITCH(2, 10, 25, 30) == 30);
 
 bool RunGame = true;
 

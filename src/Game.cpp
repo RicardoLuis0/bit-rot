@@ -5,7 +5,6 @@
 #include "SDL2Util.h"
 #include "Command.h"
 
-#include <map>
 
 using enum dir_entry_type;
 using enum hide_type;
@@ -21,132 +20,6 @@ extern uint32_t memAmount;
 
 std::string tempCommand;
 size_t tempCommandPos = 0;
-
-std::string currentDrive = "C";
-std::string currentFolder = "\\";
-
-
-//names
-
-#define YOU "Sam"
-#define SISTER "Abigail"
-
-#define FATHER "Blair"
-#define MOTHER "Noelle"
-
-#define UNCLE "Kevin"
-#define UNCLE_NICKNAME "Kev"
-
-std::map<std::string, std::string> textFilesCorrupted
-{
-                              //"I think there's something wrong with this computer, "
-    {"\\HOME\\DOCS\\BROKEN", fixStringRand(U"_______   there's something wrong with   _____________, "
-                              //"ever since updating the OS, this weird driver started loading, '666.sys', "
-                                "ever since   _______________,   this   _______________________________________, "
-                              //"I can't find it on the '\\SYSTEM\\DRV\\' folder. I tried asking Kev if he knew more, " 
-                                "I can't   ______________   '\\SYSTEM\\DRV\\'   _________   tried asking   _________   knew   ______"
-                              //"but when i tried showing him, all he saw on the monitor was a blank screen..."
-                                "___  when i tried  ____________________________________________  blank screen...", U'_', 123)},
-};
-
-std::map<std::string, std::string> textFiles
-{
-    {"\\HOME\\DOCS\\BROKEN", "I think there's something wrong with this computer, "
-                 "ever since updating the   OS, this weird driver started loading, '666.sys'. "
-                 "I can't find it on the      '\\SYSTEM\\DRV\\' folder. I tried asking Kev if he knew more, "
-                 "but when i tried   showing him, all he saw on the monitor was a blank screen..."},
-                 
-    //{"\\DELETEME", ""},
-    {"\\HOME\\README", "If i've forgotten my passwords, here's a hint: birthday"},
-    {"\\HOME\\DOCS\\DATES", "Me - 24/07/67                                                                 "
-                            "Noelle - 08/02/65                                                             "
-                            "Abigail - 14/04/89                                                            "
-    },
-    {"\\HOME\\SENSITIVE\\IF_YOU_FOUND_THIS", "If you found this computer, please destroy it, i couldn't bear to             do it myself..."},
-};
-
-std::map<std::string, CommandProc> programs
-{
-    {"CD", &Command::Cd},
-    {"DIR", &Command::Dir},
-    {"LS", &Command::Dir},
-    {"CLS", &Command::Clear},
-    {"CLEAR", &Command::Clear},
-    {"HELP", &Command::Help},
-    //{"MAN", &Command::Help},
-    {"READ", &Command::Read},
-    {"CAT", &Command::Read},
-    {"INSTALL", &Command::Install},
-    {"UNLOCK", &Command::Unlock},
-    {"RECOVERY", &Command::Recovery},
-    {"DECRYPT", &Command::Decrypt},
-    {"666", &Command::EndJamBuild},
-};
-
-std::map<std::string, std::map<std::string, std::map<std::string, dir_entry>>> directories
-{
-    {"C", {
-        {"\\", {
-            {"SYSTEM", {"SYSTEM", FOLDER}},
-            {"BIN", {"BIN", FOLDER, FORBIDDEN}},
-            {"HOME", {"HOME", FOLDER}},
-            //{"DELETEME", {"DELETEME", TEXT, DELETED}},
-        }},
-        {"\\SYSTEM\\",{
-            {"OS", {"OS", FOLDER, FORBIDDEN}},
-            {"CFG", {"CFG", FOLDER, FORBIDDEN}},
-            {"DRV", {"DRV", FOLDER}},
-        }},
-        {"\\SYSTEM\\OS\\",{
-            
-        }},
-        {"\\SYSTEM\\CFG\\",{
-            
-        }},
-        {"\\SYSTEM\\DRV\\",{
-            {"PowerMgmt",{"PowerMgmt", DRIVER}},
-            {"Display",{"Display", DRIVER}},
-            {"Console",{"Console", DRIVER}},
-            {"ExtMemory",{"ExtMemory", DRIVER}},
-            {"SndBurst",{"SndBurst", DRIVER}},
-            {"Command",{"Command", DRIVER}},
-            {"Mouse",{"Mouse", DRIVER}},
-            {"Printer",{"Printer", DRIVER}},
-            {"Network",{"Network", DRIVER}},
-            //{"666",{"666", DRIVER, HIDDEN}},
-            {"666",{"666", PROGRAM, DELETED}},
-        }},
-        {"\\BIN\\",{
-            {"CD", {"CD", PROGRAM}},
-            {"CLS", {"CLS", PROGRAM}},
-            {"CLEAR", {"CLEAR", PROGRAM}},
-            {"DIR", {"DIR", PROGRAM}},
-            {"LS", {"LS", PROGRAM}},
-            {"HELP", {"HELP", PROGRAM}},
-            //{"MAN", {"MAN", PROGRAM}},
-            {"READ", {"READ", PROGRAM}},
-            {"CAT", {"CAT", PROGRAM}},
-            {"INSTALL", {"INSTALL", PROGRAM}},
-            //{"UNLOCK", {"UNLOCK", PROGRAM}},
-            //{"RECOVERY", {"RECOVERY", PROGRAM}},
-            //{"DECRYPT", {"DECRYPT", PROGRAM}},
-        }},
-        {"\\HOME\\",{
-            {"DOCS", {"DOCS", FOLDER}},
-            {"SENSITIVE", {"SENSITIVE", FOLDER, ENCRYPTED, "140489"}},
-            {"README", {"README", TEXT}},
-        }},
-        {"\\HOME\\DOCS\\",{
-            {"BROKEN", {"BROKEN", TEXT, CORRUPTED}},
-            {"DATES", {"DATES", TEXT}},
-            {"UNLOCK", {"UNLOCK", PROGRAM}},
-        }},
-        {"\\HOME\\SENSITIVE\\",{
-            {"IF_YOU_FOUND_THIS", {"IF_YOU_FOUND_THIS", TEXT}},
-            {"RECOVERY", {"RECOVERY", PROGRAM}},
-        }},
-    }},
-};
 
 std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string path)
 {
@@ -204,6 +77,11 @@ std::string pathFolder(std::string path)
     }
 }
 
+static inline void DoErr(std::string_view msg, std::string_view err)
+{
+    Game::AddConsoleLine(std::string(msg) + std::string(err), Util::Concat(std::vector<uint8_t>(msg.size(), 0), std::vector<uint8_t>(err.size(), CHAR_INVERT1)));
+}
+
 bool Game::HasAccess(const std::string &path_str, const std::string &command_name, std::string *finalPath, dir_entry **final_entry, dir_entry_type last_allowed, hide_type last_allowed_hide, bool allow_last_missing)
 {
     if(final_entry) *final_entry = nullptr;
@@ -253,31 +131,32 @@ bool Game::HasAccess(const std::string &path_str, const std::string &command_nam
                 {
                     if(entry == entries->second.end() || (entry->second.hidden == HIDDEN || entry->second.hidden == DELETED))
                     {
-                        AddConsoleLine("Invalid Path "+Util::QuoteString(tmppath, '\'', false)+" Passed to "+command_name+": "+Util::QuoteString(path_vec[i], '\'', false)+" does not Exist");
+                        DoErr("Invalid Path "+Util::QuoteString(tmppath, '\'', false)+" Passed to "+command_name+": ",Util::QuoteString(path_vec[i], '\'', false)+" does not Exist");
                         return false;
                     }
                     else if(entry->second.type != FOLDER && ((i != (path_vec.size() - 1)) || last_allowed == FOLDER))
                     {
-                        AddConsoleLine("Invalid Path "+Util::QuoteString(tmppath, '\'', false)+" Passed to "+command_name+": "+Util::QuoteString(path_vec[i], '\'', false)+" is not a Folder");
+                        DoErr("Invalid Path "+Util::QuoteString(tmppath, '\'', false)+" Passed to "+command_name+": ",Util::QuoteString(path_vec[i], '\'', false)+" is not a Folder");
                         return false;
                     }
                     else if(entry->second.hidden == ENCRYPTED)
                     {
-                        AddConsoleLine("Invalid Path "+Util::QuoteString(tmppath, '\'', false)+" Passed to "+command_name+": "+Util::QuoteString(path_vec[i], '\'', false)+" is Encrypted");
+                        DoErr("Invalid Path "+Util::QuoteString(tmppath, '\'', false)+" Passed to "+command_name+": ", Util::QuoteString(path_vec[i], '\'', false)+" is Encrypted");
                         return false;
                     }
                     else if(entry->second.hidden == FORBIDDEN)
                     {
-                        AddConsoleLine("Invalid Path "+Util::QuoteString(tmppath, '\'', false)+" Passed to "+command_name+": "+Util::QuoteString(path_vec[i], '\'', false)+" Access Forbidden");
+                        DoErr("Invalid Path "+Util::QuoteString(tmppath, '\'', false)+" Passed to "+command_name+": ","Access Forbidden");
                         return false;
                     }
                     else if(entry->second.hidden == CORRUPTED)
                     {
                         uint32_t time = Util::MsTime();
-                        AddConsoleLine(
-                           stringRand(stringRandReplace("Invalid Path "+Util::QuoteString(tmppath, '\'', false)+" Passed to "+command_name+": Error trying to Access "+Util::QuoteString(path_vec[i], '\'', false)+" is "+std::string(const_rand(time) % 10, '_')
-                            ,'_', 64, time + 1
-                           ), '_', time + 2));
+                        
+                        std::string msg = stringRand(stringRandReplace("Invalid Path "+Util::QuoteString(tmppath, '\'', false)+" Passed to "+command_name+": ",'_', 64, time + 1), '_', time + 2);
+                        std::string err = stringRand(stringRandReplace("Error trying to Access "+Util::QuoteString(path_vec[i], '\'', false)+" is "+std::string(const_rand(time) % 10, '_'),'_', 64, time + 3), '_', time + 4);
+                        
+                        DoErr(msg, err);
                         return false;
                     }
                     else if(i == (path_vec.size() - 1))
