@@ -95,6 +95,14 @@
 		</Unit>
 		<Unit filename="src/Bitmap.cpp" />
 		<Unit filename="src/Command.cpp" />
+		<Unit filename="src/Commands/Cd.cpp" />
+		<Unit filename="src/Commands/Clear.cpp" />
+		<Unit filename="src/Commands/Dir.cpp" />
+		<Unit filename="src/Commands/Help.cpp" />
+		<Unit filename="src/Commands/Install.cpp" />
+		<Unit filename="src/Commands/Read.cpp" />
+		<Unit filename="src/Commands/Recovery.cpp" />
+		<Unit filename="src/Commands/Unlock.cpp" />
 		<Unit filename="src/Common.cpp" />
 		<Unit filename="src/Config.cpp" />
 		<Unit filename="src/Exceptions.cpp" />
