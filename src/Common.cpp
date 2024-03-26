@@ -242,6 +242,32 @@ namespace Util
         }
     }
     
+    std::vector<SplitPoint> SplitStringEx(const std::string &str, char split_on, bool join_empty, bool use_quotes)
+    {
+        std::vector<SplitPoint> o;
+        
+        SplitStringInternal(str, join_empty, use_quotes,
+        [split_on](char c)
+        {
+            return c == split_on;
+        },
+        [&o](size_t start, size_t len, const std::string &tmp, std::string_view str)
+        {
+            SplitPoint p {.offset = start, .orig_len = len, .str = std::string_view {}};
+            if(tmp.empty())
+            {
+                p.str = str;
+            }
+            else
+            {
+                p.str = (tmp + std::string(str));
+            }
+            o.emplace_back(std::move(p));
+        });
+        
+        return o;
+    }
+    
     std::vector<std::string> SplitString(const std::string &str, char split_on, bool join_empty, bool use_quotes)
     {
         std::vector<std::string> o;

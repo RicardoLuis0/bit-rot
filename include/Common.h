@@ -9,6 +9,7 @@
 #include <string>
 #include <span>
 #include <functional>
+#include <variant>
 
 #include "Log.h"
 
@@ -439,6 +440,14 @@ namespace Util
     
     std::vector<std::string_view> SplitLines(std::string_view text, uint32_t maxWidth);
     
+    struct SplitPoint
+    {
+        size_t offset;
+        size_t orig_len;
+        std::variant<std::string_view, std::string> str;
+    };
+    
+    std::vector<SplitPoint> SplitStringEx(const std::string &str, char split_on = ' ', bool join_empty = false, bool use_quotes = true);
     
     std::vector<std::string> SplitString(const std::string &str, char split_on = ' ', bool join_empty = false, bool use_quotes = true);
     
