@@ -186,115 +186,92 @@ namespace Util
         }
     }
     
+    
+    template<typename FnCheck, typename FnFound>
+    void SplitStringInternal(const std::string &str, bool join_empty, bool use_quotes, FnCheck &&isSpace, FnFound &&found)
+    {
+        size_t i = 0;
+        size_t lastSection = 0;
+        size_t lastStart = 0;
+        char lastQuoteType = 0;
+        
+        std::string tmp;
+        bool has_tmp = false;
+        
+        for(i = 0; i < std::size(str); i++)
+        {
+            if(isSpace(str[i]))
+            {
+                found(lastStart, i - lastStart, tmp, std::string_view(str).substr(lastSection, i - lastSection));
+                lastSection = i + 1;
+                tmp = "";
+                has_tmp = false;
+                if(join_empty) for(;(i + 1) < std::size(str) && isSpace(str[i + 1]); i++, lastSection++);
+                lastStart = i + 1;
+            }
+            else if(use_quotes && (str[i] == '\'' || str[i] == '"'))
+            {
+                lastQuoteType = str[i];
+                tmp += str.substr(lastSection, i - lastSection);
+                has_tmp = true;
+                bool wasQuote = false;
+                
+                for(i++;(str[i] != lastQuoteType || wasQuote) && i < std::size(str); i++)
+                {
+                    if(i == '\\' && !wasQuote)
+                    {
+                        wasQuote = true;
+                    }
+                    else
+                    {
+                        tmp += wasQuote ? unescape(i) : str[i];
+                        wasQuote = false;
+                    }
+                }
+                lastSection = i + 1;
+            }
+        }
+        
+        if(lastSection != i)
+        { // ended on an unquoted section
+            found(lastStart, i - lastStart, tmp, std::string_view(str).substr(lastSection));
+        }
+        else if(has_tmp)
+        { // ended on a quote
+            found(lastStart, i - lastStart, tmp, {});
+        }
+    }
+    
     std::vector<std::string> SplitString(const std::string &str, char split_on, bool join_empty, bool use_quotes)
     {
         std::vector<std::string> o;
         
-        size_t i = 0;
-        size_t lastSection = 0;
-        char lastQuoteType = 0;
-        
-        std::string tmp;
-        bool has_tmp = false;
-        
-        for(i = 0; i < std::size(str); i++)
+        SplitStringInternal(str, join_empty, use_quotes,
+        [split_on](char c)
         {
-            if(str[i] == split_on)
-            {
-                o.push_back(tmp + str.substr(lastSection, i - lastSection));
-                lastSection = i + 1;
-                tmp = "";
-                has_tmp = false;
-                if(join_empty) for(;(i + 1) < std::size(str) && str[i + 1] == split_on; i++, lastSection++);
-            }
-            else if(use_quotes && (str[i] == '\'' || str[i] == '"'))
-            {
-                lastQuoteType = str[i];
-                tmp += str.substr(lastSection, i - lastSection);
-                has_tmp = true;
-                bool wasQuote = false;
-                
-                for(i++;(str[i] != lastQuoteType || wasQuote) && i < std::size(str); i++)
-                {
-                    if(i == '\\' && !wasQuote)
-                    {
-                        wasQuote = true;
-                    }
-                    else
-                    {
-                        tmp += wasQuote ? unescape(i) : str[i];
-                        wasQuote = false;
-                    }
-                }
-                lastSection = i + 1;
-            }
-        }
-        
-        if(lastSection != i)
+            return c == split_on;
+        },
+        [&o](size_t start, size_t len, const std::string &tmp, std::string_view str)
         {
-            o.push_back(tmp + str.substr(lastSection));
-        }
-        else if(has_tmp)
-        {
-            o.push_back(tmp);
-        }
+            o.push_back(tmp + std::string(str));
+        });
         
         return o;
     }
     
-    //TODO deduplicate
     std::vector<std::string> SplitString(const std::string &str, const std::string &split_on, bool join_empty, bool use_quotes)
     {
         std::vector<std::string> o;
         
-        size_t i = 0;
-        size_t lastSection = 0;
-        char lastQuoteType = 0;
-        
-        std::string tmp;
-        bool has_tmp = false;
-        
-        for(i = 0; i < std::size(str); i++)
+        SplitStringInternal(str, join_empty, use_quotes,
+        [&split_on](char c)
         {
-            if(split_on.contains(str[i]))
-            {
-                o.push_back(tmp + str.substr(lastSection, i - lastSection));
-                lastSection = i + 1;
-                tmp = "";
-                has_tmp = false;
-                if(join_empty) for(;(i + 1) < std::size(str) && split_on.contains(str[i + 1]); i++, lastSection++);
-            }
-            else if(use_quotes && (str[i] == '\'' || str[i] == '"'))
-            {
-                lastQuoteType = str[i];
-                tmp += str.substr(lastSection, i - lastSection);
-                has_tmp = true;
-                bool wasQuote = false;
-                
-                for(i++;(str[i] != lastQuoteType || wasQuote) && i < std::size(str); i++)
-                {
-                    if(i == '\\' && !wasQuote)
-                    {
-                        wasQuote = true;
-                    }
-                    else
-                    {
-                        tmp += wasQuote ? unescape(i) : str[i];
-                        wasQuote = false;
-                    }
-                }
-                lastSection = i + 1;
-            }
-        }
-        
-        if(lastSection != i)
+            return split_on.contains(c);
+        },
+        [&o](size_t start, size_t len, const std::string &tmp, std::string_view str)
         {
-            o.push_back(tmp + str.substr(lastSection));
-        }
-        else if(has_tmp)
-        {
-            o.push_back(tmp);
-        }
+            o.push_back(tmp + std::string(str));
+        });
         
         return o;
     }
