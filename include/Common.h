@@ -2,7 +2,7 @@
 
 #include "Preprocessor.h"
 
-#include<type_traits>
+#include <type_traits>
 #include <cassert>
 #include <cstdio>
 #include <cstdarg>
@@ -359,6 +359,28 @@ namespace Util
     }
     
     template<typename R,typename... Fns>
+    auto Filter(R &&r,Fns&&... fns)
+    {
+        std::vector<typename R::value_type> v;
+        v.reserve(std::size(r));
+        for(auto &e:r)
+        {
+            if((std::invoke(fns, e) && ...))
+            {
+                if constexpr(std::is_rvalue_reference_v<decltype(r)>)
+                {
+                    v.emplace_back(std::move(e));
+                }
+                else
+                {
+                    v.push_back(e);
+                }
+            }
+        }
+        return v;
+    }
+    
+    template<typename R,typename... Fns>
     auto Map(R &&r,Fns&&... fns)
     {
         std::vector<decltype(invoke_all(r[0], fns...))> v;
@@ -371,23 +393,29 @@ namespace Util
     }
     
     template<typename R,typename... Fns>
-    void MapInplace(R &&r, Fns&&... fns)
-    {
-        for(auto &e:r)
-        {
-            e = invoke_all(e, fns...);
-        }
-    }
-    
-    
-    template<typename R,typename... Fns>
-    auto MapInplaceChain(R &&r, Fns&&... fns)
+    auto MapInplace(R &&r, Fns&&... fns)
     {
         for(auto &e:r)
         {
             e = invoke_all(e, fns...);
         }
         return std::forward<R&&>(r);
+    }
+    
+    template<typename R, typename Fn>
+    auto SortInplace(R &&r, Fn&& fn)
+    {
+        std::sort(std::begin(r), std::end(r), fn);
+        return std::forward<R&&>(r);
+    }
+    
+    template<typename R,typename... Fns>
+    void ForEach(R &&r, Fns&&... fns)
+    {
+        for(auto &e:r)
+        {
+            invoke_all(e, fns...);
+        }
     }
     
     class VAList_Guard
@@ -445,13 +473,18 @@ namespace Util
         size_t offset;
         size_t orig_len;
         std::variant<std::string_view, std::string> str;
+        
+        std::string_view to_view() const
+        {
+            return str.index() == 0 ? std::get<0>(str) : std::get<1>(str);
+        }
     };
     
-    std::vector<SplitPoint> SplitStringEx(const std::string &str, char split_on = ' ', bool join_empty = false, bool use_quotes = true);
+    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true);
     
-    std::vector<std::string> SplitString(const std::string &str, char split_on = ' ', bool join_empty = false, bool use_quotes = true);
+    std::vector<std::string> SplitString(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true);
     
-    std::vector<std::string> SplitString(const std::string &str, const std::string &split_on, bool join_empty = false, bool use_quotes = true);
+    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty = false, bool use_quotes = true);
     
     
     template<typename T>
@@ -465,8 +498,17 @@ namespace Util
         return vals;
     }
     
-    std::string StrToLower(const std::string &str);
-    std::string StrToUpper(const std::string &str);
+    char CharToLower(char c);
+    char CharToUpper(char c);
+    
+    std::string StrToLower(std::string_view str);
+    std::string StrToUpper(std::string_view str);
+    
+    inline std::string ReplaceChars(std::string s, char from, char to)
+    {
+        std::replace(s.begin(), s.end(), from, to);
+        return s;
+    }
 }
 
 #define UseSubsystem(x) Util::Guard<x::Init, x::Quit> PP_JOIN(manager_,__LINE__) {#x}

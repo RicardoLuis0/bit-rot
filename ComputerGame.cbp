@@ -95,6 +95,7 @@
 		</Unit>
 		<Unit filename="src/Bitmap.cpp" />
 		<Unit filename="src/Command.cpp" />
+		<Unit filename="src/CommandLine.cpp" />
 		<Unit filename="src/Commands/Cd.cpp" />
 		<Unit filename="src/Commands/Clear.cpp" />
 		<Unit filename="src/Commands/Dir.cpp" />
@@ -105,6 +106,7 @@
 		<Unit filename="src/Commands/Unlock.cpp" />
 		<Unit filename="src/Common.cpp" />
 		<Unit filename="src/Config.cpp" />
+		<Unit filename="src/Console.cpp" />
 		<Unit filename="src/Exceptions.cpp" />
 		<Unit filename="src/Font.cpp" />
 		<Unit filename="src/Game.cpp" />

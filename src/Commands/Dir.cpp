@@ -17,6 +17,38 @@ std::map<dir_entry_type, std::string> dir_type_strings
     {DRIVER,        " SYS  "},
 };
 
+std::vector<dir_entry> Game::ListDir(const std::string &folder, size_t * max_len)
+{
+    auto entries = directories[currentDrive].find(folder);
+    if(entries == directories[currentDrive].end()) return {}; // SHOULDN'T HAPPEN
+    
+    uint8_t allowed = uint8_t(VISIBLE) | uint8_t(CORRUPTED) | uint8_t(ENCRYPTED) | uint8_t(FORBIDDEN);
+    
+    return Util::SortInplace(
+        Util::Filter(
+            Util::MapValues(
+                entries->second
+            ),
+            [allowed, max_len](dir_entry& e)
+            {
+                if(uint8_t(e.hidden) & allowed)
+                {
+                    if(max_len) *max_len = std::max(*max_len, e.name.size());
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        ),
+        [](auto &a, auto &b)
+        {
+            return (a.type == b.type) ? a.name < b.name : a.type < b.type;
+        }
+    );
+}
+
 void Command::Dir(const std::vector<std::string> &args)
 {
     std::string folder;
@@ -41,19 +73,8 @@ void Command::Dir(const std::vector<std::string> &args)
         folder = currentFolder;
     }
     
-    auto entries = directories[currentDrive].find(folder);
-    if(entries == directories[currentDrive].end()) return; // SHOULDN'T HAPPEN
-    
-    auto list = Util::MapValues(entries->second);
-    
-    std::sort(list.begin(), list.end(), [](auto &a, auto &b)
-    {
-        return (a.type == b.type) ? a.name < b.name : a.type < b.type;
-    });
-    
-    uint8_t allowed = uint8_t(VISIBLE) | uint8_t(CORRUPTED) | uint8_t(ENCRYPTED) | uint8_t(FORBIDDEN);
-    
-    size_t max = list.size() == 0 ? 0 : Util::MaxAll(Util::Map(list, [allowed](dir_entry& e){return (uint8_t(e.hidden) & allowed) ? e.name.size() : 0;}));
+    size_t max = 0;
+    auto list = ListDir(folder, &max);
     
     if(max == 0)
     {
@@ -68,11 +89,8 @@ void Command::Dir(const std::vector<std::string> &args)
         
         for(auto &e : list)
         {
-            if(uint8_t(e.hidden) & allowed)
-            {
-                auto pad = std::string(max - e.name.size(), ' ');
-                AddConsoleLine(e.name + pad + " - " + dir_type_strings[e.type]);
-            }
+            auto pad = std::string(max - e.name.size(), ' ');
+            AddConsoleLine(e.name + pad + " - " + dir_type_strings[e.type]);
         }
     }
     AddConsoleLine("");

@@ -175,6 +175,18 @@ extern std::map<std::vector<std::string>, program_help> programHelp;
 
 namespace Game
 {
+    
+    extern std::string tempCommand;
+    extern size_t tempCommandPos;
+    
+    extern std::string tempCommandPreHistory;
+    extern std::vector<std::string> commandHistory;
+    extern ssize_t historyPos;
+    
+    extern std::vector<std::pair<std::string, std::vector<uint8_t>>> GameConsoleOutput;
+    
+    const constexpr size_t MaxConsoleLines = 37;
+    
     void DoLoad();
     inline void DoSave() {} // TODO
     inline bool HasSave() {return false;} // TODO
@@ -184,7 +196,11 @@ namespace Game
     
     std::vector<std::string> ListProgramsAt(std::string drive, std::string path);
     std::vector<std::string> ListPrograms();
-    bool HasAccess(const std::string &path_str, const std::string &command_name, std::string *finalPath = nullptr, dir_entry **final_entry = nullptr, dir_entry_type last_allowed = dir_entry_type::ENTRY_ANY, hide_type last_allowed_hide = hide_type::HIDE_ANY, bool allow_last_missing = false);
+    bool HasAccess(const std::string &path_str, const std::string &command_name, std::string *finalPath = nullptr,
+                   dir_entry **final_entry = nullptr, dir_entry_type last_allowed = dir_entry_type::ENTRY_ANY, hide_type last_allowed_hide = hide_type::HIDE_ANY,
+                   bool allow_last_missing = false, bool silent = false);
+    
+    std::vector<dir_entry> ListDir(const std::string &folder, size_t * max_len = nullptr);
     
     void IntroResponder(SDL_Event *e);
     void Responder(SDL_Event *e);
@@ -192,10 +208,11 @@ namespace Game
     void TickIntro();
     void Tick();
     void TickEnd();
+    void RunCommand(const std::string &cmd);
     
     void ClearConsole();
-    void AddConsoleLine(const std::string &text);
-    void AddConsoleLine(const std::string &text, const std::vector<uint8_t> &props);
+    void AddConsoleLine(std::string_view text);
+    void AddConsoleLine(std::string_view text, const std::vector<uint8_t> &props);
     
     
     inline void AddConsoleLines(const std::vector<std::string> &text)

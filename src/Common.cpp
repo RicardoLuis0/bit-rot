@@ -188,7 +188,7 @@ namespace Util
     
     
     template<typename FnCheck, typename FnFound>
-    void SplitStringInternal(const std::string &str, bool join_empty, bool use_quotes, FnCheck &&isSpace, FnFound &&found)
+    void SplitStringInternal(std::string_view str, bool join_empty, bool use_quotes, FnCheck &&isSpace, FnFound &&found)
     {
         size_t i = 0;
         size_t lastSection = 0;
@@ -198,11 +198,13 @@ namespace Util
         std::string tmp;
         bool has_tmp = false;
         
+        if(join_empty && std::size(str) > 0 && isSpace(str[i])) for(; i < std::size(str) && isSpace(str[i]); i++, lastSection++);
+        
         for(i = 0; i < std::size(str); i++)
         {
             if(isSpace(str[i]))
             {
-                found(lastStart, i - lastStart, tmp, std::string_view(str).substr(lastSection, i - lastSection));
+                found(lastStart, i - lastStart, tmp, str.substr(lastSection, i - lastSection));
                 lastSection = i + 1;
                 tmp = "";
                 has_tmp = false;
@@ -234,7 +236,7 @@ namespace Util
         
         if(lastSection != i)
         { // ended on an unquoted section
-            found(lastStart, i - lastStart, tmp, std::string_view(str).substr(lastSection));
+            found(lastStart, i - lastStart, tmp, str.substr(lastSection));
         }
         else if(has_tmp)
         { // ended on a quote
@@ -242,7 +244,7 @@ namespace Util
         }
     }
     
-    std::vector<SplitPoint> SplitStringEx(const std::string &str, char split_on, bool join_empty, bool use_quotes)
+    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on, bool join_empty, bool use_quotes)
     {
         std::vector<SplitPoint> o;
         
@@ -268,7 +270,7 @@ namespace Util
         return o;
     }
     
-    std::vector<std::string> SplitString(const std::string &str, char split_on, bool join_empty, bool use_quotes)
+    std::vector<std::string> SplitString(std::string_view str, char split_on, bool join_empty, bool use_quotes)
     {
         std::vector<std::string> o;
         
@@ -285,7 +287,7 @@ namespace Util
         return o;
     }
     
-    std::vector<std::string> SplitString(const std::string &str, const std::string &split_on, bool join_empty, bool use_quotes)
+    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty, bool use_quotes)
     {
         std::vector<std::string> o;
         
@@ -302,27 +304,27 @@ namespace Util
         return o;
     }
     
-    char clower(char c)
+    char CharToLower(char c)
     {
         return c >= 'A' && c <= 'Z' ? c - ('A' - 'a') : c;
     }
     
-    char cupper(char c)
+    char CharToUpper(char c)
     {
         return c >= 'a' && c <= 'z' ? c + ('A' - 'a') : c;
     }
     
-    std::string StrToLower(const std::string &str)
+    std::string StrToLower(std::string_view str)
     {
-        std::string s = str;
-        MapInplace(s, clower);
+        std::string s(str);
+        MapInplace(s, CharToLower);
         return s;
     }
     
-    std::string StrToUpper(const std::string &str)
+    std::string StrToUpper(std::string_view str)
     {
-        std::string s = str;
-        MapInplace(s, cupper);
+        std::string s(str);
+        MapInplace(s, CharToUpper);
         return s;
     }
 }
