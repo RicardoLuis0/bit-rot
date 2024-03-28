@@ -1,6 +1,7 @@
 #include "Command.h"
 #include "Game.h"
 #include "Common.h"
+#include "SaveData.h"
 
 using namespace Game;
 
@@ -37,6 +38,7 @@ void Command::Unlock(const std::vector<std::string> &args)
         }
         else
         {
+            SaveData::PushAction(SaveData::UNLOCK, filepath + "\\" + entry->name, entry->password);
             AddConsoleLine(Util::QuoteString(entry->name, '\'', false) + " Unlocked Successfully");
             entry->hidden = VISIBLE;
         }

@@ -5,6 +5,7 @@
 
 namespace Command
 {
+    void Exit(const std::vector<std::string> &args);
     void Cd(const std::vector<std::string> &args);
     void Dir(const std::vector<std::string> &args);
     void Clear(const std::vector<std::string> &args);

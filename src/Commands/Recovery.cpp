@@ -1,6 +1,7 @@
 #include "Command.h"
 #include "Game.h"
 #include "Common.h"
+#include "SaveData.h"
 
 using namespace Game;
 
@@ -24,6 +25,7 @@ void Command::Recovery(const std::vector<std::string> &args)
     {
         if(entry.second.hidden == DELETED || entry.second.hidden == CORRUPTED)
         {
+            SaveData::PushAction(SaveData::RECOVERY, currentFolder + "\\" + entry.second.name);
             recovered.push_back(entry.second.name);
             entry.second.hidden = VISIBLE;
         }

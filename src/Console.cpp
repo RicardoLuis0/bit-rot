@@ -1,13 +1,11 @@
 #include "Game.h"
+#include "SaveData.h"
 
 namespace Game
 {
     static void InternalAddConsoleLine(std::string_view text, std::span<const uint8_t> props)
     {
-        if(GameConsoleOutput.size() == MaxConsoleLines)
-        {
-            GameConsoleOutput.erase(GameConsoleOutput.begin());
-        }
+        SaveData::PushBuffer(text, props);
         GameConsoleOutput.push_back({std::string(text), std::vector<uint8_t>(props.begin(), props.end())});
     }
 }

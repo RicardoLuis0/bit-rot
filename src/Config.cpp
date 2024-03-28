@@ -36,7 +36,7 @@ void Config::Quit()
 {
     if(config_ok)
     {
-        Util::WriteFile("config.json",configData.to_json());
+        Util::WriteFile(configFile, configData.to_json());
     }
 }
 

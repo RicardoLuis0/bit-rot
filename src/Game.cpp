@@ -3,7 +3,9 @@
 #include "Input.h"
 #include "Renderer.h"
 #include "Command.h"
+#include "SaveData.h"
 
+#include <stdexcept>
 
 using enum dir_entry_type;
 using enum hide_type;
@@ -11,6 +13,7 @@ using enum hide_type;
 extern int currentScreen;
 extern int introStage;
 extern uint32_t introStartMs;
+extern uint32_t nextLineMs;
 
 extern uint32_t memIncrement;
 
@@ -27,6 +30,8 @@ namespace Game
     ssize_t historyPos = -1;
     
     std::vector<std::pair<std::string, std::vector<uint8_t>>> GameConsoleOutput;
+    
+    bool GameIsSave = false;
 }
 
 std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string path)
@@ -210,10 +215,7 @@ bool Game::HasAccess(const std::string &path_str, const std::string &command_nam
 
 void Game::DoLoad()
 {
-    introStage = 1;
-    currentScreen = 3;
-    introStartMs = Util::MsTime();
-    Audio::StartFan();
+    GameIsSave = true;
 }
 
 
@@ -221,27 +223,102 @@ void Game::ToGame()
 {
     currentScreen = 4;
     GameConsoleOutput.clear();
-    GameConsoleOutput.push_back({"RD-OS v6.66 RECOVERY MODE", {0,0,0,0,0,0,0,0,0,0,0,0,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1}});
-    GameConsoleOutput.push_back({"",{}});
-    GameConsoleOutput.push_back({"  Type 'HELP' for help",{}});
-    GameConsoleOutput.push_back({"",{}});
+    if(GameIsSave)
+    {
+        std::vector<SaveData::SaveAction> actions;
+        
+        SaveData::GetSave(currentFolder, actions, commandHistory, GameConsoleOutput);
+        
+        for(auto &action : actions)
+        {
+            if(action.type == SaveData::INSTALL)
+            {
+                if(programs.find(action.info) == programs.end())
+                {
+                    continue; //throw std::runtime_error("Bad Save Data");
+                }
+                directories["C"]["\\BIN\\"].insert({action.info, {action.info, PROGRAM}});
+            }
+            else
+            {
+                std::string path;
+                std::string file;
+                size_t split = action.info.find_last_of('\\');
+                if(split == std::string::npos)
+                {
+                    path = "\\";
+                    file = action.info;
+                }
+                else
+                {
+                    path = action.info.substr(0, split + 1);
+                    file = action.info.substr(split + 1);
+                }
+                auto entries = directories[currentDrive].find(path);
+                if(entries == directories[currentDrive].end()) continue; //throw std::runtime_error("Bad Save Data");
+                
+                auto entry = directories[currentDrive][path].find(file);
+                if(entry == entries->second.end()) continue; //throw std::runtime_error("Bad Save Data");
+                
+                auto &e = directories[currentDrive][path][file];
+                
+                if(action.type == SaveData::RECOVERY)
+                {
+                    if(e.hidden == DELETED || e.hidden == CORRUPTED)
+                    {
+                        e.hidden = VISIBLE;
+                    }
+                    /*
+                    else
+                    {
+                        throw std::runtime_error("Bad Save Data");
+                    }
+                    */
+                }
+                else if(action.type == SaveData::UNLOCK)
+                {
+                    
+                    if(e.hidden == ENCRYPTED && action.extra_info == e.password)
+                    {
+                        e.hidden = VISIBLE;
+                    }
+                    /*
+                    else
+                    {
+                        throw std::runtime_error("Bad Save Data");
+                    }
+                    */
+                }
+            }
+        }
+        
+    }
+    else
+    {
+        AddConsoleLine("RD-OS v6.66 RECOVERY MODE", {0,0,0,0,0,0,0,0,0,0,0,0,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1});
+        AddConsoleLine("");
+        AddConsoleLine("  Type 'HELP' for help");
+        AddConsoleLine("");
+    }
 }
 
 void Game::Tick()
 {
     Renderer::DrawClear();
     uint32_t offsetY = 1;
+    
     size_t maxLines = std::min<size_t>(MaxConsoleLines, GameConsoleOutput.size());
+    size_t offset = GameConsoleOutput.size() - maxLines;
     
     for(size_t i = 0; i < maxLines; i++)
     {
-        if(GameConsoleOutput[i].first.size() > 0)
+        if(GameConsoleOutput[offset + i].first.size() > 0)
         {
-            Renderer::DrawLineText(1, offsetY, GameConsoleOutput[i].first);
+            Renderer::DrawLineText(1, offsetY, GameConsoleOutput[offset + i].first);
         }
-        if(GameConsoleOutput[i].second.size() > 0)
+        if(GameConsoleOutput[offset + i].second.size() > 0)
         {
-            Renderer::DrawLineProp(1, offsetY, GameConsoleOutput[i].second);
+            Renderer::DrawLineProp(1, offsetY, GameConsoleOutput[offset + i].second);
         }
         offsetY++;
     }

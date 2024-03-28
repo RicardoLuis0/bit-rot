@@ -107,6 +107,12 @@ void Game::IntroResponder(SDL_Event *e)
         Audio::StartFan();
         Audio::FadeMusic(1500);
     }
+    else if(GameIsSave && introStage > 1 && e->type == SDL_KEYDOWN && e->key == SDLK_ESCAPE)
+    {
+        Renderer::HighRes();
+        currentScreen = 4;
+        ToGame();
+    }
 }
 
 void Game::EndResponder(SDL_Event *e)
@@ -256,11 +262,24 @@ static void DoIntroShared(bool skipText)
             if(memAmount == memAmountTarget && (Util::MsTime() - lastIncrementMs) >= 3500)
             {
                 Renderer::HighRes();
+                
+                if(Game::GameIsSave)
+                {
+                    Renderer::DrawLineTextCentered(39, "Press ESCAPE to Skip");
+                    Renderer::DrawFillLineProp(0, 39, CHAR_BLINK3, 80);
+                }
             }
             else
             {
                 Renderer::LowRes();
+                
+                if(Game::GameIsSave)
+                {
+                    Renderer::DrawLineTextCentered(24, "Press ESCAPE to Skip");
+                    Renderer::DrawFillLineProp(0, 24, CHAR_BLINK3, 80);
+                }
             }
+            
             
             std::string target_msg = std::to_string(memAmountTarget) + " KB OK";
             std::string msg = std::to_string(memAmount) + " KB OK";
@@ -331,7 +350,7 @@ static void DoIntro1()
                 {
                     start = 0;
                     offset = 2;
-                    Renderer::DrawLineText(1, 1, std::to_string(memAmount) + " KB OK");
+                    Renderer::DrawLineText(1, 1, std::to_string(memAmountTarget) + " KB OK");
                 }
                 else
                 {
@@ -494,7 +513,13 @@ void DoIntro2()
         DoIntroShared(true);
         break;
     case 4:
-        Renderer::DrawLineText(1, 1, std::to_string(memAmount) + " KB OK");
+        if(Game::GameIsSave)
+        {
+            Renderer::DrawLineTextCentered(39, "Press ESCAPE to Skip");
+            Renderer::DrawFillLineProp(0, 39, CHAR_BLINK3, 80);
+        }
+        
+        Renderer::DrawLineText(1, 1, std::to_string(memAmountTarget) + " KB OK");
         Renderer::DrawLineTextCentered(3, "LAST BOOT FAILED");
         Renderer::DrawLineTextCentered(4, "ENTERING RECOVERY MODE");
         Renderer::DrawFillLineProp(0, 3, CHAR_INVERT2, 80);
@@ -513,6 +538,12 @@ void DoIntro2()
         break;
     case 5:
         {
+            if(Game::GameIsSave)
+            {
+                Renderer::DrawLineTextCentered(39, "Press ESCAPE to Skip");
+                Renderer::DrawFillLineProp(0, 39, CHAR_BLINK3, 80);
+            }
+            
             while(Util::MsTime() >= nextLineMs && nextLine < initText.size())
             {
                 if(initText[nextLine].recovery)
@@ -534,7 +565,7 @@ void DoIntro2()
             {
                 start = 0;
                 offset = 5;
-                Renderer::DrawLineText(1, 1, std::to_string(memAmount) + " KB OK");
+                Renderer::DrawLineText(1, 1, std::to_string(memAmountTarget) + " KB OK");
                 Renderer::DrawLineTextCentered(3, "LAST BOOT FAILED");
                 Renderer::DrawLineTextCentered(4, "ENTERING RECOVERY MODE");
                 Renderer::DrawFillLineProp(0, 3, CHAR_INVERT2, 80);

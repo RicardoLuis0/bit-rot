@@ -727,3 +727,10 @@ void Renderer::DrawClear(uint8_t text_char, uint8_t prop)
         textBuffer.Update(textBufferData->chars, offsetof(TextInfo, chars), bufSiz * 2);
     }
 }
+
+void Renderer::DrawLineTextCentered(uint32_t y, std::string_view newText)
+{
+    assert(std::size(newText) <= textBufferData->screen_width);
+    uint32_t x = (textBufferData->screen_width - std::size(newText)) / 2;
+    DrawLineText(x, y, newText);
+}

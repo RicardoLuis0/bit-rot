@@ -92,6 +92,9 @@ namespace JSON {
         inline uint64_t& get_uint(){ return is_int()?*reinterpret_cast<uint64_t*>(&std::get<int64_t>(data)):throw JSON_Exception("Integer",type_name()); }
         inline const uint64_t& get_uint() const { return is_int()?*reinterpret_cast<const uint64_t*>(&std::get<int64_t>(data)):throw JSON_Exception("Integer",type_name()); }
         
+        
+        inline uint8_t get_uint8() const { return is_int()?*reinterpret_cast<const uint64_t*>(&std::get<int64_t>(data)):throw JSON_Exception("Integer",type_name()); }
+        
         inline double& get_double(){ return is_double()?std::get<double>(data):throw JSON_Exception("Double",type_name()); }
         inline const double& get_double() const { return is_double()?std::get<double>(data):throw JSON_Exception("Double",type_name()); }
         

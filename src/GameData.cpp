@@ -63,6 +63,7 @@ std::map<std::string, CommandProc> programs
     {"INSTALL", &Command::Install},
     {"UNLOCK", &Command::Unlock},
     {"RECOVERY", &Command::Recovery},
+    {"EXIT", &Command::Exit},
     //{"DECRYPT", &Command::Decrypt}, // TODO
     {"666", &Command::EndJamBuild},
 };
@@ -77,6 +78,7 @@ std::map<std::vector<std::string>, program_help> programHelp
     {{"INSTALL"}, {"Install a program to your \\BIN\\ directory, allowing you to use it anywhere", "INSTALL <PATH>"}},
     {{"UNLOCK"}, {"Pass it a path and a password to unlock encrypted folders/files", "UNLOCK <PATH> <PASSWORD>"}},
     {{"RECOVERY"}, {"This can recover deleted files in the current folder", "RECOVERY"}},
+    {{"EXIT"}, {"Save and Exit", "EXIT"}},
     {{"666"}, program_help::hide({stringRand("________________________________________________________________________________________________________________________________________", '_', 819), stringRand("_________________", '_', 820)})},
 };
 
@@ -124,6 +126,7 @@ std::map<std::string, std::map<std::string, std::map<std::string, dir_entry>>> d
             {"READ", {"READ", PROGRAM_ALIAS}},
             {"CAT", {"CAT", PROGRAM}},
             {"INSTALL", {"INSTALL", PROGRAM}},
+            {"EXIT", {"EXIT", PROGRAM}},
             //{"UNLOCK", {"UNLOCK", PROGRAM}},
             //{"RECOVERY", {"RECOVERY", PROGRAM}},
             //{"DECRYPT", {"DECRYPT", PROGRAM}},

@@ -1,6 +1,7 @@
 #include "Command.h"
 #include "Game.h"
 #include "Common.h"
+#include "SaveData.h"
 
 using namespace Game;
 
@@ -15,6 +16,7 @@ void Command::Clear(const std::vector<std::string> &args)
     }
     else
     {
+        SaveData::ClearBuffer();
         ClearConsole();
     }
 }

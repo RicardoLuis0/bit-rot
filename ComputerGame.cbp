@@ -11,6 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option use_console_runner="0" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-DDEBUG_BUILD" />
@@ -90,6 +91,7 @@
 		<Unit filename="include/Renderer/GLUniformBuffer.h" />
 		<Unit filename="include/Renderer/Internal.h" />
 		<Unit filename="include/SDL2Util.h" />
+		<Unit filename="include/SaveData.h" />
 		<Unit filename="include/System.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -99,6 +101,7 @@
 		<Unit filename="src/Commands/Cd.cpp" />
 		<Unit filename="src/Commands/Clear.cpp" />
 		<Unit filename="src/Commands/Dir.cpp" />
+		<Unit filename="src/Commands/Exit.cpp" />
 		<Unit filename="src/Commands/Help.cpp" />
 		<Unit filename="src/Commands/Install.cpp" />
 		<Unit filename="src/Commands/Read.cpp" />
@@ -122,6 +125,7 @@
 		<Unit filename="src/Renderer/GLQuad.cpp" />
 		<Unit filename="src/Renderer/GLTexture.cpp" />
 		<Unit filename="src/Renderer/GLUniformBuffer.cpp" />
+		<Unit filename="src/SaveData.cpp" />
 		<Unit filename="src/System.cpp" />
 		<Unit filename="src/main.cpp" />
 		<Extensions>

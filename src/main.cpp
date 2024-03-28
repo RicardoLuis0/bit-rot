@@ -12,6 +12,7 @@
 #include "Config.h"
 #include "Menu.h"
 #include "Game.h"
+#include "SaveData.h"
 #include "SDL2Util.h"
 
 #undef main
@@ -50,6 +51,9 @@ int doGame()
                 UseSubsystem(Renderer);
                 UseSubsystem(Input);
                 UseSubsystem(Audio);
+                UseSubsystem(SaveData);
+                UseSubsystem(Menu);
+                
                 LogDebug("Starting Main Loop");
                 
                 #ifndef DEBUG_BUILD

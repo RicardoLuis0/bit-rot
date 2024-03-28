@@ -1,6 +1,7 @@
 #include "Common.h"
 #include "Game.h"
 #include "Input.h"
+#include "SaveData.h"
 #include "SDL2Util.h"
 
 extern int currentScreen;
@@ -295,10 +296,14 @@ void Game::RunCommand(const std::string &command)
     std::vector<std::string> args = Util::SplitString(command, ' ', true, true);
     if(args.size() > 0)
     {
-        Game::AddConsoleLine(">"+command);
-        commandHistory.insert(commandHistory.begin(), command);
-        
         std::string cmd = Util::StrToUpper(args[0]);
+        
+        if(args.size() > 1 || cmd != "EXIT")
+        {
+            Game::AddConsoleLine(">"+command);
+            commandHistory.insert(commandHistory.begin(), command);
+            SaveData::PushHistory(command);
+        }
         
         if(std::find(programsList.begin(), programsList.end(), cmd) != programsList.end())
         {

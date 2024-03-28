@@ -1,6 +1,7 @@
 #include "Command.h"
 #include "Game.h"
 #include "Common.h"
+#include "SaveData.h"
 
 using namespace Game;
 
@@ -23,6 +24,7 @@ void Command::Cd(const std::vector<std::string> &args)
             AddConsoleLine("");
             return;
         }
+        SaveData::SetFolder(currentFolder);
     }
     AddConsoleLine("Current Directory: " + currentDrive + ":" + currentFolder);
     AddConsoleLine("");

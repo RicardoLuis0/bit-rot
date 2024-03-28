@@ -68,12 +68,7 @@ namespace Renderer
     void DrawLineText(uint32_t x, uint32_t y, std::string_view newText, uint32_t width = 0);
     void DrawLineTextFillProp(uint32_t x, uint32_t y, std::string_view newText, uint8_t newProperty, uint32_t width = 0);
     
-    inline void DrawLineTextCentered(uint32_t y, std::string_view newText)
-    {
-        assert(std::size(newText) <= 80);
-        uint32_t x = (80 - std::size(newText)) / 2;
-        DrawLineText(x, y, newText);
-    }
+    void DrawLineTextCentered(uint32_t y, std::string_view newText);
     
     void DrawLineProp(uint32_t x, uint32_t y, std::span<const uint8_t> newProperties, uint32_t width = 0);
     

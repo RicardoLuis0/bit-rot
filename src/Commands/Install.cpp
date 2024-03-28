@@ -1,6 +1,7 @@
 #include "Command.h"
 #include "Game.h"
 #include "Common.h"
+#include "SaveData.h"
 
 using namespace Game;
 
@@ -37,6 +38,7 @@ void Command::Install(const std::vector<std::string> &args)
             }
             else
             {
+                SaveData::PushAction(SaveData::INSTALL, entry->name);
                 bin.insert({entry->name, {entry->name, PROGRAM}});
                 AddConsoleLine(Util::QuoteString(entry->name, '\'', false)+" Successfully Installed");
             }

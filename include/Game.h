@@ -185,11 +185,11 @@ namespace Game
     
     extern std::vector<std::pair<std::string, std::vector<uint8_t>>> GameConsoleOutput;
     
+    extern bool GameIsSave;
+    
     const constexpr size_t MaxConsoleLines = 37;
     
     void DoLoad();
-    inline void DoSave() {} // TODO
-    inline bool HasSave() {return false;} // TODO
     
     void ToIntro();
     void ToGame();

@@ -4,6 +4,7 @@
 #include "Font.h"
 #include "Config.h"
 #include "Game.h"
+#include "SaveData.h"
 #include <string>
 
 #include "SDL2Util.h"
@@ -84,6 +85,12 @@ extern bool RunGame;
 
 extern bool InGame;
 
+
+void Menu::Init()
+{
+    currentMainMenuItem = SaveData::HasSave() ? -1 : 0;
+}
+
 static void DrawBorder()
 {
     Renderer::DrawLineText(0, 0, BorderTop);
@@ -102,20 +109,24 @@ void Menu::MainMenuResponder(SDL_Event *e)
         if(e->key == SDLK_UP)
         {
             currentMainMenuItem--;
-            if(currentMainMenuItem < 0) currentMainMenuItem = (numMainMenuItems - 1);
+            if(currentMainMenuItem < (SaveData::HasSave() ? -1 : 0)) currentMainMenuItem = (numMainMenuItems - 1);
         }
         else if(e->key == SDLK_DOWN)
         {
-            currentMainMenuItem = (currentMainMenuItem + 1) % numMainMenuItems;
+            currentMainMenuItem++;
+            
+            if(currentMainMenuItem >= numMainMenuItems) currentMainMenuItem = SaveData::HasSave() ? -1 : 0;
         }
         else if(e->key == SDLK_RETURN)
         {
-            switch(currentMainMenuItem - Game::HasSave())
+            switch(currentMainMenuItem)
             {
             case -1: // continue
                 Game::DoLoad();
+                Game::ToIntro();
                 break;
             case 0: // new game
+                SaveData::Reset();
                 Game::ToIntro();
                 break;
             case 1: // settings
@@ -162,7 +173,7 @@ void Menu::PauseMenuResponder(SDL_Event *e)
                 currentScreen = 1;
                 break;
             case 2: // save and quit
-                Game::DoSave();
+                //Game::DoSave();
                 RunGame = false;
                 break;
             }
@@ -307,23 +318,7 @@ void Menu::DrawSettingsMenu()
 
 void Menu::DrawMainMenu()
 {
-    /*
-    static bool lastHasSave = Game::HasSave();
-    bool hasSave = Game::HasSave();
-    
-    if(hasSave)
-    {
-        numMainMenuItems = 4;
-        if(hasSave != lastHasSave) currentMainMenuItem++;
-    }
-    else
-    {
-        numMainMenuItems = 3;
-        
-        if(hasSave != lastHasSave && currentMainMenuItem > 0) currentMainMenuItem--;
-    }
-    lastHasSave = hasSave;
-    */
+    bool hasSave = SaveData::HasSave();
     
     Renderer::DrawClear();
     
@@ -334,13 +329,10 @@ void Menu::DrawMainMenu()
     
     int offsetX = 34;
     int offsetY = 8;
-    /*
-    if(hasSave) DRAW_BUTTON(currentMainMenuItem, 0, ButtonContinue);
-    DRAW_BUTTON(currentMainMenuItem, 0 + hasSave, ButtonNew);
-    DRAW_BUTTON(currentMainMenuItem, 1 + hasSave, ButtonSettings);
-    DRAW_BUTTON(currentMainMenuItem, 2 + hasSave, ButtonQuit);
-    */
-    if(Config::getStringOr("SawIntro1", "no") == "yes")
+    
+    if(hasSave) DRAW_BUTTON(currentMainMenuItem, -1, ButtonContinue);
+    
+    if(!hasSave && Config::getStringOr("SawIntro1", "no") == "yes")
     {
         offsetX = 32;
         DRAW_BUTTON(currentMainMenuItem, 0, ButtonContinueMaybe);
@@ -368,15 +360,8 @@ void Menu::DrawPauseMenu()
     
     DRAW_BUTTON(currentPauseMenuItem, 0, ButtonContinue);
     DRAW_BUTTON(currentPauseMenuItem, 1, ButtonSettings);
-    /*
-    if(canSave)
-    {
-        offsetX = 32;
-        
-        DRAW_BUTTON(currentPauseMenuItem, 2, ButtonSaveAndQuit);
-    }
-    else
-    {*/
-        DRAW_BUTTON(currentPauseMenuItem, 2, ButtonQuit);
-    //}
+    
+    offsetX = 32;
+    
+    DRAW_BUTTON(currentPauseMenuItem, 2, ButtonSaveAndQuit);
 }
