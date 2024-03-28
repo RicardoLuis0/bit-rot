@@ -24,6 +24,7 @@ namespace Game
 {
     std::string tempCommand;
     size_t tempCommandPos = 0;
+    size_t tempCommandViewOffset = 0;
     
     std::string tempCommandPreHistory;
     std::vector<std::string> commandHistory;
@@ -322,7 +323,38 @@ void Game::Tick()
         }
         offsetY++;
     }
+    
+    int diff = (ssize_t(tempCommandPos) - ssize_t(tempCommandViewOffset));
+    
+    if(diff > 74 && tempCommand.size() > 77)
+    {
+        tempCommandViewOffset = tempCommandPos - 74;
+    }
+    
+    if(diff < 0)
+    {
+        tempCommandViewOffset = tempCommandPos;
+    }
+    
     Renderer::DrawLineTextFillProp(1, offsetY, ">", 0);
-    Renderer::DrawLineTextFillProp(2, offsetY, tempCommand, 0);
-    Renderer::DrawFillLineProp(2 + tempCommandPos, offsetY, CHAR_UNDERSCORE, 1);
+    
+    if(tempCommandViewOffset > 1)
+    {
+        Renderer::DrawLineTextFillProp(2, offsetY, "<", CHAR_INVERT1);
+        Renderer::DrawLineTextFillProp(3, offsetY, std::string_view(tempCommand.data() + tempCommandViewOffset, 75), 0);
+        if(tempCommandViewOffset != tempCommand.size() - 74)
+        {
+            Renderer::DrawLineTextFillProp(78, offsetY, ">", CHAR_INVERT1);
+        }
+    }
+    else if(tempCommand.size() > 77)
+    {
+        Renderer::DrawLineTextFillProp(2, offsetY, std::string_view(tempCommand.data(), 76), 0);
+        Renderer::DrawLineTextFillProp(78, offsetY, ">", CHAR_INVERT1);
+    }
+    else
+    {
+        Renderer::DrawLineTextFillProp(2, offsetY, tempCommand.data(), 0);
+    }
+    Renderer::DrawFillLineProp((tempCommandViewOffset > 0 ? 3 : 2) + (tempCommandPos - tempCommandViewOffset), offsetY, CHAR_UNDERSCORE, 1);
 }

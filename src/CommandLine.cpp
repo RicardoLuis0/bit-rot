@@ -122,6 +122,7 @@ void Game::Responder(SDL_Event *e)
         else if(e->key == SDLK_BACKSPACE && tempCommandPos > 0 && tempCommand.size() > 0)
         {
             tempCommandPos--;
+            if(tempCommandViewOffset > 0) tempCommandViewOffset--;
             tempCommand.erase(tempCommandPos, 1);
             historyPos = -1;
             tempCommandPreHistory = "";
@@ -272,18 +273,15 @@ void Game::Responder(SDL_Event *e)
         }
         else if(e->key.keysym.sym >= ' ' && e->key.keysym.sym <= '~')
         {
-            if(tempCommand.size() < 77)
+            char c = e->key.keysym.sym;
+            if(Input::ShiftPressed() || (e->key.keysym.mod & KMOD_CAPS))
             {
-                char c = e->key.keysym.sym;
-                if(Input::ShiftPressed() || (e->key.keysym.mod & KMOD_CAPS))
-                {
-                    c = Util::CharToUpper(c);
-                }
-                tempCommand.insert(tempCommandPos, std::string(1, c));
-                tempCommandPos++;
-                historyPos = -1;
-                tempCommandPreHistory = "";
+                c = Util::CharToUpper(c);
             }
+            tempCommand.insert(tempCommandPos, std::string(1, c));
+            tempCommandPos++;
+            historyPos = -1;
+            tempCommandPreHistory = "";
         }
         break;
     }
@@ -298,7 +296,7 @@ void Game::RunCommand(const std::string &command)
     {
         std::string cmd = Util::StrToUpper(args[0]);
         
-        if(args.size() > 1 || cmd != "EXIT")
+        if(args.size() > 1 || (cmd != "EXIT" && cmd != "666")) // TODO: stop muting 666 after expanding the story
         {
             Game::AddConsoleLine(">"+command);
             commandHistory.insert(commandHistory.begin(), command);

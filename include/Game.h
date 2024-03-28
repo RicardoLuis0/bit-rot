@@ -178,6 +178,7 @@ namespace Game
     
     extern std::string tempCommand;
     extern size_t tempCommandPos;
+    extern size_t tempCommandViewOffset;
     
     extern std::string tempCommandPreHistory;
     extern std::vector<std::string> commandHistory;

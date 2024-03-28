@@ -6,6 +6,8 @@
 #include <cstring>
 #include <iterator>
 
+#include <zlib.h>
+
 namespace Util
 {
     
@@ -113,7 +115,7 @@ namespace Util
         throw std::runtime_error("Failed to open/write file "+Util::QuoteString(filename)+" : "+e.what());
     }
     
-    void WriteFileBinary(const std::string & filename, std::span<std::byte> data) try
+    void WriteFileBinary(const std::string & filename, std::span<const std::byte> data) try
     {
         std::ofstream f(filename, std::ios::binary);
         f.write(reinterpret_cast<const char*>(data.data()), data.size());
@@ -326,5 +328,57 @@ namespace Util
         std::string s(str);
         MapInplace(s, CharToUpper);
         return s;
+    }
+    std::string Decompress(std::span<const std::byte> data)
+    {
+        std::string out;
+        
+        constexpr const int bufSiz = 256;
+        char buf[bufSiz];
+        
+        z_stream z;
+        z.zalloc = nullptr;
+        z.zfree = nullptr;
+        z.opaque = nullptr;
+        z.avail_in = 0;
+        z.next_in = nullptr;
+        if(int err = inflateInit(&z); err != Z_OK)
+        {
+            throw std::runtime_error("ZLib Decompress Failed: "+std::to_string(err));
+        }
+        
+        z.avail_in = data.size();
+        z.next_in = (unsigned char *)(data.data());
+        
+        do
+        {
+            z.avail_out = bufSiz;
+            z.next_out = reinterpret_cast<unsigned char *>(buf);
+            int err = inflate(&z, Z_NO_FLUSH);
+            if(err != Z_OK && err != Z_STREAM_END)
+            {
+                throw std::runtime_error("ZLib Decompress Failed: "+std::to_string(err));
+            }
+            int bufFill = bufSiz - z.avail_out;
+            out += std::string_view(buf, bufFill);
+            if(err == Z_STREAM_END) break;
+        }
+        while(z.avail_out == 0);
+        
+        return out;
+    }
+    
+    std::vector<std::byte> Compress(std::string_view str)
+    {
+        auto maxLen = compressBound(str.length());
+        std::vector<std::byte> buf;
+        buf.resize(maxLen);
+        unsigned long realLen = maxLen;
+        if(int err = compress2(reinterpret_cast<unsigned char *>(buf.data()), &realLen, (unsigned char *)(str.data()), str.length(), Z_BEST_COMPRESSION); err != Z_OK)
+        {
+            throw std::runtime_error("ZLib Compress Failed: "+std::to_string(err));
+        }
+        buf.resize(realLen);
+        return buf;
     }
 }

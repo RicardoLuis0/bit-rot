@@ -9,11 +9,8 @@ JSON::Element saveData;
 
 bool save_ok = false;
 
-#ifdef DEBUG_BUILD
-    constexpr const char * saveFile = "saveData.json";
-#else
-    constexpr const char * saveFile = "saveData.json";
-#endif
+constexpr const char * saveFilePlain = "saveData.json";
+constexpr const char * saveFileCompressed = "saveData.bin";
 
 void SaveData::Reset()
 {
@@ -28,11 +25,20 @@ void SaveData::Reset()
 //TODO: gzip save data to reduce file size
 void SaveData::Init()
 {
-    if(std::filesystem::exists(saveFile))
+    if(std::filesystem::exists(saveFilePlain) || std::filesystem::exists(saveFileCompressed))
     {
         try
         {
-            saveData = JSON::Parse(Util::ReadFile(saveFile));
+            if(!std::filesystem::exists(saveFilePlain) || std::filesystem::last_write_time(saveFileCompressed) > std::filesystem::last_write_time(saveFilePlain))
+            {
+                
+                saveData = JSON::Parse(Util::Decompress(Util::ReadFileBinary(saveFileCompressed)));
+            }
+            else
+            {
+                saveData = JSON::Parse(Util::ReadFile(saveFilePlain));
+            }
+            
             saveData.get_obj();
         }
         catch(JSON::JSON_Exception &e)
@@ -58,9 +64,9 @@ void SaveData::Quit()
     if(save_ok)
     {
         #ifdef DEBUG_BUILD
-            Util::WriteFile(saveFile, saveData.to_json()); // don't save mininified in debug builds
+            Util::WriteFile(saveFilePlain, saveData.to_json()); // don't save mininified in debug builds
         #else
-            Util::WriteFile(saveFile, saveData.to_json_min());
+            Util::WriteFileBinary(saveFileCompressed, Util::Compress(saveData.to_json_min()));
         #endif
     }
 }

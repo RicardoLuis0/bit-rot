@@ -56,6 +56,7 @@
 			<Add option="-lopengl32" />
 			<Add option="-lglu32" />
 			<Add option="-lSDL2_mixer" />
+			<Add option="-lz" />
 		</Linker>
 		<Unit filename="ComputerGame.rc">
 			<Option compilerVar="WINDRES" />

@@ -457,7 +457,7 @@ namespace Util
     std::string ReadFile(const std::string &filename);
     std::vector<std::byte> ReadFileBinary(const std::string &filename);
     void WriteFile(const std::string &filename, std::string_view data);
-    void WriteFileBinary(const std::string &filename, std::span<std::byte> data);
+    void WriteFileBinary(const std::string &filename, std::span<const std::byte> data);
     
     void ShowFatalError(const std::string &title,const std::string &msg);
     
@@ -509,6 +509,10 @@ namespace Util
         std::replace(s.begin(), s.end(), from, to);
         return s;
     }
+    
+    
+    std::string Decompress(std::span<const std::byte> data);
+    std::vector<std::byte> Compress(std::string_view str);
 }
 
 #define UseSubsystem(x) Util::Guard<x::Init, x::Quit> PP_JOIN(manager_,__LINE__) {#x}
