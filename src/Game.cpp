@@ -296,6 +296,7 @@ void Game::ToGame()
     }
     else
     {
+        SaveData::Reset();
         AddConsoleLine("RD-OS v6.66 RECOVERY MODE", {0,0,0,0,0,0,0,0,0,0,0,0,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1,CHAR_INVERT1});
         AddConsoleLine("");
         AddConsoleLine("  Type 'HELP' for help");

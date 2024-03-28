@@ -25,7 +25,7 @@ void Command::Recovery(const std::vector<std::string> &args)
     {
         if(entry.second.hidden == DELETED || entry.second.hidden == CORRUPTED)
         {
-            SaveData::PushAction(SaveData::RECOVERY, currentFolder + "\\" + entry.second.name);
+            SaveData::PushAction(SaveData::RECOVERY, currentFolder + entry.second.name);
             recovered.push_back(entry.second.name);
             entry.second.hidden = VISIBLE;
         }

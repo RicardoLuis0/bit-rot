@@ -126,7 +126,6 @@ void Menu::MainMenuResponder(SDL_Event *e)
                 Game::ToIntro();
                 break;
             case 0: // new game
-                SaveData::Reset();
                 Game::ToIntro();
                 break;
             case 1: // settings

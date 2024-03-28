@@ -38,7 +38,7 @@ void Command::Unlock(const std::vector<std::string> &args)
         }
         else
         {
-            SaveData::PushAction(SaveData::UNLOCK, filepath + "\\" + entry->name, entry->password);
+            SaveData::PushAction(SaveData::UNLOCK, filepath.substr(0, filepath.find_last_of('\\')), entry->password);
             AddConsoleLine(Util::QuoteString(entry->name, '\'', false) + " Unlocked Successfully");
             entry->hidden = VISIBLE;
         }
