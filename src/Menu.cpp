@@ -59,7 +59,7 @@ void Menu::DrawBorderDouble(char prop, int x, int y, int width, int height)
     DrawBorder((std::array<const char*, 3> {DoubleBorderTop.data(), DoubleBorderMid.data(), DoubleBorderBottom.data()}).data(), prop, x, y, width, height);
 }
 
-int DrawButton(int x_center, int y_center, int min_width, std::string_view text, bool highlight)
+int Menu::DrawButton(int x_center, int y_center, int min_width, std::string_view text, bool highlight)
 {
     int width = std::max<int>(min_width, text.size() + 4);
     int x = x_center - (width / 2);
@@ -271,16 +271,18 @@ void Menu::DrawSettingsMenu()
     
 }
 
-#define DRAW_BUTTON(var, i, text){\
-    if(var == (i))\
-    {\
-        Renderer::DrawLineText(DrawButton(40, offsetY + 1, 12, text, true) - 2, offsetY + 1, ">");\
-    }\
-    else\
-    {\
-        DrawButton(40, offsetY + 1, 12, text, false);\
-    }\
-    offsetY += 4;}
+void Menu::DrawMenuItemButton(bool selected, int &y, std::string_view text)
+{
+    if(selected)
+    {
+        Renderer::DrawLineText(DrawButton(40, y, 12, text, true) - 2, y, ">");
+    }
+    else
+    {
+        DrawButton(40, y, 12, text, false);
+    }
+    y += 4;
+}
 
 void Menu::DrawMainMenu()
 {
@@ -293,23 +295,14 @@ void Menu::DrawMainMenu()
     //Renderer::DrawText(1, 1, Title);
     Renderer::DrawText(19, 1, Title);
     
-    int offsetX = 34;
-    int offsetY = 8;
+    int y = 9;
     
-    if(hasSave) DRAW_BUTTON(currentMainMenuItem, -1, "Continue");
+    if(hasSave) DrawMenuItemButton(currentMainMenuItem == -1, y, "Continue");
     
-    if(!hasSave && Config::getStringOr("SawIntro1", "no") == "yes")
-    {
-        offsetX = 32;
-        DRAW_BUTTON(currentMainMenuItem, 0, "Continue...?");
-        offsetX = 34;
-    }
-    else
-    {
-        DRAW_BUTTON(currentMainMenuItem, 0, "New Game");
-    }
-    DRAW_BUTTON(currentMainMenuItem, 1, "Settings");
-    DRAW_BUTTON(currentMainMenuItem, 2, "Quit");
+    DrawMenuItemButton(currentMainMenuItem == 0, y, (!hasSave && Config::getStringOr("SawIntro1", "no") == "yes") ? "Continue...?" : "New Game");
+    
+    DrawMenuItemButton(currentMainMenuItem == 1, y, "Settings");
+    DrawMenuItemButton(currentMainMenuItem == 2, y, "Quit");
 }
 
 void Menu::DrawPauseMenu()
@@ -318,16 +311,12 @@ void Menu::DrawPauseMenu()
     
     DrawBorderSingle();
     
-    //Renderer::DrawText(1, 1, Title);
     Renderer::DrawText(19, 1, Title);
     
-    int offsetX = 34;
-    int offsetY = 8;
+    int y = 9;
     
-    DRAW_BUTTON(currentPauseMenuItem, 0, "Continue");
-    DRAW_BUTTON(currentPauseMenuItem, 1, "Settings");
+    DrawMenuItemButton(currentPauseMenuItem == 0, y, "Continue");
+    DrawMenuItemButton(currentPauseMenuItem == 1, y, "Settings");
     
-    offsetX = 32;
-    
-    DRAW_BUTTON(currentPauseMenuItem, 2, "Save And Quit");
+    DrawMenuItemButton(currentPauseMenuItem == 2, y, "Save And Quit");
 }

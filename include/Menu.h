@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 union SDL_Event;
 
 namespace Menu
@@ -20,4 +22,8 @@ namespace Menu
     void DrawBorderDouble(char prop = 0, int x = 0, int y = 0, int width = 80, int height = 40);
     
     void DrawLine(int x, int y, int width, char start, char mid, char end, char prop = 0);
+    
+    int DrawButton(int x_center, int y_center, int min_width, std::string_view text, bool highlight);
+    
+    void DrawMenuItemButton(bool selected, int &y, std::string_view text);
 }
