@@ -67,7 +67,7 @@ int doGame()
                     }
                 #endif
                 
-                int vol = std::clamp<int>(Config::getIntOr("Volume", 100), 0, 100);
+                int vol = std::clamp<int>(Config::getIntOr("Volume", 50), 0, 100);
                 Mix_MasterVolume(vol);
                 Mix_VolumeMusic(vol);
                 
