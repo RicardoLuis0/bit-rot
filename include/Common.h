@@ -56,14 +56,12 @@ inline constexpr char fixChar(char32_t c)
     constexpr char32_t double_corner2   = U'╚';
     constexpr char32_t double_corner3   = U'╝';
     constexpr char32_t double_corner4   = U'╔';
-    //TODO
-    /*
-    constexpr char32_t double_inter1    = U'┤';
-    constexpr char32_t double_inter2    = U'┴';
-    constexpr char32_t double_inter3    = U'┬';
-    constexpr char32_t double_inter4    = U'├';
-    constexpr char32_t double_inter5    = U'┼';
-    */
+    
+    constexpr char32_t double_inter1    = U'╣';
+    constexpr char32_t double_inter2    = U'╩';
+    constexpr char32_t double_inter3    = U'╦';
+    constexpr char32_t double_inter4    = U'╠';
+    constexpr char32_t double_inter5    = U'╬';
     
     constexpr char32_t block1 = U'░';
     constexpr char32_t block2 = U'▒';
@@ -112,6 +110,16 @@ inline constexpr char fixChar(char32_t c)
         return 188;
     case double_corner4:
         return 201;
+    case double_inter1:
+        return 185;
+    case double_inter2:
+        return 202;
+    case double_inter3:
+        return 203;
+    case double_inter4:
+        return 204;
+    case double_inter5:
+        return 206;
     case block1:
         return 176;
     case block2:

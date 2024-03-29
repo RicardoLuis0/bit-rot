@@ -615,6 +615,50 @@ void Renderer::DrawFillLineProp(uint32_t x, uint32_t y, uint8_t newProperty, uin
     memset(textBufferData->char_properties + offset, newProperty, n);
 }
 
+void Renderer::DrawFillLineText(uint32_t x, uint32_t y, char newText, uint32_t width)
+{
+    if(x >= textBufferData->screen_width || y >= textBufferData->screen_height)
+    {
+        return;
+    }
+    size_t m = size_t(textBufferData->screen_width - x);
+    
+    size_t n = std::min<size_t>(width, m);
+    
+    size_t offset = x + (y * textBufferData->screen_width);
+    
+    memset(textBufferData->chars + offset, newText, n);
+}
+
+void Renderer::DrawFillLineTextProp(uint32_t x, uint32_t y, char newText, uint8_t newProperty, uint32_t width)
+{
+    if(x >= textBufferData->screen_width || y >= textBufferData->screen_height)
+    {
+        return;
+    }
+    size_t m = size_t(textBufferData->screen_width - x);
+    
+    size_t n = std::min<size_t>(width, m);
+    
+    size_t offset = x + (y * textBufferData->screen_width);
+    
+    memset(textBufferData->chars + offset, newText, n);
+    memset(textBufferData->char_properties + offset, newProperty, n);
+}
+
+void Renderer::DrawChar(uint32_t x, uint32_t y, char newChar, uint8_t newProperty)
+{
+    if(x >= textBufferData->screen_width || y >= textBufferData->screen_height)
+    {
+        return;
+    }
+    
+    size_t offset = x + (y * textBufferData->screen_width);
+    
+    textBufferData->chars[offset] = newChar;
+    textBufferData->char_properties[offset] = newProperty;
+}
+
 template<bool text = true, bool props = true>
 static void DrawClear(uint32_t x, uint32_t y, uint32_t width)
 {

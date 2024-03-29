@@ -73,6 +73,12 @@ namespace Renderer
     void DrawLineProp(uint32_t x, uint32_t y, std::span<const uint8_t> newProperties, uint32_t width = 0);
     
     void DrawFillLineProp(uint32_t x, uint32_t y, uint8_t newProperty, uint32_t width);
+    void DrawFillLineText(uint32_t x, uint32_t y, char newText, uint32_t width);
+    
+    void DrawFillLineTextProp(uint32_t x, uint32_t y, char newText, uint8_t newProperty, uint32_t width);
+    
+    
+    void DrawChar(uint32_t x, uint32_t y, char newChar, uint8_t newProperty = 0);
     
     template<Util::ContainerConvertibleTo<std::string_view> L>
     void DrawText(uint32_t x, uint32_t y, L &&lines, uint32_t width)

@@ -79,6 +79,7 @@
 		<Unit filename="include/Json.h" />
 		<Unit filename="include/Log.h" />
 		<Unit filename="include/Menu.h" />
+		<Unit filename="include/MenuStrings.h" />
 		<Unit filename="include/Preprocessor.h" />
 		<Unit filename="include/Preprocessor/Bool.h" />
 		<Unit filename="include/Preprocessor/ForEach.h" />

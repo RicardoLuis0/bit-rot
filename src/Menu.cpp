@@ -5,77 +5,12 @@
 #include "Config.h"
 #include "Game.h"
 #include "SaveData.h"
+#include "MenuStrings.h"
 #include <string>
 
 #include "SDL2Util.h"
 
 constexpr bool canSave = false;
-
-constexpr FakeString<80> BorderTop =    fixString(U"┌──────────────────────────────────────────────────────────────────────────────┐");
-constexpr FakeString<80> BorderMid =    fixString(U"│                                                                              │");
-constexpr FakeString<80> BorderBottom = fixString(U"└──────────────────────────────────────────────────────────────────────────────┘");
-
-constexpr FakeString<42> Title[] {
-    fixString(U"┌─────┐               ┌─────┐             "),
-    fixString(U"│ ┌─┐ │  ┌─┐┌─────┐   │ ┌─┐ │┌─────┬─────┐"),
-    fixString(U"│ └─┘ └┐ │ │└─┐ ┌─┘   │ └─┘ └┤ ┌─┐ ├─┐ ┌─┘"),
-    fixString(U"│ ┌──┐ │ │ │  │ │     │ ┌──┐ │ │ │ │ │ │  "),
-    fixString(U"│ └──┘ │ │ │  │ │     │ │  │ │ └─┘ │ │ │  "),
-    fixString(U"└──────┘ └─┘  └─┘     └─┘  └─┴─────┘ └─┘  "),
-};
-
-constexpr FakeString<47> TitleSettings[] {
-    fixString(U"┌──────┐                                       "),
-    fixString(U"│ ┌────┼────┬─────┬─────┐┌─┐┌─────┬─────┬─────┐"),
-    fixString(U"│ └────┤  ─┬┴─┐ ┌─┴─┐ ┌─┘│ ││ ┌─┐ │ ┌───┤ ┌───┘"),
-    fixString(U"└────┐ │ ┌─┘  │ │   │ │  │ ││ │ │ │ │┌──┤ └───┐"),
-    fixString(U"┌────┘ │ └──┐ │ │   │ │  │ ││ │ │ │ └┴─ ├───  │"),
-    fixString(U"└──────┴────┘ └─┘   └─┘  └─┘└─┘ └─┴─────┴─────┘"),
-};
-
-constexpr FakeString SettingsTop =      fixString(U"┌──────────────┬───────────────────────────────────────────────────────────┐");
-constexpr FakeString SettingsMid =      fixString(U"│              │                                                           │");
-constexpr FakeString SettingsSep =      fixString(U"├──────────────┼───────────────────────────────────────────────────────────┤");
-constexpr FakeString SettingsBottom =   fixString(U"└──────────────┴───────────────────────────────────────────────────────────┘");
-
-
-constexpr FakeString<12> ButtonContinue[] {
-    fixString(U"╔══════════╗"),
-    fixString(U"║ Continue ║"),
-    fixString(U"╚══════════╝"),
-};
-
-constexpr FakeString<16> ButtonContinueMaybe[] {
-    fixString(U"╔══════════════╗"),
-    fixString(U"║ Continue...? ║"),
-    fixString(U"╚══════════════╝"),
-};
-
-
-constexpr FakeString<12> ButtonNew[] {
-    fixString(U"╔══════════╗"),
-    fixString(U"║ New Game ║"),
-    fixString(U"╚══════════╝"),
-};
-
-
-constexpr FakeString<12> ButtonSettings[] {
-    fixString(U"╔══════════╗"),
-    fixString(U"║ Settings ║"),
-    fixString(U"╚══════════╝"),
-};
-
-constexpr FakeString<12> ButtonQuit[] {
-    fixString(U"╔══════════╗"),
-    fixString(U"║   Quit   ║"),
-    fixString(U"╚══════════╝"),
-};
-
-constexpr FakeString<17> ButtonSaveAndQuit[] {
-    fixString(U"╔═══════════════╗"),
-    fixString(U"║ Save And Quit ║"),
-    fixString(U"╚═══════════════╝"),
-};
 
 int numMainMenuItems = 3;
 int currentMainMenuItem = 0;
@@ -91,14 +26,47 @@ void Menu::Init()
     currentMainMenuItem = SaveData::HasSave() ? -1 : 0;
 }
 
-static void DrawBorder()
+void Menu::DrawLine(int x, int y, int width, char start, char mid, char end, char prop)
 {
-    Renderer::DrawLineText(0, 0, BorderTop);
-    for(int i = 1; i < 39; i++)
+    if(width > 2)
     {
-        Renderer::DrawLineText(0, i, BorderMid);
+        Renderer::DrawChar(x, y, start, prop);
+        Renderer::DrawFillLineTextProp(x + 1, y, mid, prop, width - 2);
+        Renderer::DrawChar(x + (width - 1), y, end, prop);
     }
-    Renderer::DrawLineText(0, 39, BorderBottom);
+}
+
+void Menu::DrawBorder(const char **border, char prop, int x, int y, int width, int height)
+{
+    if(width > 2 && height > 2)
+    {
+        DrawLine(x, y, width, border[0][0], border[0][1], border[0][2], prop);
+        for(int i = 1; i < (height - 1); i++)
+        {
+            DrawLine(x, y + i, width, border[1][0], border[1][1], border[1][2], prop);
+        }
+        DrawLine(x, y + (height - 1), width, border[2][0], border[2][1], border[2][2], prop);
+    }
+}
+
+void Menu::DrawBorderSingle(char prop, int x, int y, int width, int height)
+{
+    DrawBorder((std::array<const char*, 3> {BorderTop.data(), BorderMid.data(), BorderBottom.data()}).data(), prop, x, y, width, height);
+}
+
+void Menu::DrawBorderDouble(char prop, int x, int y, int width, int height)
+{
+    DrawBorder((std::array<const char*, 3> {DoubleBorderTop.data(), DoubleBorderMid.data(), DoubleBorderBottom.data()}).data(), prop, x, y, width, height);
+}
+
+int DrawButton(int x_center, int y_center, int min_width, std::string_view text, bool highlight)
+{
+    int width = std::max<int>(min_width, text.size() + 4);
+    int x = x_center - (width / 2);
+    Menu::DrawBorderDouble(highlight ? CHAR_INVERT2 | CHAR_BLINK_INVERT | CHAR_BLINK3 : 0, x, y_center - 1, width, 3);
+    int text_x = x_center - (text.size() / 2);
+    Renderer::DrawLineText(text_x, y_center, text, text.size());
+    return x;
 }
 
 void Menu::MainMenuResponder(SDL_Event *e)
@@ -268,7 +236,7 @@ void Menu::DrawSettingsMenu()
 {
     Renderer::DrawClear();
     
-    DrawBorder();
+    DrawBorderSingle();
     
     Renderer::DrawText(16, 1, TitleSettings);
     
@@ -303,15 +271,14 @@ void Menu::DrawSettingsMenu()
     
 }
 
-#define DRAW_BUTTON(var, i, name){\
+#define DRAW_BUTTON(var, i, text){\
     if(var == (i))\
     {\
-        Renderer::DrawLineText(offsetX - 2, offsetY + 1, ">");\
-        Renderer::DrawTextFillProp(offsetX, offsetY, name, CHAR_INVERT1 | CHAR_BLINK_INVERT | CHAR_BLINK3);\
+        Renderer::DrawLineText(DrawButton(40, offsetY + 1, 12, text, true) - 2, offsetY + 1, ">");\
     }\
     else\
     {\
-        Renderer::DrawText(offsetX, offsetY, name);\
+        DrawButton(40, offsetY + 1, 12, text, false);\
     }\
     offsetY += 4;}
 
@@ -321,7 +288,7 @@ void Menu::DrawMainMenu()
     
     Renderer::DrawClear();
     
-    DrawBorder();
+    DrawBorderSingle();
     
     //Renderer::DrawText(1, 1, Title);
     Renderer::DrawText(19, 1, Title);
@@ -329,27 +296,27 @@ void Menu::DrawMainMenu()
     int offsetX = 34;
     int offsetY = 8;
     
-    if(hasSave) DRAW_BUTTON(currentMainMenuItem, -1, ButtonContinue);
+    if(hasSave) DRAW_BUTTON(currentMainMenuItem, -1, "Continue");
     
     if(!hasSave && Config::getStringOr("SawIntro1", "no") == "yes")
     {
         offsetX = 32;
-        DRAW_BUTTON(currentMainMenuItem, 0, ButtonContinueMaybe);
+        DRAW_BUTTON(currentMainMenuItem, 0, "Continue...?");
         offsetX = 34;
     }
     else
     {
-        DRAW_BUTTON(currentMainMenuItem, 0, ButtonNew);
+        DRAW_BUTTON(currentMainMenuItem, 0, "New Game");
     }
-    DRAW_BUTTON(currentMainMenuItem, 1, ButtonSettings);
-    DRAW_BUTTON(currentMainMenuItem, 2, ButtonQuit);
+    DRAW_BUTTON(currentMainMenuItem, 1, "Settings");
+    DRAW_BUTTON(currentMainMenuItem, 2, "Quit");
 }
 
 void Menu::DrawPauseMenu()
 {
     Renderer::DrawClear();
     
-    DrawBorder();
+    DrawBorderSingle();
     
     //Renderer::DrawText(1, 1, Title);
     Renderer::DrawText(19, 1, Title);
@@ -357,10 +324,10 @@ void Menu::DrawPauseMenu()
     int offsetX = 34;
     int offsetY = 8;
     
-    DRAW_BUTTON(currentPauseMenuItem, 0, ButtonContinue);
-    DRAW_BUTTON(currentPauseMenuItem, 1, ButtonSettings);
+    DRAW_BUTTON(currentPauseMenuItem, 0, "Continue");
+    DRAW_BUTTON(currentPauseMenuItem, 1, "Settings");
     
     offsetX = 32;
     
-    DRAW_BUTTON(currentPauseMenuItem, 2, ButtonSaveAndQuit);
+    DRAW_BUTTON(currentPauseMenuItem, 2, "Save And Quit");
 }
