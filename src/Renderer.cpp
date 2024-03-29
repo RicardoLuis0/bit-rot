@@ -16,8 +16,6 @@
 using namespace Renderer;
 using namespace Renderer::Internal;
 
-constexpr bool useGlMapBuffer = true;
-
 
 constexpr uint32_t max_screen_width = 80;
 constexpr uint32_t max_screen_height = 40;
@@ -227,15 +225,7 @@ void Renderer::Init()
         
         textBuffer.Init(&tmp2);
         
-        if constexpr(useGlMapBuffer)
-        {
-            textBufferData = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBuffer.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
-        }
-        else
-        {
-            textBufferData = new TextInfo;
-            *textBufferData = tmp2;
-        }
+        textBufferData = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBuffer.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
         
         textArea.addUBO(&textBuffer);
         
@@ -284,17 +274,15 @@ void Renderer::SetText(std::string_view newText)
     size_t bufSiz = 80 * 40;
     size_t n = std::min(bufSiz, newText.size());
     size_t n2 = bufSiz - n;
+    
     memcpy(textBufferData->chars, newText.data(), n);
+    
     if(n2 > 0)
     {
         memset(textBufferData->chars + n, 0, n2);
     }
-    memset(textBufferData->char_properties, 0, bufSiz);
     
-    if constexpr(!useGlMapBuffer)
-    {
-        textBuffer.Update(textBufferData->chars, offsetof(TextInfo, chars), bufSiz * 2);
-    }
+    memset(textBufferData->char_properties, 0, bufSiz);
 }
 
 
@@ -371,10 +359,6 @@ static void ReloadFont()
     
     fontTexture.UpdateRGBA8(fnt.data(), w, h);
     
-    if constexpr(!useGlMapBuffer)
-    {
-        textBuffer.Update(&textBufferData->font_width, offsetof(TextInfo, font_width), sizeof(uint32_t) * 4);
-    }
     skipNextFrame = true;
 }
 
@@ -458,11 +442,7 @@ void Renderer::Render()
     
     SDL_GL_SwapWindow(win);
     
-    
-    if constexpr(useGlMapBuffer)
-    {
-        textBufferData = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBuffer.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
-    }
+    textBufferData = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBuffer.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
 }
 
 void Renderer::Quit()
@@ -568,11 +548,6 @@ void Renderer::DrawLineText(uint32_t x, uint32_t y, std::string_view newText, ui
         
         n += n2;
     }
-    
-    if constexpr(!useGlMapBuffer)
-    {
-        textBuffer.Update(textBufferData->chars + offset, offsetof(TextInfo, chars) + offset, n);
-    }
 }
 
 void Renderer::DrawLineTextFillProp(uint32_t x, uint32_t y, std::string_view newText, uint8_t newProperty, uint32_t width)
@@ -599,12 +574,6 @@ void Renderer::DrawLineTextFillProp(uint32_t x, uint32_t y, std::string_view new
     }
     
     memset(textBufferData->char_properties + offset, newProperty, n);
-    
-    if constexpr(!useGlMapBuffer)
-    {
-        textBuffer.Update(textBufferData->chars + offset, offsetof(TextInfo, chars) + offset, n);
-        textBuffer.Update(textBufferData->char_properties + offset, offsetof(TextInfo, char_properties) + offset, n);
-    }
 }
 
 void Renderer::DrawLineProp(uint32_t x, uint32_t y, std::span<const uint8_t> newProperties, uint32_t width)
@@ -629,11 +598,6 @@ void Renderer::DrawLineProp(uint32_t x, uint32_t y, std::span<const uint8_t> new
         
         n += n2;
     }
-    
-    if constexpr(!useGlMapBuffer)
-    {
-        textBuffer.Update(textBufferData->char_properties + offset, offsetof(TextInfo, char_properties) + offset, n);
-    }
 }
 
 void Renderer::DrawFillLineProp(uint32_t x, uint32_t y, uint8_t newProperty, uint32_t width)
@@ -649,11 +613,6 @@ void Renderer::DrawFillLineProp(uint32_t x, uint32_t y, uint8_t newProperty, uin
     size_t offset = x + (y * textBufferData->screen_width);
     
     memset(textBufferData->char_properties + offset, newProperty, n);
-    
-    if constexpr(!useGlMapBuffer)
-    {
-        textBuffer.Update(textBufferData->char_properties + offset, offsetof(TextInfo, char_properties) + offset, n);
-    }
 }
 
 template<bool text = true, bool props = true>
@@ -671,12 +630,6 @@ static void DrawClear(uint32_t x, uint32_t y, uint32_t width)
     
     if constexpr(text) memset(textBufferData->chars + offset, 0, n);
     if constexpr(props) memset(textBufferData->char_properties + offset, 0, n);
-    
-    if constexpr(!useGlMapBuffer)
-    {
-        if constexpr(text) textBuffer.Update(textBufferData->chars + offset, offsetof(TextInfo, chars) + offset, n);
-        if constexpr(props) textBuffer.Update(textBufferData->char_properties + offset, offsetof(TextInfo, char_properties) + offset, n);
-    }
 }
 
 void Renderer::DrawClear(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
@@ -708,11 +661,6 @@ void Renderer::DrawClear()
     size_t bufSiz = max_screen_width * max_screen_height;
     
     memset(textBufferData->chars, 0, bufSiz * 2);
-    
-    if constexpr(!useGlMapBuffer)
-    {
-        textBuffer.Update(textBufferData->chars, offsetof(TextInfo, chars), bufSiz * 2);
-    }
 }
 
 void Renderer::DrawClear(uint8_t text_char, uint8_t prop)
@@ -721,11 +669,6 @@ void Renderer::DrawClear(uint8_t text_char, uint8_t prop)
     
     memset(textBufferData->chars, text_char, bufSiz);
     memset(textBufferData->char_properties, prop, bufSiz);
-    
-    if constexpr(!useGlMapBuffer)
-    {
-        textBuffer.Update(textBufferData->chars, offsetof(TextInfo, chars), bufSiz * 2);
-    }
 }
 
 void Renderer::DrawLineTextCentered(uint32_t y, std::string_view newText)
