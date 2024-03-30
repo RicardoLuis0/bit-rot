@@ -142,16 +142,32 @@ struct : SettingItem
     {
         int vol = Config::setInt("Volume", std::clamp(Mix_MasterVolume(-1) + 10, 0, 100));
         Mix_MasterVolume(vol);
-        Mix_VolumeMusic(vol);
+        Mix_VolumeMusic(Config::getIntOr("MuteMusic", 0) ? 0 : vol);
     }
     
     virtual void ToggleDown() override
     {
         int vol = Config::setInt("Volume", std::clamp(Mix_MasterVolume(-1) - 10, 0, 100));
         Mix_MasterVolume(vol);
-        Mix_VolumeMusic(vol);
+        Mix_VolumeMusic(Config::getIntOr("MuteMusic", 0) ? 0 : vol);
     }
 } VolumeSetting;
+
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "Music"; }
+    virtual std::string getValue() const override { return Config::getIntOr("MuteMusic", 0) ? "No" : "Yes"; }
+    
+    virtual void ToggleUp() override
+    {
+        Mix_VolumeMusic(Config::setInt("MuteMusic", !Config::getIntOr("MuteMusic", 0)) ? 0 : Mix_MasterVolume(-1));
+    }
+    
+    virtual void ToggleDown() override
+    {
+        Mix_VolumeMusic(Config::setInt("MuteMusic", !Config::getIntOr("MuteMusic", 0)) ? 0 : Mix_MasterVolume(-1));
+    }
+} MusicSetting;
 
 std::vector<SettingItem*> settings
 {
@@ -159,6 +175,7 @@ std::vector<SettingItem*> settings
     &ColorSetting,
     &VSyncSetting,
     &VolumeSetting,
+    &MusicSetting,
 };
 
 void Menu::DrawSettingsMenu()
