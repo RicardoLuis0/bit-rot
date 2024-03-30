@@ -41,12 +41,12 @@ const char * LogCategoryStrings[]
 
 const char * LogPriorityStrings[]
 {
-    "INVALID",
-    "VERBOSE",
-    "DEBUG",
-    "INFO",
-    "WARN",
-    "ERROR",
+    " INVALID",
+    " VERBOSE",
+    "  DEBUG ",
+    "  INFO  ",
+    "  WARN  ",
+    "  ERROR ",
     "CRITICAL",
 };
 
