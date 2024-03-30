@@ -33,6 +33,9 @@ Input::Responder responders[]
     &Game::EndResponder,
 };
 
+int GetSoundVolume();
+int GetMusicVolume();
+
 int lastScreen = 0;
 
 int doGame()
@@ -67,9 +70,8 @@ int doGame()
                     }
                 #endif
                 
-                int vol = std::clamp<int>(Config::getIntOr("Volume", 50), 0, 100);
-                Mix_MasterVolume(vol);
-                Mix_VolumeMusic(Config::getIntOr("MuteMusic", 0)? 0 : vol);
+                Mix_MasterVolume(GetSoundVolume());
+                Mix_VolumeMusic(GetMusicVolume());
                 
                 while(RunGame)
                 {
