@@ -153,7 +153,7 @@ namespace Log
     extern std::vector<log_item_t> Logs;
     
     void Init();
-    inline void Quit() {};
+    void Quit();
     
     void Disable();
     

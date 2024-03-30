@@ -117,13 +117,11 @@ namespace Log
         std::lock_guard g(logLock);
         
         Logs.emplace_back(std::move(orig_log));
+        
         if(log_inited) [[likely]]
         {
             FilterLog(Logs.size() - 1);
         }
-        
-        //debug delay
-        //SDL_Delay(100);
     }
     
     void LogHandler(void *,int cat, SDL_LogPriority pri, const char * msg);
@@ -154,7 +152,10 @@ namespace Log
         }
     }
     
-    #ifdef DEBUG_BUILD
+    void Quit()
+    {
+        Util::WriteFile("info.log", Util::Join(Util::Map(Logs, std::bind(formatMessage, std::placeholders::_1, 0)), "\n"));
+    }
     
     void LogHandler(void *,int cat, SDL_LogPriority pri, const char * msg)
     {
@@ -186,24 +187,6 @@ namespace Log
         time_t timestamp = time(NULL);
         AddLog({std::string(fn_namespace), std::string(fn_name), std::string(file_name), line, std::string(msg), timestamp, priority, LogCategory::APPLICATION});
     }
-    #else
-    
-    void LogHandler(void *,int cat, SDL_LogPriority pri, const char * msg)
-    {
-    }
-    
-    void LogFull(LogPriority priority, std::string_view fn_namespace, std::string_view fn_name, std::string_view file_name, int line, const char *fmt, ...)
-    {
-    }
-    
-    void LogFull(LogPriority priority, std::string_view fn_namespace, std::string_view fn_name, std::string_view file_name, int line, const std::string &msg)
-    {
-    }
-    
-    void LogFull(LogPriority priority, std::string_view fn_namespace, std::string_view fn_name, std::string_view file_name, int line, std::string_view msg)
-    {
-    }
-    #endif
     
     void Disable()
     {
