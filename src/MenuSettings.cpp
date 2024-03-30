@@ -13,7 +13,6 @@
 extern int currentScreen;
 extern bool InGame;
 
-int numSettingsMenuItems = 4;
 int currentSettingsMenuItem = 0;
 
 struct SettingItem
@@ -39,11 +38,11 @@ void Menu::SettingsMenuResponder(SDL_Event *e)
         else if(e->key == SDLK_UP)
         {
             currentSettingsMenuItem--;
-            if(currentSettingsMenuItem < 0) currentSettingsMenuItem = (numSettingsMenuItems - 1);
+            if(currentSettingsMenuItem < 0) currentSettingsMenuItem = (settings.size() - 1);
         }
         else if(e->key == SDLK_DOWN)
         {
-            currentSettingsMenuItem = (currentSettingsMenuItem + 1) % numSettingsMenuItems;
+            currentSettingsMenuItem = (currentSettingsMenuItem + 1) % settings.size();
         }
         else if(e->key == SDLK_RETURN || e->key == SDLK_RIGHT)
         {
