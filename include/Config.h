@@ -36,7 +36,7 @@ namespace Config
         if(val) for(unsigned i = 0; i < std::size(values); i++)
         {
             if(values[i] == *val) return T(i);
-        } 
+        }
         return alternative;
     }
     
