@@ -16,6 +16,17 @@ extern bool InGame;
 int numSettingsMenuItems = 4;
 int currentSettingsMenuItem = 0;
 
+struct SettingItem
+{
+    virtual ~SettingItem() = default;
+    virtual std::string_view getName() const = 0;
+    virtual std::string getValue() const = 0;
+    virtual void ToggleUp() = 0;
+    virtual void ToggleDown() = 0;
+};
+
+extern std::vector<SettingItem*> settings;
+
 void Menu::SettingsMenuResponder(SDL_Event *e)
 {
     switch(e->type)
@@ -36,65 +47,120 @@ void Menu::SettingsMenuResponder(SDL_Event *e)
         }
         else if(e->key == SDLK_RETURN || e->key == SDLK_RIGHT)
         {
-            switch(currentSettingsMenuItem)
-            {
-            case 0:
-                Renderer::CycleFont();
-                break;
-            case 1:
-                Renderer::CycleTextColor();
-                break;
-            case 2:
-                Renderer::CycleVSync();
-                break;
-            case 3:
-                {
-                    int vol = Config::setInt("Volume", std::clamp(Mix_MasterVolume(-1) + 10, 0, 100));
-                    Mix_MasterVolume(vol);
-                    Mix_VolumeMusic(vol);
-                    break;
-                }
-            }
+            settings[currentSettingsMenuItem]->ToggleUp();
         }
         else if(e->key == SDLK_LEFT)
         {
-            switch(currentSettingsMenuItem)
-            {
-            case 0:
-                Renderer::CycleFontDown();
-                break;
-            case 1:
-                Renderer::CycleTextColorDown();
-                break;
-            case 2:
-                Renderer::CycleVSyncDown();
-                break;
-            case 3:
-                {
-                    int vol = Config::setInt("Volume", std::clamp(Mix_MasterVolume(-1) - 10, 0, 100));
-                    Mix_MasterVolume(vol);
-                    Mix_VolumeMusic(vol);
-                    break;
-                }
-            }
+            settings[currentSettingsMenuItem]->ToggleDown();
         }
         break;
     }
 }
 
-#define DRAW_SETTING(i, name, value){\
-    if(currentSettingsMenuItem == (i))\
-    {\
-        Renderer::DrawLineText(offsetX1 - 2, offsetY, ">");\
-        Renderer::DrawLineTextFillProp(offsetX1, offsetY, name, CHAR_INVERT1 | CHAR_BLINK_INVERT | CHAR_BLINK3);\
-        Renderer::DrawLineTextFillProp(offsetX2, offsetY, value, CHAR_INVERT1);\
-    }\
-    else\
-    {\
-        Renderer::DrawLineText(offsetX1, offsetY, name);\
-        Renderer::DrawLineText(offsetX2, offsetY, value);\
-    }\
-    offsetY += 2;}
+void DrawSetting(bool selected, std::string_view name, std::string_view value, int &y, bool start, bool end, int width1 = 16, int width2 = 61)
+{
+    int fullWidth = (width1 + width2) - 1;
+    int x = ((80 - fullWidth) / 2);
+    
+    if(start)
+    {
+        Menu::DrawHalfLine(x, y - 1, width1 - 1, BorderTop[0], BorderTop[1], 0);
+        Menu::DrawLine(x + (width1 - 1), y - 1, width2, BorderTopEnd[0], BorderTopEnd[1], BorderTopEnd[2], 0);
+    }
+    else
+    {
+        Menu::DrawHalfLine(x, y - 1, width1 - 1, BorderSep[0], BorderSep[1], 0);
+        Menu::DrawLine(x + (width1 - 1), y - 1, width2, BorderSepEnd[0], BorderSepEnd[1], BorderSepEnd[2], 0);
+    }
+    
+    Menu::DrawHalfLine(x, y, width1 - 1, BorderMid[0], BorderMid[1], 0);
+    Menu::DrawLine(x + (width1 - 1), y, width2, BorderMid[0], BorderMid[1], BorderMid[2], 0);
+    
+    int name_x = x + 4;
+    int value_x = x + width1 + 2;
+    
+    if(selected)
+    {
+        Renderer::DrawLineText(4, y, ">");
+        Renderer::DrawLineTextFillProp(name_x, y, name, CHAR_INVERT1 | CHAR_BLINK_INVERT | CHAR_BLINK3);
+        Renderer::DrawLineTextFillProp(value_x, y, value, CHAR_INVERT1);
+    }
+    else
+    {
+        Renderer::DrawLineText(name_x, y, name);
+        Renderer::DrawLineText(value_x, y, value);
+    }
+    
+    if(end)
+    {
+        Menu::DrawHalfLine(x, y + 1, width1 - 1, BorderBottom[0], BorderBottom[1], 0);
+        Menu::DrawLine(x + (width1 - 1), y + 1, width2, BorderBottomEnd[0], BorderBottomEnd[1], BorderBottomEnd[2], 0);
+    }
+    
+    y += 2;
+}
+
+void DrawSettings(unsigned selection, const std::vector<SettingItem*> &settings, int width1 = 16, int width2 = 61)
+{
+    unsigned last = settings.size() - 1;
+    int y = 9;
+    for(unsigned i = 0; i < settings.size(); i++)
+    {
+        DrawSetting(i == selection, settings[i]->getName(), settings[i]->getValue(), y, i == 0, i == last);
+    }
+}
+
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "Font"; }
+    virtual std::string getValue() const override { return std::string(Font::curFontName()); }
+    virtual void ToggleUp() override { Renderer::CycleFont(); }
+    virtual void ToggleDown() override { Renderer::CycleFontDown(); }
+} FontSetting;
+
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "Color"; }
+    virtual std::string getValue() const override { return std::string(Renderer::GetTextColorName()); }
+    virtual void ToggleUp() override { Renderer::CycleTextColor(); }
+    virtual void ToggleDown() override { Renderer::CycleTextColorDown(); }
+} ColorSetting;
+
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "VSync"; }
+    virtual std::string getValue() const override { return std::string(Config::mustGetString("VSync")); }
+    virtual void ToggleUp() override { Renderer::CycleVSync(); }
+    virtual void ToggleDown() override { Renderer::CycleVSyncDown(); }
+} VSyncSetting;
+
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "Volume"; }
+    virtual std::string getValue() const override { return std::to_string(Mix_MasterVolume(-1)); }
+    
+    virtual void ToggleUp() override
+    {
+        int vol = Config::setInt("Volume", std::clamp(Mix_MasterVolume(-1) + 10, 0, 100));
+        Mix_MasterVolume(vol);
+        Mix_VolumeMusic(vol);
+    }
+    
+    virtual void ToggleDown() override
+    {
+        int vol = Config::setInt("Volume", std::clamp(Mix_MasterVolume(-1) - 10, 0, 100));
+        Mix_MasterVolume(vol);
+        Mix_VolumeMusic(vol);
+    }
+} VolumeSetting;
+
+std::vector<SettingItem*> settings
+{
+    &FontSetting,
+    &ColorSetting,
+    &VSyncSetting,
+    &VolumeSetting,
+};
 
 void Menu::DrawSettingsMenu()
 {
@@ -105,32 +171,6 @@ void Menu::DrawSettingsMenu()
     Renderer::DrawText(16, 1, TitleSettings);
     
     Renderer::DrawLineText(2, 8, SettingsTop);
-    int offset = 9;
-    for(int i = 0; i < numSettingsMenuItems; i++)
-    {
-        if(i != 0) Renderer::DrawLineText(2, offset - 1, SettingsSep);
-        Renderer::DrawLineText(2, offset, SettingsMid);
-        offset += 2;
-    }
-    Renderer::DrawLineText(2, offset - 1, SettingsBottom);
     
-    int offsetX1;
-    int offsetX2 = 19;
-    
-    int offsetY = 9;
-    
-    
-    
-    offsetX1 = 7;
-    DRAW_SETTING(0, "Font", Font::curFontName());
-    
-    offsetX1 = 7;
-    DRAW_SETTING(1, "Color", Renderer::GetTextColorName());
-    
-    offsetX1 = 7;
-    DRAW_SETTING(2, "VSync", Config::mustGetString("VSync"));
-    
-    offsetX1 = 6;
-    DRAW_SETTING(3, "Volume", std::to_string(Mix_MasterVolume(-1)));
-    
+    DrawSettings(currentSettingsMenuItem, settings);
 }

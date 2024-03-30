@@ -27,6 +27,15 @@ void Menu::DrawLine(int x, int y, int width, char start, char mid, char end, cha
     }
 }
 
+void Menu::DrawHalfLine(int x, int y, int width, char start, char mid, char prop)
+{
+    if(width > 2)
+    {
+        Renderer::DrawChar(x, y, start, prop);
+        Renderer::DrawFillLineTextProp(x + 1, y, mid, prop, width - 1);
+    }
+}
+
 void Menu::DrawBorder(const char **border, char prop, int x, int y, int width, int height)
 {
     if(width > 2 && height > 2)

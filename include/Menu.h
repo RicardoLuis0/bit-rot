@@ -23,6 +23,8 @@ namespace Menu
     
     void DrawLine(int x, int y, int width, char start, char mid, char end, char prop = 0);
     
+    void DrawHalfLine(int x, int y, int width, char start, char mid, char prop = 0);
+    
     int DrawButton(int x_center, int y_center, int min_width, std::string_view text, bool highlight);
     
     void DrawMenuItemButton(bool selected, int &y, std::string_view text);
