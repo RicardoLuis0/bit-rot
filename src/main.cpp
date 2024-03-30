@@ -123,7 +123,7 @@ int doGame()
     return EXIT_SUCCESS;
 }
 
-#ifdef DEBUG_BUILD
+#if defined(DEBUG_BUILD) || !defined(_WIN32)
 int main(int argc, char *argv[])
 {
     return doGame();
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 #else
 
 #define WIN32_LEAN_AND_MEAN
-#include "windows.h"
+#include <windows.h>
 
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR     lpCmdLine, int nShowCmd)
 {
