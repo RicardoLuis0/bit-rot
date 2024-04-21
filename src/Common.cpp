@@ -218,18 +218,18 @@ namespace Util
                 lastQuoteType = str[i];
                 tmp += str.substr(lastSection, i - lastSection);
                 has_tmp = true;
-                bool wasQuote = false;
+                bool wasSlash = false;
                 
-                for(i++;(str[i] != lastQuoteType || wasQuote) && i < std::size(str); i++)
+                for(i++;(str[i] != lastQuoteType || wasSlash) && i < std::size(str); i++)
                 {
-                    if(i == '\\' && !wasQuote)
+                    if(i == '\\' && !wasSlash)
                     {
-                        wasQuote = true;
+                        wasSlash = true;
                     }
                     else
                     {
-                        tmp += wasQuote ? unescape(i) : str[i];
-                        wasQuote = false;
+                        tmp += wasSlash ? unescape(str[i]) : str[i];
+                        wasSlash = false;
                     }
                 }
                 lastSection = i + 1;
