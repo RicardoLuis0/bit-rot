@@ -1,4 +1,4 @@
-#version 460
+#version 450
 
 out vec4 fragColor;
 in vec2 texCoord;
@@ -51,7 +51,7 @@ void main()
     
     if((p & CHAR_UNDERSCORE) != 0 && (time % 1000) > 500)
     {
-        charCoord = mod(baseCoord, 1) + ivec2('_' % font_width, '_' / font_width);
+        charCoord = mod(baseCoord, 1) + ivec2(95 % font_width, 95 / font_width);
         vec4 tex2 = texture(fontTexture, charCoord / vec2(font_width, font_height));
         if(tex2 != transparentKey)
         {

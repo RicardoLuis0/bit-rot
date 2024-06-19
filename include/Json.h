@@ -209,6 +209,6 @@ namespace JSON {
     inline Element Object(const std::map<std::string,Element> & m){ return Element(Element::data_t(m)); }
     inline Element Object(std::map<std::string,Element> && m){ return Element(Element::data_t(std::move(m))); }
     
-    Element Parse(const std::string &data);
+    Element Parse(std::string_view data);
     
 }

@@ -161,7 +161,7 @@ struct program_help
     static program_help&& hide(program_help &&h)
     {
         h.hidden = true;
-        return h;
+        return std::move(h);
     }
 };
 

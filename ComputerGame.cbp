@@ -55,7 +55,6 @@
 			<Add option="-lglew32" />
 			<Add option="-lopengl32" />
 			<Add option="-lglu32" />
-			<Add option="-lSDL2_mixer" />
 			<Add option="-lz" />
 		</Linker>
 		<Unit filename="ComputerGame.rc">
@@ -124,6 +123,41 @@
 		<Unit filename="src/MenuMain.cpp" />
 		<Unit filename="src/MenuPause.cpp" />
 		<Unit filename="src/MenuSettings.cpp" />
+		<Unit filename="src/Mixer/codecs/mp3utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/Mixer/codecs/mp3utils.h" />
+		<Unit filename="src/Mixer/codecs/music_ogg.h" />
+		<Unit filename="src/Mixer/codecs/music_ogg_stb.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/Mixer/codecs/music_wav.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/Mixer/codecs/music_wav.h" />
+		<Unit filename="src/Mixer/codecs/stb_vorbis/stb_vorbis.h" />
+		<Unit filename="src/Mixer/effect_position.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/Mixer/effect_stereoreverse.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/Mixer/effects_internal.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/Mixer/effects_internal.h" />
+		<Unit filename="src/Mixer/mixer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/Mixer/mixer.h" />
+		<Unit filename="src/Mixer/music.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/Mixer/music.h" />
+		<Unit filename="src/Mixer/utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/Mixer/utils.h" />
 		<Unit filename="src/Renderer.cpp" />
 		<Unit filename="src/Renderer/GLFrameBuffer.cpp" />
 		<Unit filename="src/Renderer/GLProgram.cpp" />

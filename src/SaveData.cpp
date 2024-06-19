@@ -141,7 +141,7 @@ void SaveData::GetSave(std::string &savePath, std::vector<SaveData::SaveAction> 
     
     for(auto &line : saveData["SavedBuffer"].get_arr())
     {
-        buffer.push_back({line["Text"].get_str(),Util::Map(line["Props"].get_arr(), JSON::Element::get_uint8)});
+        buffer.push_back({line["Text"].get_str(),Util::Map(line["Props"].get_arr(), &JSON::Element::get_uint8)});
     }
 }
 catch(JSON::JSON_Exception &e)

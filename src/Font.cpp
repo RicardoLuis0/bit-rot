@@ -4,6 +4,7 @@
 #include "Common.h"
 
 #include <filesystem>
+#include <algorithm>
 
 constexpr const char * fontInfoFile = "Fonts/FontInfo.json";
 

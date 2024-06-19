@@ -182,7 +182,7 @@ void Game::Responder(SDL_Event *e)
                 std::string arg = Util::StrToUpper(currentArg->to_view());
                 std::vector<std::string> completionAlternatives =
                                                 Util::Filter(ListPrograms(),
-                                                        std::bind((bool(std::string::*)(std::string_view)const noexcept)std::string::starts_with, std::placeholders::_1, std::string_view(arg)));
+                                                        std::bind((bool(std::string::*)(std::string_view)const noexcept)&std::string::starts_with, std::placeholders::_1, std::string_view(arg)));
                 if(completionAlternatives.size() > 1)
                 {
                     if(lastWasTab)

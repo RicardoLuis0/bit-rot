@@ -14,6 +14,7 @@
   */
 
 #include "json.h"
+#include <bit>
 #include <cmath>
 #include <cstring>
 #include <stdexcept>
@@ -42,21 +43,21 @@ namespace JSON
             return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c=='_';
         }
         
-        bool is_number_start_nosign(const std::string &data, size_t i)
+        bool is_number_start_nosign(std::string_view data, size_t i)
         {
             return is_number(data[i])
                     || (data[i] == '.' && (i + 1) < data.size()
                             &&is_number(data[i + 1]));
         }
         
-        bool is_number_start(const std::string &data, size_t i)
+        bool is_number_start(std::string_view data, size_t i)
         {
             return is_number_start_nosign(data, i)
                     || ((data[i] == '-' || data[i] == '+') && (i + 1) < data.size()
                             && is_number_start_nosign(data, i + 1));
         }
         
-        Element get_number(const std::string &data, size_t &i)
+        Element get_number(std::string_view data, size_t &i)
         {   //handles integers, decimals and scientific notation
             
             //the way this parses floating point is cursed, and **WILL** destroy precision
@@ -216,18 +217,18 @@ namespace JSON
             }
         }
         
-        inline bool is_char(const std::string &data, size_t &i, char c)
+        inline bool is_char(std::string_view data, size_t &i, char c)
         {
             return (i < data.size()) && (data[i] == c);
         }
         
-        inline void expect_char(const std::string &data, size_t &i, char c)
+        inline void expect_char(std::string_view data, size_t &i, char c)
         {
             if(!is_char(data, i, c))  throw std::runtime_error("Expected " + QuoteChar(c) + ", got " + (i >= data.size() ? "EOF" : QuoteChar(data[i])+" at pos "+std::to_string(i)));
             i++;
         }
         
-        std::string get_string(const std::string &data, size_t &i)
+        std::string get_string(std::string_view data, size_t &i)
         {   //TODO: optimize string reading
             expect_char(data,i,'"');
             
@@ -276,7 +277,7 @@ namespace JSON
             throw std::runtime_error("Expected '\"', got EOF");
         }
         
-        void skip_whitespace(const std::string &data, size_t &i)
+        void skip_whitespace(std::string_view data, size_t &i)
         {   //SAFE TO CALL ON EOF
             while(i < data.size())
             {
@@ -310,9 +311,9 @@ namespace JSON
             }
         }
         
-        Element get_element(const std::string &data, size_t &i);
+        Element get_element(std::string_view data, size_t &i);
         
-        array_t get_array(const std::string &data, size_t &i)
+        array_t get_array(std::string_view data, size_t &i)
         {
             expect_char(data, i, '[');
             
@@ -353,7 +354,7 @@ namespace JSON
             throw std::runtime_error("Expected ']', got EOF");
         }
         
-        object_t get_object(const std::string &data, size_t &i)
+        object_t get_object(std::string_view data, size_t &i)
         {
             expect_char(data, i, '{');
             
@@ -402,7 +403,7 @@ namespace JSON
             throw std::runtime_error("Expected '}', got EOF");
         }
         
-        Element get_element(const std::string &data, size_t &i)
+        Element get_element(std::string_view data, size_t &i)
         {
             skip_whitespace(data, i);
             if(i >= data.size()) throw std::runtime_error("Expected JSON, got EOF");
@@ -588,7 +589,7 @@ namespace JSON
         __builtin_unreachable();//all std::variant cases are handled in the if/else, this is absolutely unreachable
     }
     
-    Element Parse(const std::string &data)
+    Element Parse(std::string_view data)
     {
         size_t i = 0;
         return get_element(data, i);

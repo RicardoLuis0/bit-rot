@@ -1,11 +1,12 @@
 #pragma once
 
 #include "Renderer.h"
+#include "Log.h"
 #include <SDL2/SDL.h>
 #include <cstdint>
-#include <gl/glew.h>
+#include <GL/glew.h>
 #include <SDL2/SDL_opengl.h>
-#include <gl/glu.h>
+#include <GL/glu.h>
 #include <stdexcept>
 
 namespace Renderer::Internal
@@ -30,7 +31,7 @@ namespace Renderer::Internal
         return glErrMsg(glGetError());
     }
     
-    inline void glCheckErrors()
+    inline void glCheckErrorsInternal(std::string msgPre)
     {
         if(GLenum err = glGetError(); err != GL_NO_ERROR)
         {
@@ -39,9 +40,41 @@ namespace Renderer::Internal
             {
                 msg += "\n" + glErrMsg(err);
             }
-            throw std::runtime_error(msg);
+            throw std::runtime_error(msgPre + msg);
         }
     }
+    
+    inline void glCheckErrorsLine(std::string_view fn_namespace, std::string_view fn_name, std::string_view file_name, int line)
+    {
+        std::string msg = "";
+        if(fn_namespace.size() > 0)
+        {
+            assert(fn_name.size() > 0);
+            msg += "[" + std::string(fn_namespace) + "::" + std::string(fn_name) + "] ";
+        }
+        else if(fn_name.size() > 0)
+        {
+            msg += "[" + std::string(fn_name) + "] ";
+        }
+        
+        if(file_name.size() > 0)
+        {
+            msg += "[" + std::string(file_name) + ":" + std::to_string(line) + "] ";
+        }
+        glCheckErrorsInternal(msg);
+    }
+    
+    
+    #ifdef _MSC_VER
+        #define glCheckErrors()\
+            glCheckErrorsLine(std::string_view(__FUNCSIG__ + namespace_start(__FUNCSIG__) , namespace_len(__FUNCSIG__)), std::string_view(__FUNCSIG__ + funcname_start(__FUNCSIG__) , funcname_len(__FUNCSIG__)), std::string_view(__FILE__ + filename_start(__FILE__)) , __LINE__)
+    #elif defined(__GNUC__)
+        #define glCheckErrors()\
+            glCheckErrorsLine(std::string_view(__PRETTY_FUNCTION__ + namespace_start(__PRETTY_FUNCTION__) , namespace_len(__PRETTY_FUNCTION__)), std::string_view(__PRETTY_FUNCTION__ + funcname_start(__PRETTY_FUNCTION__) , funcname_len(__PRETTY_FUNCTION__)), std::string_view(__FILE__ + filename_start(__FILE__)) , __LINE__)
+    #else
+        #define glCheckErrors()\
+            glCheckErrorsLine({}, std::string_view(__func__), std::string_view(__FILE__ + filename_start(__FILE__)) , __LINE__)
+    #endif
     
     constexpr double ratio = 4.0/3.0;
     constexpr double ratio_tolerance = 0.1;

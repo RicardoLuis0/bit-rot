@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL.h>
-#include <SDL2/SDL_mixer.h>
+#include "SDL_mixer.h"
 
 
 extern __thread char buf[1024];
