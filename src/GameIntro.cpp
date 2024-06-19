@@ -82,7 +82,7 @@ void Game::ToIntro()
     }
     else
     {
-        if(Config::getStringOr("SawIntro1", "no") == "yes")
+        if(Game::GameIsSave || Config::getStringOr("SawIntro1", "no") == "yes")
         {
             introStage = DEBUG_START_STAGE2;
             Audio::FadeMusic(500);
