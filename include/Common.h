@@ -472,7 +472,7 @@ namespace Util
     //returns rgba8 array
     std::vector<uint32_t> ReadFileBitmap(const std::string &filename, uint32_t &width, uint32_t &height);
     
-    uint32_t MsTime();
+    uint64_t MsTime();
     
     std::vector<std::string_view> SplitLines(std::string_view text, uint32_t maxWidth);
     

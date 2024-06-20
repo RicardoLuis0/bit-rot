@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cstring>
 #include <iterator>
+#include <chrono>
 
 #include <zlib.h>
 
@@ -125,10 +126,9 @@ namespace Util
         throw std::runtime_error("Failed to open/write file "+Util::QuoteString(filename)+" : "+e.what());
     }
     
-    uint32_t MsTime()
+    uint64_t MsTime()
     {
-        //return SDL_GetTicks();
-        return uint32_t((double(clock()) /  CLOCKS_PER_SEC) * 1000.0); // read clock instead of ticks, so that it isn't affected by speedhacks/etc
+        return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
     }
     
     std::vector<std::string_view> SplitLines(std::string_view text, uint32_t maxWidth)
