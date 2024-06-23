@@ -125,6 +125,7 @@ void Renderer::SetVSync(std::string_view VSync)
     {
         if(SDL_GL_SetSwapInterval(1))
         {
+            VSync = "Off";
             LogWarn("Failed to enable VSync: " + errMsg());
         }
         else
