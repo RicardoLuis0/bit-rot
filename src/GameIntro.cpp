@@ -59,7 +59,7 @@ uint32_t lineCountRecovery = 0;
 std::string message = "While rummaging through your childhood home's attic after your parents' passing, you found an old computer that you don't seem to have any recollection of.\n\n\n\nYou decided to dust it off, plug it in, and see if it works...";
 std::string message2 = "Press any key to continue";
 
-std::string end_message = "You've reached the end of the Jam Build of BitRot, Congratulations, and Thanks for Playing!";
+std::string end_message = "You've reached the end of this Build of BitRot, Congratulations, and Thanks for Playing!";
 std::string end_message2 = "Press escape to close the game";
 
 std::vector<std::string_view> messageLines = Util::SplitLines(message, 50);
