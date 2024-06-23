@@ -4,6 +4,7 @@
 #include "Input.h"
 #include "Config.h"
 #include "SDL2Util.h"
+#include "Menu.h"
 
 #ifdef DEBUG_BUILD
     #define DEBUG_START_SCREEN 4
@@ -54,14 +55,8 @@ uint32_t nextLineMs = 0;
 uint32_t nextLine = 0;
 uint32_t lineCountRecovery = 0;
 
-constexpr FakeString<72> BorderTop =    fixString(U"┌──────────────────────────────────────────────────────────────────────┐");
-constexpr FakeString<72> BorderMid =    fixString(U"│                                                                      │");
-constexpr FakeString<72> BorderBottom = fixString(U"└──────────────────────────────────────────────────────────────────────┘");
-
 std::string message = "While rummaging through your childhood home's attic after your parents' passing, you found an old computer that you don't seem to have any recollection of.\n\n\n\nYou decided to dust it off, plug it in, and see if it works...";
-
 std::string message2 = "Press any key to continue";
-
 
 std::string end_message = "You've reached the end of the Jam Build of BitRot, Congratulations, and Thanks for Playing!";
 std::string end_message2 = "Press escape to close the game";
@@ -186,25 +181,16 @@ void Game::TickEnd()
 {
     
     Renderer::DrawClear();
-    uint32_t offsetY = 10;
     
-    Renderer::DrawLineText(4, offsetY, BorderTop);
+    Menu::DrawBorderSingle(0, 4, 10, 72, endMessageLines.size() + 6);
+    
+    uint32_t offsetY = 12;
+    
+    Util::ForEach(endMessageLines, [&offsetY](std::string_view v){
+        Renderer::DrawLineTextCentered(offsetY++, v);
+    });
+    
     offsetY++;
-    
-    Renderer::DrawLineText(4, offsetY, BorderMid);
-    offsetY++;
-    
-    for(std::string_view line : endMessageLines)
-    {
-        Renderer::DrawLineText(4, offsetY, BorderMid);
-        Renderer::DrawLineTextCentered(offsetY, line);
-        offsetY++;
-    }
-    Renderer::DrawLineText(4, offsetY, BorderMid);
-    offsetY++;
-    
-    Renderer::DrawLineText(4, offsetY, BorderBottom);
-    offsetY += 8;
     
     Renderer::DrawLineTextCentered(offsetY, end_message2);
 }
@@ -218,24 +204,14 @@ static void DoIntroShared(bool skipText)
     case 0:
         if(!skipText)
         {
-            uint32_t offsetY = 10;
+            Menu::DrawBorderSingle(0, 4, 10, 72, messageLines.size() + 4);
             
-            Renderer::DrawLineText(4, offsetY, BorderTop);
-            offsetY++;
+            uint32_t offsetY = 12;
             
-            Renderer::DrawLineText(4, offsetY, BorderMid);
-            offsetY++;
+            Util::ForEach(messageLines, [&offsetY](std::string_view v){
+                Renderer::DrawLineTextCentered(offsetY++, v);
+            });
             
-            for(std::string_view line : messageLines)
-            {
-                Renderer::DrawLineText(4, offsetY, BorderMid);
-                Renderer::DrawLineTextCentered(offsetY, line);
-                offsetY++;
-            }
-            Renderer::DrawLineText(4, offsetY, BorderMid);
-            offsetY++;
-            
-            Renderer::DrawLineText(4, offsetY, BorderBottom);
             offsetY += 8;
             
             Renderer::DrawLineTextCentered(offsetY, message2);

@@ -117,12 +117,10 @@ namespace Renderer
         DrawTextFillProp(x, y, lines, prop, width);
     }
     
-    template
-    <
+    template <
         Util::ContainerConvertibleTo<std::string_view> L,
         Util::ContainerConvertibleTo<std::span<const uint8_t>> P
-    >
-    void DrawText(uint32_t x, uint32_t y, L &&lines, P &&props, uint32_t width)
+    > void DrawText(uint32_t x, uint32_t y, L &&lines, P &&props, uint32_t width)
     {
         size_t n1 = std::size(lines);
         size_t n2 = std::size(props);
@@ -134,12 +132,11 @@ namespace Renderer
             if(i < n2) DrawLineProp(x, y + i, props[i], width);
         }
     }
-    template
-    <
+    
+    template <
         Util::ContainerConvertibleTo<std::string_view> L,
         Util::ContainerConvertibleTo<std::span<const uint8_t>> P
-    >
-    void DrawText(uint32_t x, uint32_t y, L &&lines, P &&props)
+    > void DrawText(uint32_t x, uint32_t y, L &&lines, P &&props)
     {
         uint32_t width = std::max<uint32_t>(Util::MaxAll(Util::Map(lines, std::size<std::remove_cvref_t<decltype(lines[0])>>)), Util::MaxAll(Util::Map(props, std::size<std::remove_cvref_t<decltype(props[0])>>)));
         DrawText(x, y, lines, props, width);
