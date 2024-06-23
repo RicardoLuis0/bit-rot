@@ -25,6 +25,8 @@ __thread char buf[1024];
 SDL_Window * win;
 SDL_GLContext ctx;
 
+uint64_t baseTime;
+
 struct TextInfo
 {
     uint32_t font_width;
@@ -266,6 +268,8 @@ void Renderer::Init()
     SDL_MaximizeWindow(win);
     SDL_GL_SwapWindow(win);
     
+    baseTime = Util::MsTime();
+    
     LogDebug("Window Shown");
 }
 
@@ -405,6 +409,11 @@ void Renderer::ToggleWireframe()
     t = !t;
 }
 
+void Renderer::ResetTimer()
+{
+    baseTime = Util::MsTime();
+}
+
 void Renderer::Render()
 {
     uint32_t w = textBufferData->char_width * max_screen_width;
@@ -422,7 +431,7 @@ void Renderer::Render()
     {
         glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT | GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
         
-        textDrawer.setUInt(5, Util::MsTime());
+        textDrawer.setUInt(5, Util::MsTime() - baseTime);
         
         phosphorBufferIndex = (phosphorBufferIndex + 1) % numPhosphorBuffers;
         glCopyImageSubData(textFrameBuffer.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffers[phosphorBufferIndex].index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);

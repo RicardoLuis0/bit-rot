@@ -59,7 +59,7 @@ void main()
         }
     }
     
-    bool blink = ((p & CHAR_BLINK_BITS) == CHAR_BLINK1 && (time % 200) > 100) || ((p & CHAR_BLINK_BITS) == CHAR_BLINK2 && (time % 1000) > 500) || ((p & CHAR_BLINK_BITS) == CHAR_BLINK3 && (time % 2000) > 1000);
+    bool blink = ((p & CHAR_BLINK_BITS) == CHAR_BLINK1 && (time % 200) < 100) || ((p & CHAR_BLINK_BITS) == CHAR_BLINK2 && (time % 1000) < 500) || ((p & CHAR_BLINK_BITS) == CHAR_BLINK3 && (time % 2000) < 1000);
     
     float pixel;
     if((p & CHAR_BLINK_INVERT) != 0)

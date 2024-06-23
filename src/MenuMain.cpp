@@ -23,13 +23,14 @@ void Menu::MainMenuResponder(SDL_Event *e)
     case SDL_KEYDOWN:
         if(e->key == SDLK_UP)
         {
+            Renderer::ResetTimer();
             currentMainMenuItem--;
             if(currentMainMenuItem < (SaveData::HasSave() ? -1 : 0)) currentMainMenuItem = (numMainMenuItems - 1);
         }
         else if(e->key == SDLK_DOWN)
         {
+            Renderer::ResetTimer();
             currentMainMenuItem++;
-            
             if(currentMainMenuItem >= numMainMenuItems) currentMainMenuItem = SaveData::HasSave() ? -1 : 0;
         }
         else if(e->key == SDLK_RETURN)

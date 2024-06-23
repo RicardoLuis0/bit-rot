@@ -144,4 +144,6 @@ namespace Renderer
         uint32_t width = std::max<uint32_t>(Util::MaxAll(Util::Map(lines, std::size<std::remove_cvref_t<decltype(lines[0])>>)), Util::MaxAll(Util::Map(props, std::size<std::remove_cvref_t<decltype(props[0])>>)));
         DrawText(x, y, lines, props, width);
     }
+    
+    void ResetTimer();
 }

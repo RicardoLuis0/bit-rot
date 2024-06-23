@@ -23,11 +23,13 @@ void Menu::PauseMenuResponder(SDL_Event *e)
     case SDL_KEYDOWN:
         if(e->key == SDLK_UP)
         {
+            Renderer::ResetTimer();
             currentPauseMenuItem--;
             if(currentPauseMenuItem < 0) currentPauseMenuItem = (numPauseMenuItems - 1);
         }
         else if(e->key == SDLK_DOWN)
         {
+            Renderer::ResetTimer();
             currentPauseMenuItem = (currentPauseMenuItem + 1) % numPauseMenuItems;
         }
         else if(e->key == SDLK_ESCAPE)

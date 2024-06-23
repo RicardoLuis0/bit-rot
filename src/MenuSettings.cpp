@@ -61,11 +61,13 @@ void Menu::SettingsMenuResponder(SDL_Event *e)
         }
         else if(e->key == SDLK_UP)
         {
+            Renderer::ResetTimer();
             currentSettingsMenuItem--;
             if(currentSettingsMenuItem < 0) currentSettingsMenuItem = (settings.size() - 1);
         }
         else if(e->key == SDLK_DOWN)
         {
+            Renderer::ResetTimer();
             currentSettingsMenuItem = (currentSettingsMenuItem + 1) % settings.size();
         }
         else if(e->key == SDLK_RETURN || e->key == SDLK_RIGHT)
