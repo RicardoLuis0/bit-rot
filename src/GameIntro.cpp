@@ -5,6 +5,7 @@
 #include "Config.h"
 #include "SDL2Util.h"
 #include "Menu.h"
+#include "SaveData.h"
 
 #ifdef DEBUG_BUILD
     #define DEBUG_START_SCREEN 4
@@ -470,6 +471,7 @@ static void DoIntro1()
         {
             Config::setString("SawIntro1", "yes");
             RunGame = false;
+            SaveData::Clear();
             //introStartMs = Util::MsTime();
             //introStage = 8;
         }

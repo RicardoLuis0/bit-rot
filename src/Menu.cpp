@@ -59,7 +59,7 @@ void Menu::DrawBorderDouble(char prop, int x, int y, int width, int height)
     DrawBorder((std::array<const char*, 3> {DoubleBorderTop.data(), DoubleBorderMid.data(), DoubleBorderBottom.data()}).data(), prop, x, y, width, height);
 }
 
-int Menu::DrawButton(int x_center, int y_center, int min_width, std::string_view text, bool highlight)
+int Menu::DrawButton(int x_center, int y_center, int min_width, std::string_view text, bool highlight) //, bool center_x, bool center_y)
 {
     int width = std::max<int>(min_width, text.size() + 4);
     int x = x_center - (width / 2);

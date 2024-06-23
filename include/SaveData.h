@@ -23,8 +23,10 @@ namespace SaveData
     void Init();
     void Quit();
     void Reset();
+    void Clear();
     
     bool HasSave();
+    void MarkNewGameOk();
     
     void SetFolder(std::string_view folder);
     

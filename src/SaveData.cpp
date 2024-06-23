@@ -21,6 +21,28 @@ void SaveData::Reset()
         {"SavedHistory", JSON::Array({})},
         {"SavedBuffer",  JSON::Array({})}
     });
+    
+    save_ok = false;
+}
+
+void SaveData::Clear()
+{
+    Reset();
+    
+    if(std::filesystem::exists(saveFilePlain))
+    {
+        std::filesystem::remove(saveFilePlain);
+    }
+    
+    if(std::filesystem::exists(saveFileCompressed))
+    {
+        std::filesystem::remove(saveFileCompressed);
+    }
+}
+
+void SaveData::MarkNewGameOk()
+{
+    save_ok = (!std::filesystem::exists(saveFilePlain) && !std::filesystem::exists(saveFileCompressed));
 }
 
 //TODO: gzip save data to reduce file size

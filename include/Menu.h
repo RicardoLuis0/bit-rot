@@ -25,7 +25,22 @@ namespace Menu
     
     void DrawHalfLine(int x, int y, int width, char start, char mid, char prop = 0);
     
-    int DrawButton(int x_center, int y_center, int min_width, std::string_view text, bool highlight);
+    int DrawButton(int x, int y, int min_width, std::string_view text, bool highlight); //, bool center_x = true, bool center_y = true);
     
     void DrawMenuItemButton(bool selected, int &y, std::string_view text);
+    /*
+    template<Util::ContainerConvertibleTo<std::string_view> L>
+    void DrawMenuItemButtonRow(int selected, int &y, L texts)
+    {
+        int width = 0;
+        std::vector<int> sizes;
+        for(std::string_view text : texts)
+        {
+            int size = std::max<int>(min_width, text.size() + 4);
+            sizes.push_back(size);
+            width += size + 1;
+        }
+        width -= 1;
+    }
+    */
 }

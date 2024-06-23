@@ -301,6 +301,7 @@ void Game::ToGame()
         AddConsoleLine("");
         AddConsoleLine("  Type 'HELP' for help");
         AddConsoleLine("");
+        SaveData::MarkNewGameOk();
     }
 }
 

@@ -16,43 +16,92 @@ extern bool RunGame;
 int numMainMenuItems = 3;
 int currentMainMenuItem = 0;
 
+bool showSecondNewGamePopup = false;
+int numMainMenuPopupItems = 3;
+int currentMainMenuPopupItem = 2;
+
 void Menu::MainMenuResponder(SDL_Event *e)
 {
-    switch(e->type)
+    if(e->type == SDL_KEYDOWN)
     {
-    case SDL_KEYDOWN:
-        if(e->key == SDLK_UP)
+        if(showSecondNewGamePopup)
         {
-            Renderer::ResetTimer();
-            currentMainMenuItem--;
-            if(currentMainMenuItem < (SaveData::HasSave() ? -1 : 0)) currentMainMenuItem = (numMainMenuItems - 1);
-        }
-        else if(e->key == SDLK_DOWN)
-        {
-            Renderer::ResetTimer();
-            currentMainMenuItem++;
-            if(currentMainMenuItem >= numMainMenuItems) currentMainMenuItem = SaveData::HasSave() ? -1 : 0;
-        }
-        else if(e->key == SDLK_RETURN)
-        {
-            switch(currentMainMenuItem)
+            if(e->key == SDLK_UP)
             {
-            case -1: // continue
-                Game::DoLoad();
-                Game::ToIntro();
-                break;
-            case 0: // new game
-                Game::ToIntro();
-                break;
-            case 1: // settings
-                currentScreen = 1;
-                break;
-            case 2: // quit
-                RunGame = false;
-                break;
+                Renderer::ResetTimer();
+                currentMainMenuPopupItem--;
+                if(currentMainMenuPopupItem < 0) currentMainMenuPopupItem = (numMainMenuPopupItems - 1);
+            }
+            else if(e->key == SDLK_DOWN)
+            {
+                Renderer::ResetTimer();
+                currentMainMenuPopupItem = (currentMainMenuPopupItem + 1) % numMainMenuPopupItems;
+            }
+            else if(e->key == SDLK_RETURN)
+            {
+                switch(currentMainMenuPopupItem)
+                {
+                case 0: // first intro
+                    Config::setString("SawIntro1", "no");
+                    Game::ToIntro();
+                    break;
+                case 1: // new game
+                    Config::setString("SawIntro1", "yes");
+                    Game::ToIntro();
+                    break;
+                case 2: // quit
+                    showSecondNewGamePopup = false;
+                    break;
+                }
+            }
+            else if(e->key == SDLK_ESCAPE)
+            {
+                showSecondNewGamePopup = false;
             }
         }
-        break;
+        else
+        {
+            if(e->key == SDLK_UP)
+            {
+                Renderer::ResetTimer();
+                currentMainMenuItem--;
+                if(currentMainMenuItem < (SaveData::HasSave() ? -1 : 0)) currentMainMenuItem = (numMainMenuItems - 1);
+            }
+            else if(e->key == SDLK_DOWN)
+            {
+                Renderer::ResetTimer();
+                currentMainMenuItem++;
+                if(currentMainMenuItem >= numMainMenuItems) currentMainMenuItem = SaveData::HasSave() ? -1 : 0;
+            }
+            else if(e->key == SDLK_RETURN)
+            {
+                switch(currentMainMenuItem)
+                {
+                case -1: // continue
+                    Game::DoLoad();
+                    Game::ToIntro();
+                    break;
+                case 0: // new game
+                    if(SaveData::HasSave())
+                    {
+                        Renderer::ResetTimer();
+                        showSecondNewGamePopup = true;
+                        currentMainMenuPopupItem = 2;
+                    }
+                    else
+                    {
+                        Game::ToIntro();
+                    }
+                    break;
+                case 1: // settings
+                    currentScreen = 1;
+                    break;
+                case 2: // quit
+                    RunGame = false;
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -75,5 +124,18 @@ void Menu::DrawMainMenu()
     
     DrawMenuItemButton(currentMainMenuItem == 1, y, "Settings");
     DrawMenuItemButton(currentMainMenuItem == 2, y, "Quit");
+    
+    if(showSecondNewGamePopup)
+    {
+        Renderer::DrawClear(10, 11, 60, 20);
+        Menu::DrawBorderSingle(0, 10, 11, 60, 20);
+        Renderer::DrawLineTextCentered(13, "Start a New Game? Current Progress will be Erased.");
+        
+        int y = 18;
+        
+        DrawMenuItemButton(currentMainMenuPopupItem == 0, y, "New Game");
+        DrawMenuItemButton(currentMainMenuPopupItem == 1, y, "Skip First Intro");
+        DrawMenuItemButton(currentMainMenuPopupItem == 2, y, "Cancel");
+    }
 }
 
