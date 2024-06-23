@@ -21,9 +21,14 @@
 
 #include "SDL2/SDL.h"
 
+
 #include "SDL_mixer.h"
 #include "mixer.h"
 #include "music.h"
+
+unsigned long long Custom_GetTics();
+
+#define SDL_GetTics Custom_GetTics
 
 #define MIX_INTERNAL_EFFECT__
 #include "effects_internal.h"

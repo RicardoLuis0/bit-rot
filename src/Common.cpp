@@ -1,6 +1,7 @@
 #include "Common.h"
 #include "Bitmap.h"
 
+#include <bit>
 #include <fstream>
 #include <sstream>
 #include <cstring>
@@ -124,11 +125,6 @@ namespace Util
     catch(std::exception &e)
     {
         throw std::runtime_error("Failed to open/write file "+Util::QuoteString(filename)+" : "+e.what());
-    }
-    
-    uint64_t MsTime()
-    {
-        return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
     }
     
     std::vector<std::string_view> SplitLines(std::string_view text, uint32_t maxWidth)
@@ -380,5 +376,41 @@ namespace Util
         }
         buf.resize(realLen);
         return buf;
+    }
+}
+
+#ifdef _WIN32
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+#endif
+
+namespace Util
+{
+    bool hasFreq = false;
+    uint64_t PerformanceFreq;
+    uint64_t MsTime()
+    {
+        #ifdef _WIN32
+            LARGE_INTEGER i;
+            if(hasFreq)
+            {
+                QueryPerformanceCounter(&i);
+                return std::bit_cast<uint64_t>(i.QuadPart) / PerformanceFreq;
+            }
+            else
+            {
+                QueryPerformanceFrequency(&i);
+                PerformanceFreq = std::bit_cast<uint64_t>(i.QuadPart) / 1000;
+                hasFreq = true;
+                return MsTime();
+            }
+        #else
+            return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
+        #endif
+    }
+    
+    extern "C" uint64_t Custom_GetTics()
+    {
+        return MsTime();
     }
 }
