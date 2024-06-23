@@ -1,5 +1,6 @@
 #include "SaveData.h"
 #include "Json.h"
+#include "Config.h"
 
 #include <filesystem>
 
@@ -63,11 +64,14 @@ void SaveData::Quit()
 {
     if(save_ok)
     {
-        #ifdef DEBUG_BUILD
-            Util::WriteFile(saveFilePlain, saveData.to_json()); // don't save mininified in debug builds
-        #else
+        if(Config::getStringOr("CompressSaves", "yes") == "yes")
+        {
             Util::WriteFileBinary(saveFileCompressed, Util::Compress(saveData.to_json_min()));
-        #endif
+        }
+        else
+        {
+            Util::WriteFile(saveFilePlain, saveData.to_json());
+        }
     }
 }
 

@@ -161,6 +161,24 @@ struct : SettingItem
 
 struct : SettingItem
 {
+    virtual std::string_view getName() const override { return "Compress Saves"; }
+    virtual std::string getValue() const override { return std::string(Config::getStringOr("CompressSaves", "yes")); }
+    virtual void ToggleUp() override
+    {
+        if(Config::getStringOr("CompressSaves", "yes") == "yes")
+        {
+            Config::setString("CompressSaves", "no");
+        }
+        else
+        {
+            Config::setString("CompressSaves", "yes");
+        }
+    }
+    virtual void ToggleDown() override { ToggleUp(); }
+} CompressSavesSetting;
+
+struct : SettingItem
+{
     virtual std::string_view getName() const override { return "Global Volume"; }
     virtual std::string getValue() const override { return std::to_string(Config::getIntOr("Volume", DefaultGlobalVolume)); }
     
@@ -242,6 +260,7 @@ std::vector<SettingItem*> settings
     &VolumeSetting,
     &VolumeSoundSetting,
     &VolumeMusicSetting,
+    &CompressSavesSetting,
 };
 
 void Menu::DrawSettingsMenu()
