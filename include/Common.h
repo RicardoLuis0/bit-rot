@@ -410,6 +410,19 @@ namespace Util
         return std::forward<R&&>(r);
     }
     
+    template<typename T, typename R, typename Fn>
+    auto Reduce(R &&r, Fn&& fn)
+    {
+        T v = {};
+        
+        for(auto &e:r)
+        {
+            v = fn(e, v);
+        }
+        
+        return v;
+    }
+    
     template<typename R, typename Fn>
     auto SortInplace(R &&r, Fn&& fn)
     {

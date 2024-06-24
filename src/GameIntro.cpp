@@ -56,6 +56,8 @@ uint32_t nextLineMs = 0;
 uint32_t nextLine = 0;
 uint32_t lineCountRecovery = 0;
 
+bool skipText = false;
+
 std::string message = "While rummaging through your childhood home's attic after your parents' passing, you found an old computer that you don't seem to have any recollection of.\n\n\n\nYou decided to dust it off, plug it in, and see if it works...";
 std::string message2 = "Press any key to continue";
 
@@ -103,7 +105,7 @@ void Game::IntroResponder(SDL_Event *e)
         Audio::StartFan();
         Audio::FadeMusic(1500);
     }
-    else if(GameIsSave && introStage > 1 && e->type == SDL_KEYDOWN && e->key == SDLK_ESCAPE)
+    else if(skipText && SaveData::HasSave() && introStage > 1 && e->type == SDL_KEYDOWN && e->key == SDLK_ESCAPE)
     {
         Renderer::HighRes();
         currentScreen = 4;
@@ -125,57 +127,58 @@ struct initTextLine
     std::string text;
     bool beep = false;
     bool recovery = true;
+    bool intro = true;
 };
 
 std::vector<initTextLine> initText
 {
-    {   0, ""},
-    { 750, "Initializing Memory"},
-    { 100, "  Detected: " MEMORY_MB_TXT " MB"},
-    { 100, "  Usable: 640 KB"},
-    { 500, "Checking CPU Info"},
-    { 100, "  CPU: Atel a892"},
-    { 500, "Calibrating Hardware Timers"},
-    { 500, "  Timer 0 - OK"},
-    { 100, "  Timer 1 - OK"},
-    {1000, "Calibrating Clock Speed"},
-    { 100, "  16MHz"},
-    { 100, "Checking Devices"},
-    { 500, "  Found:"},
-    { 500, "    Graphics - AGA  - 80x40, text-mode monochrome display adapter", true},
-    { 500, "    Audio    - AD0  - Beeper", true},
-    { 500, "    Audio    - AD1  - Sound Card", true},
-    { 500, "    Serial   - TTY0", true},
-    { 500, "    Serial   - TTY1", true},
-    { 500, "    Serial   - TTY2", true},
-    { 500, "    Network  - ETH0", true},
-    { 500, "    Drive    - FD0  - Floppy", true},
-    { 500, "    Drive    - FD1  - Floppy", true},
-    { 100, "    Drive    - SDA  - Disk", true},
-    { 100, "Checking Drives"},
-    { 500, "  FD0 - 1.44 MB - Empty"},
-    { 500, "  FD1 - 1.44 MB - Empty"},
-    { 100, "  SDA - 120 MB  - Boot Drive"},
-    { 100, "Detecting File Systems"},
-    { 100, "  FD0 - N/A"},
-    { 500, "  FD1 - N/A"},
-    { 100, "  SDA - THIN32"},
-    {1000, "Loading Kernel"},
-    { 100, "  RD-OS Version 6.66"},
-    {1000, "Loading Drivers"},
-    {1000, "  PowerMgmt.sys     - OK", true},
-    {1000, "  Display.sys       - OK - 80x40 text display", true},
-    {1000, "  Console.sys       - OK", true},
-    {1000, "  ExtMemory.sys     - OK - " MEMORY_MB_TXT " MB Ready", true},
-    {1000, "  SndBurst.sys      - OK", true},
-    {1000, "  Command.sys       - OK", true},
-    {1000, "  Mouse.sys         - OK - No mouse devices detected", true, false},
-    {1000, "  Printer.sys       - OK - No printer devices detected", true, false},
-    {1000, "  Network.sys       - OK - No network connection on ETH0", true, false},
-    {1000, "  666.sys           - ERROR", true, false},
-    {1000, "  666.sys           - OK", true},
-    {1000, "Recovery Mode Drivers Loaded OK", true, true},
-    {1000, "Entering Recovery Console", true, true},
+    {   0, "", false, true, true},
+    { 750, "Initializing Memory", false, true, true},
+    { 100, "  Detected: 16 MB", false, true, true},
+    { 100, "  Usable: 640 KB", false, true, true},
+    { 500, "Checking CPU Info", false, true, true},
+    { 100, "  CPU: Atel a892", false, true, true},
+    { 500, "Calibrating Hardware Timers", false, true, true},
+    { 500, "  Timer 0 - OK", false, true, true},
+    { 100, "  Timer 1 - OK", false, true, true},
+    {1000, "Calibrating Clock Speed", false, true, true},
+    { 100, "  16MHz", false, true, true},
+    { 100, "Checking Devices", false, true, true},
+    { 500, "  Found:", false, true, true},
+    { 500, "    Graphics - AGA  - 80x40, text-mode monochrome display adapter", true, true, true},
+    { 500, "    Audio    - AD0  - Beeper", true, true, true},
+    { 500, "    Audio    - AD1  - Sound Card", true, true, true},
+    { 500, "    Serial   - TTY0", true, true, true},
+    { 500, "    Serial   - TTY1", true, true, true},
+    { 500, "    Serial   - TTY2", true, true, true},
+    { 500, "    Network  - ETH0", true, true, true},
+    { 500, "    Drive    - FD0  - Floppy", true, true, true},
+    { 500, "    Drive    - FD1  - Floppy", true, true, true},
+    { 100, "    Drive    - SDA  - Disk", true, true, true},
+    { 100, "Checking Drives", false, true, true},
+    { 500, "  FD0 - 1.44 MB - Empty", false, true, true},
+    { 500, "  FD1 - 1.44 MB - Empty", false, true, true},
+    { 100, "  SDA - 120 MB  - Boot Drive", false, true, true},
+    { 100, "Detecting File Systems", false, true, true},
+    { 100, "  FD0 - N/A", false, true, true},
+    { 500, "  FD1 - N/A", false, true, true},
+    { 100, "  SDA - THIN32", false, true, true},
+    {1000, "Loading Kernel", false, true, true},
+    { 100, "  RD-OS Version 6.66", false, true, true},
+    {1000, "Loading Drivers", false, true, true},
+    {1000, "  PowerMgmt.sys     - OK", true, true, true},
+    {1000, "  Display.sys       - OK - 80x40 text display", true, true, true},
+    {1000, "  Console.sys       - OK", true, true, true},
+    {1000, "  ExtMemory.sys     - OK - " MEMORY_MB_TXT " MB Ready", true, true, true},
+    {1000, "  SndBurst.sys      - OK", true, true, true},
+    {1000, "  Command.sys       - OK", true, true, true},
+    {1000, "  Mouse.sys         - OK - No mouse devices detected", true, false, true},
+    {1000, "  Printer.sys       - OK - No printer devices detected", true, false, true},
+    {1000, "  Network.sys       - OK - No network connection on ETH0", true, false, true},
+    {1000, "  666.sys           - ERROR", true, false, true},
+    {1000, "  666.sys           - OK", true, true, false},
+    {1000, "Recovery Mode Drivers Loaded OK", true, true, false},
+    {1000, "Entering Recovery Console", true, true, false},
 };
 
 void Game::TickEnd()
@@ -196,9 +199,13 @@ void Game::TickEnd()
     Renderer::DrawLineTextCentered(offsetY, end_message2);
 }
 
-uint32_t numRecoveryTexts = 3;
+uint32_t numRecoveryTexts = Util::Reduce<uint32_t>(initText,
+    [](const initTextLine& line, uint32_t acc)
+    {
+        return (line.intro) ? acc : acc + 1;
+    });
 
-static void DoIntroShared(bool skipText)
+static void DoIntroShared()
 {
     switch(introStage)
     {
@@ -240,7 +247,7 @@ static void DoIntroShared(bool skipText)
             {
                 Renderer::HighRes();
                 
-                if(Game::GameIsSave)
+                if(skipText && SaveData::HasSave())
                 {
                     Renderer::DrawLineTextCentered(39, "Press ESCAPE to Skip");
                     Renderer::DrawFillLineProp(0, 39, CHAR_BLINK3, 80);
@@ -250,7 +257,7 @@ static void DoIntroShared(bool skipText)
             {
                 Renderer::LowRes();
                 
-                if(Game::GameIsSave)
+                if(skipText && SaveData::HasSave())
                 {
                     Renderer::DrawLineTextCentered(24, "Press ESCAPE to Skip");
                     Renderer::DrawFillLineProp(0, 24, CHAR_BLINK3, 80);
@@ -297,7 +304,8 @@ static void DoIntro1()
     case 1:
     case 2:
     case 3:
-        DoIntroShared(false);
+        skipText = false;
+        DoIntroShared();
         break;
     case 4:
     case 5:
@@ -488,7 +496,8 @@ void DoIntro2()
     case 1:
     case 2:
     case 3:
-        DoIntroShared(true);
+        skipText = true;
+        DoIntroShared();
         break;
     case 4:
         if(Game::GameIsSave)

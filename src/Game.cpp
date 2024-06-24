@@ -278,7 +278,6 @@ void Game::ToGame()
                 }
                 else if(action.type == SaveData::UNLOCK)
                 {
-                    
                     if(e.hidden == ENCRYPTED && action.extra_info == e.password)
                     {
                         e.hidden = VISIBLE;
