@@ -175,6 +175,8 @@ extern std::map<std::vector<std::string>, program_help> programHelp;
 
 namespace Game
 {
+    void Init();
+    inline void Quit() {};
     
     extern std::string tempCommand;
     extern size_t tempCommandPos;
@@ -231,4 +233,6 @@ namespace Game
             AddConsoleLine(line.first, line.second);
         }
     }
+    
+    void LoadData();
 };

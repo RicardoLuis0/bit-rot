@@ -27,14 +27,15 @@ void Command::Read(const std::vector<std::string> &args)
     dir_entry * entry = nullptr;
     if(HasAccess(args[1], "READ", &filepath, &entry, TEXT, hide_type(uint8_t(VISIBLE) | uint8_t(CORRUPTED)), false) && entry)
     {
-        if(entry->hidden == CORRUPTED)
-        {
-            AddConsoleLine(textFilesCorrupted[filepath]);
-        }
-        else
-        {
-            AddConsoleLine(textFiles[filepath]);
-        }
+        Util::ForEach(
+            Util::SplitString(
+                (entry->hidden == CORRUPTED) ? textFilesCorrupted[filepath] : textFiles[filepath], '\n'
+            ),
+            [](const std::string &s)
+            {
+                AddConsoleLine(s);
+            }
+        );
     }
     AddConsoleLine("");
 }

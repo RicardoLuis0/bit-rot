@@ -60,7 +60,6 @@
 		<Unit filename="ComputerGame.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
-		<Unit filename="fx/frag.glsl" />
 		<Unit filename="fx/text.glsl" />
 		<Unit filename="fx/vertex.glsl" />
 		<Unit filename="include/Bitmap.h" />

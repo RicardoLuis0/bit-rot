@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Common.h"
+#include "Json.h"
 #include "Input.h"
 #include "Renderer.h"
 #include "SDL2Util.h"
@@ -10,45 +11,6 @@ using enum hide_type;
 
 std::string currentDrive = "C";
 std::string currentFolder = "\\";
-
-//names
-
-#define YOU "Sam"
-#define SISTER "Abigail"
-
-#define FATHER "Blair"
-#define MOTHER "Noelle"
-
-#define UNCLE "Kevin"
-#define UNCLE_NICKNAME "Kev"
-
-std::map<std::string, std::string> textFilesCorrupted
-{
-                              //"I think there's something wrong with this computer, "
-    {"\\HOME\\DOCS\\BROKEN", fixStringRand(U"_______   there's something wrong with   _____________, "
-                              //"ever since updating the OS, this weird driver started loading, '666.sys', "
-                                "ever since   _______________,   this   _______________________________________, "
-                              //"I can't find it on the '\\SYSTEM\\DRV\\' folder. I tried asking Kev if he knew more, " 
-                                "I can't   ______________   '\\SYSTEM\\DRV\\'   _________   tried asking   _________   knew   ______"
-                              //"but when i tried showing him, all he saw on the monitor was a blank screen..."
-                                "___  when i tried  ____________________________________________  blank screen...", U'_', 123)},
-};
-
-std::map<std::string, std::string> textFiles
-{
-    {"\\HOME\\DOCS\\BROKEN", "I think there's something wrong with this computer, "
-                 "ever since updating the   OS, this weird driver started loading, '666.sys'. "
-                 "I can't find it on the      '\\SYSTEM\\DRV\\' folder. I tried asking Kev if he knew more, "
-                 "but when i tried   showing him, all he saw on the monitor was a blank screen..."},
-                 
-    //{"\\DELETEME", ""},
-    {"\\HOME\\README", "If i've forgotten my passwords, here's a hint: birthday DDMMYY"},
-    {"\\HOME\\DOCS\\DATES", "Me - 24/07/67                                                                 "
-                            "Noelle - 08/02/65                                                             "
-                            "Abigail - 14/04/89                                                            "
-    },
-    {"\\HOME\\SENSITIVE\\IF_YOU_FOUND_THIS", "If you found this computer, please destroy it, i couldn't bear to             do it myself..."},
-};
 
 std::map<std::string, CommandProc> programs
 {
@@ -82,68 +44,114 @@ std::map<std::vector<std::string>, program_help> programHelp
     {{"666"}, program_help::hide({stringRand("________________________________________________________________________________________________________________________________________", '_', 819), stringRand("_________________", '_', 820)})},
 };
 
-std::map<std::string, std::map<std::string, std::map<std::string, dir_entry>>> directories
+std::map<std::string, std::map<std::string, std::map<std::string, dir_entry>>> directories;
+
+std::string JoinText(JSON::Element e)
 {
-    {"C", {
-        {"\\", {
-            {"SYSTEM", {"SYSTEM", FOLDER}},
-            {"BIN", {"BIN", FOLDER}},
-            {"HOME", {"HOME", FOLDER}},
-            //{"DELETEME", {"DELETEME", TEXT, DELETED}},
-        }},
-        {"\\SYSTEM\\",{
-            {"OS", {"OS", FOLDER, FORBIDDEN}},
-            {"CFG", {"CFG", FOLDER, FORBIDDEN}},
-            {"DRV", {"DRV", FOLDER}},
-        }},
-        {"\\SYSTEM\\OS\\",{
-            
-        }},
-        {"\\SYSTEM\\CFG\\",{
-            
-        }},
-        {"\\SYSTEM\\DRV\\",{
-            {"PowerMgmt",{"PowerMgmt", DRIVER}},
-            {"Display",{"Display", DRIVER}},
-            {"Console",{"Console", DRIVER}},
-            {"ExtMemory",{"ExtMemory", DRIVER}},
-            {"SndBurst",{"SndBurst", DRIVER}},
-            {"Command",{"Command", DRIVER}},
-            {"Mouse",{"Mouse", DRIVER}},
-            {"Printer",{"Printer", DRIVER}},
-            {"Network",{"Network", DRIVER}},
-            //{"666",{"666", DRIVER, HIDDEN}},
-            {"666",{"666", PROGRAM, DELETED}},
-        }},
-        {"\\BIN\\",{
-            {"CD", {"CD", PROGRAM}},
-            {"CLS", {"CLS", PROGRAM_ALIAS}},
-            {"CLEAR", {"CLEAR", PROGRAM}},
-            {"DIR", {"DIR", PROGRAM_ALIAS}},
-            {"LS", {"LS", PROGRAM}},
-            {"HELP", {"HELP", PROGRAM}},
-            //{"MAN", {"MAN", PROGRAM}},
-            {"READ", {"READ", PROGRAM_ALIAS}},
-            {"CAT", {"CAT", PROGRAM}},
-            {"INSTALL", {"INSTALL", PROGRAM}},
-            {"EXIT", {"EXIT", PROGRAM}},
-            //{"UNLOCK", {"UNLOCK", PROGRAM}},
-            //{"RECOVERY", {"RECOVERY", PROGRAM}},
-            //{"DECRYPT", {"DECRYPT", PROGRAM}},
-        }},
-        {"\\HOME\\",{
-            {"DOCS", {"DOCS", FOLDER}},
-            {"SENSITIVE", {"SENSITIVE", FOLDER, ENCRYPTED, "140489"}},
-            {"README", {"README", TEXT}},
-        }},
-        {"\\HOME\\DOCS\\",{
-            {"BROKEN", {"BROKEN", TEXT, CORRUPTED}},
-            {"DATES", {"DATES", TEXT}},
-            {"UNLOCK", {"UNLOCK", PROGRAM}},
-        }},
-        {"\\HOME\\SENSITIVE\\",{
-            {"IF_YOU_FOUND_THIS", {"IF_YOU_FOUND_THIS", TEXT}},
-            {"RECOVERY", {"RECOVERY", PROGRAM}},
-        }},
-    }},
+    if(e.is_arr())
+    {
+        return Util::Join(Util::Map(e.get_arr(), &JoinText), "");
+    }
+    else
+    {
+        return e.get_str();
+    }
+}
+
+std::map<std::string, std::string> textFilesCorrupted;
+std::map<std::string, std::string> textFiles;
+
+std::map<std::string, dir_entry_type> dir_entry_types
+{
+    {"FOLDER",FOLDER},
+    {"TEXT", TEXT},
+    {"DATA", DATA},
+    {"PROGRAM", PROGRAM},
+    {"PROGRAM_ALIAS", PROGRAM_ALIAS},
+    {"DRIVER", DRIVER},
 };
+std::map<std::string, hide_type> hide_types
+{
+    {"VISIBLE", VISIBLE},
+    {"CORRUPTED", CORRUPTED},
+    //{"ENCRYPTED", ENCRYPTED},
+    {"DELETED", DELETED},
+    {"HIDDEN", HIDDEN},
+    {"FORBIDDEN", FORBIDDEN},
+};
+
+void Game::LoadData()
+{
+    std::string texts = Util::ReadFile("GameData/data.json");
+    JSON::Element e = JSON::Parse(texts);
+    
+    JSON::Element corruptedfiles = e["CorruptedTextFiles"];
+    int corruptedseed = 123;
+    for(auto &pair : corruptedfiles.get_obj())
+    {
+        textFilesCorrupted[pair.first] = stringRand(JoinText(pair.second), '_', corruptedseed++);
+    }
+    
+    JSON::Element files = e["TextFiles"];
+    for(auto &pair : files.get_obj())
+    {
+        textFiles[pair.first] = JoinText(pair.second);
+    }
+    
+    JSON::Element drives = e["Drives"];
+    
+    for(auto &drive : drives.get_obj())
+    {
+        std::map<std::string, std::map<std::string, dir_entry>> dirs = {};
+        
+        for(auto &folder : drive.second.get_obj())
+        {
+            std::map<std::string, dir_entry> entries;
+            for(auto &files : folder.second.get_obj())
+            {
+                auto &arr = files.second.get_arr();
+                switch(arr.size())
+                {
+                case 2:
+                    //type
+                    if(!dir_entry_types.contains(arr[1].get_str()))
+                    {
+                        throw std::runtime_error("Invalid directory type in data.json");//TODO improve error
+                    }
+                    entries.emplace(std::pair{files.first, dir_entry(arr[0].get_str(), dir_entry_types[arr[1].get_str()])});
+                    break;
+                case 3:
+                    //type + attr
+                    if(!dir_entry_types.contains(arr[1].get_str()))
+                    {
+                        throw std::runtime_error("Invalid directory type in data.json");//TODO improve error
+                    }
+                    if(!hide_types.contains(arr[2].get_str()))
+                    {
+                        throw std::runtime_error("Invalid directory attribute in data.json");//TODO improve error
+                    }
+                    entries.emplace(std::pair{files.first, dir_entry(arr[0].get_str(), dir_entry_types[arr[1].get_str()], hide_types[arr[2].get_str()])});
+                    break;
+                case 4:
+                    //type + encrypted attr + pass
+                    if(!dir_entry_types.contains(arr[1].get_str()))
+                    {
+                        throw std::runtime_error("Invalid directory type in data.json");//TODO improve error
+                    }
+                    if(arr[2].get_str() == "ENCRYPTED")
+                    {
+                        entries.emplace(std::pair{files.first, dir_entry(arr[0].get_str(), dir_entry_types[arr[1].get_str()], ENCRYPTED, arr[3].get_str())});
+                        break;
+                    }
+                    [[fallthrough]];
+                default:
+                    throw std::runtime_error("Invalid parameter count for directory in data.json");
+                }
+            }
+            dirs.emplace(std::pair{folder.first, std::move(entries)});
+        }
+        
+        directories.emplace(std::pair{drive.first, std::move(dirs)});
+        
+    }
+}

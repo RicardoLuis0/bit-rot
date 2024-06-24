@@ -56,6 +56,7 @@ int doGame()
                 UseSubsystem(Audio);
                 UseSubsystem(SaveData);
                 UseSubsystem(Menu);
+                UseSubsystem(Game);
                 
                 LogDebug("Starting Main Loop");
                 

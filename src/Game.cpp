@@ -35,6 +35,11 @@ namespace Game
     bool GameIsSave = false;
 }
 
+void Game::Init()
+{
+    LoadData();
+}
+
 std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string path)
 {
     auto entries = directories[drive].find(path);

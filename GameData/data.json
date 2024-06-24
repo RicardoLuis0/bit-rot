@@ -1,0 +1,98 @@
+/*
+BASIC INFO, SUBJECT TO CHANGE
+
+YOU = Sam
+
+SISTER = Abigail
+FATHER = Blair
+MOTHER = Noelle
+
+UNCLE = Kevin, NICKNAME = Kev
+*/
+
+{
+    "CorruptedTextFiles":
+    {
+        "\\HOME\\DOCS\\BROKEN": ["_______   there's something wrong with   _____________, ",
+                                 "ever since   _______________,   this   _______________________________________, ",
+                                 "I can't   ______________   '\\SYSTEM\\DRV\\'   _________   tried asking   _________   knew   ______",
+                                 "___  when i tried  ____________________________________________  blank screen..."],
+    },
+    "TextFiles":
+    {
+        "\\HOME\\DOCS\\BROKEN": ["I think there's something wrong with this computer, ever since updating the\n",
+                                 "OS, this weird driver started loading, '666.sys'. I can't find it on the\n",
+                                 "'\\SYSTEM\\DRV\\' folder. I tried asking Kev if he knew more, but when i tried\n",
+                                 "showing him, all he saw on the monitor was a blank screen..."],
+        "\\HOME\\README": "If i've forgotten my passwords, here's a hint: birthday DDMMYY",
+        "\\HOME\\DOCS\\DATES": ["Me - 24/07/67\n",
+                                "Noelle - 08/02/65\n",
+                                "Abigail - 14/04/89\n"],
+        "\\HOME\\SENSITIVE\\IF_YOU_FOUND_THIS": "If you found this computer, please destroy it, i couldn't bear to\ndo it myself...",
+    },
+    "Drives":
+    {
+        "C":
+        {
+            "\\":
+            {
+                "SYSTEM": ["SYSTEM", "FOLDER"],
+                "BIN": ["BIN", "FOLDER"],
+                "HOME": ["HOME", "FOLDER"],
+                //"DELETEME": ["DELETEME", "TEXT", "DELETED"],
+            },
+            "\\SYSTEM\\":
+            {
+                "OS": ["OS", "FOLDER", "FORBIDDEN"],
+                "CFG": ["CFG", "FOLDER", "FORBIDDEN"],
+                "DRV": ["DRV", "FOLDER"],
+            },
+            "\\SYSTEM\\OS\\":{},
+            "\\SYSTEM\\CFG\\":{},
+            "\\SYSTEM\\DRV\\":
+            {
+                "PowerMgmt": ["PowerMgmt", "DRIVER"],
+                "Display": ["Display", "DRIVER"],
+                "Console": ["Console", "DRIVER"],
+                "ExtMemory": ["ExtMemory", "DRIVER"],
+                "SndBurst": ["SndBurst", "DRIVER"],
+                "Command": ["Command", "DRIVER"],
+                "Mouse": ["Mouse", "DRIVER"],
+                "Printer": ["Printer", "DRIVER"],
+                "Network": ["Network", "DRIVER"],
+                //"666": ["666", "DRIVER", "HIDDEN"],
+                "666": ["666", "PROGRAM", "DELETED"],
+            },
+            "\\BIN\\":
+            {
+                "CD": ["CD", "PROGRAM"],
+                "CLS": ["CLS", "PROGRAM_ALIAS"],
+                "CLEAR": ["CLEAR", "PROGRAM"],
+                "DIR": ["DIR", "PROGRAM_ALIAS"],
+                "LS": ["LS", "PROGRAM"],
+                "HELP": ["HELP", "PROGRAM"],
+                "READ": ["READ", "PROGRAM_ALIAS"],
+                "CAT": ["CAT", "PROGRAM"],
+                "INSTALL": ["INSTALL", "PROGRAM"],
+                "EXIT": ["EXIT", "PROGRAM"],
+            },
+            "\\HOME\\":
+            {
+                "DOCS": ["DOCS", "FOLDER"],
+                "SENSITIVE": ["SENSITIVE", "FOLDER", "ENCRYPTED", "140489"],
+                "README": ["README", "TEXT"],
+            },
+            "\\HOME\\DOCS\\":
+            {
+                "BROKEN": ["BROKEN", "TEXT", "CORRUPTED"],
+                "DATES": ["DATES", "TEXT"],
+                "UNLOCK": ["UNLOCK", "PROGRAM"],
+            },
+            "\\HOME\\SENSITIVE\\":
+            {
+                "IF_YOU_FOUND_THIS": ["IF_YOU_FOUND_THIS", "TEXT"],
+                "RECOVERY": ["RECOVERY", "PROGRAM"],
+            },
+        }
+    }
+}
