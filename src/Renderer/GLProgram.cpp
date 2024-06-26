@@ -70,8 +70,8 @@ namespace Renderer
     
     void GLProgram::CompileAndLink(const std::string &programName, const std::string &vertexFilename, const std::string &fragmentFilename)
     {
-        std::string vertexFilePath = "fx/"+vertexFilename;
-        std::string fragmentFilePath = "fx/"+fragmentFilename;
+        std::string vertexFilePath = "Fx/" + vertexFilename;
+        std::string fragmentFilePath = "Fx/" + fragmentFilename;
         
         GLuint vertexShader = 0;
         GLuint fragShader = 0;
