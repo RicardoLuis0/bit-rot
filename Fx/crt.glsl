@@ -44,11 +44,7 @@ void main()
         b
     )*edge.x*edge.y;
     
-    float yfrac = mod(crtUV.y * frameBufferResolution.y, 1.);
+    float yfrac = mod(crtUV2.y * frameBufferResolution.y, 1.);
     
-    //lines
-    //fragColor.rgb*=.2 + float(mod(crtUV.y * iResolution.y, 2.)>=1.);
     fragColor.rgb*=0.4 + float(yfrac > 0.25 && yfrac < 0.75) * 0.8;
-    //else fragColor.rgb*=1.2;
-    
 }
