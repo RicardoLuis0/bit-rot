@@ -141,7 +141,86 @@ void Renderer::SetVSync(std::string_view VSync)
     Config::setString("VSync", VSync);
 }
 
+bool firstCompile = true;
 
+
+
+void Renderer::Compile()
+{
+    vertexShaderCache.clear();
+    fragShaderCache.clear();
+    
+    phosphorProgram.CompileAndLink("phosphor", "vertex.glsl", "phosphor.glsl");
+    crtProgram.CompileAndLink("crt", "vertex.glsl", "crt.glsl");
+    bloomProgram.CompileAndLink("bloom", "vertex.glsl", "bloom.glsl");
+    textDrawer.CompileAndLink("textDrawer", "vertex.glsl", "text.glsl");
+    
+    textDrawer.setInt(0, 0);
+    textDrawer.setFloat(1, 1.0, 0.0, 1.0, 1.0);
+    
+    phosphorProgram.setInt(0, 0);
+    
+    crtProgram.setInt(1, window_width, window_height);
+    crtProgram.setInt(0, 0);
+    crtProgram.setInt(3, 8 * max_screen_width, 8 *max_screen_height); // fake out 8-width chars for CRT shader, looks bad otherwise for high-res fonts
+    SetTextColor(Config::getEnumOr("TextColor", textColorNames, ETextColor::AMBER));
+    
+    bloomProgram.setInt(1, window_width, window_height);
+    bloomProgram.setInt(0, 0);
+    
+    LogDebug(firstCompile ? "Shaders Compiled" : "Shaders Recompiled");
+    
+    {
+        
+        TextInfo tmp2 = {};
+        
+        tmp2.screen_width = max_screen_width;
+        tmp2.screen_height = max_screen_height;
+        
+        uint32_t w, h;
+        
+        auto &fnt = Font::getSelectedFont(w, h, tmp2.char_height, tmp2.char_width, tmp2.font_width, tmp2.font_height);
+        
+        fontTexture.LoadRGBA8(fnt.data(), w, h);
+        
+        LogDebug(firstCompile ? "Text Font Loaded" : "Text Font Reloaded");
+        
+        textBuffer.Init(&tmp2);
+        
+        textBufferData = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBuffer.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
+        
+        glCheckErrors();
+        SetTextColor(Config::getEnumOr("TextColor", textColorNames, ETextColor::AMBER));
+        
+        glCheckErrorsDebug();
+        
+        LogDebug(firstCompile ? "Text Info Loaded" : "Text Info Reloaded");
+    }
+    
+    textFrameBuffer.Init(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
+    textFrameBuffer2.Init(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
+    frameBuffer.Init(window_width, window_height);
+    
+    mainArea.Gen(std::array { &crtProgram, &bloomProgram } ,-1.0, -1.0, 1.0, 1.0);
+    
+    textArea.Gen(std::array { &textDrawer, &phosphorProgram } , -1.0, -1.0, 1.0, 1.0);
+    
+    LogDebug(firstCompile ? "Geometry Generated" : "Geometry Regenerated");
+    
+    textArea.addUBO(&textBuffer);
+    textArea.addTexture(std::array { &fontTexture, &textFrameBuffer.colorTexture });
+    mainArea.addTexture(std::array { &textFrameBuffer2.colorTexture, &frameBuffer.colorTexture });
+    
+    for(size_t i = 0; i < numPhosphorBuffers; i++)
+    {
+        phosphorBuffers[i].InitNew(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
+        textArea.addTexture(std::array { (GLTexture*)nullptr, phosphorBuffers + i });
+    }
+    
+    LogDebug(firstCompile ? "Framebuffer Generated" : "Framebuffer Regenerated");
+    
+    firstCompile = false;
+}
 
 void Renderer::Init()
 {
@@ -184,76 +263,11 @@ void Renderer::Init()
     
     LogDebug("GLEW Initialized");
     
-    phosphorProgram.CompileAndLink("phosphor", "vertex.glsl", "phosphor.glsl");
-    crtProgram.CompileAndLink("crt", "vertex.glsl", "crt.glsl");
-    crtProgram.setInt(1, window_width, window_height);
-    bloomProgram.CompileAndLink("bloom", "vertex.glsl", "bloom.glsl");
-    bloomProgram.setInt(1, window_width, window_height);
     
-    textDrawer.CompileAndLink("textDrawer", "vertex.glsl", "text.glsl");
     
-    // textures
-    textDrawer.setInt(0, 0);
+    Compile();
     
-    phosphorProgram.setInt(0, 0);
     
-    //phosphorProgram.setFloat(1, 0.5);
-    
-    crtProgram.setInt(0, 0);
-    bloomProgram.setInt(0, 0);
-    
-    LogDebug("Shaders Compiled");
-    
-    mainArea.Gen(std::array { &crtProgram, &bloomProgram } ,-1.0, -1.0, 1.0, 1.0);
-    
-    textArea.Gen(std::array { &textDrawer, &phosphorProgram } , -1.0, -1.0, 1.0, 1.0);
-    
-    LogDebug("Geometry Generated");
-    
-    {
-        
-        TextInfo tmp2 = {};
-        
-        tmp2.screen_width = max_screen_width;
-        tmp2.screen_height = max_screen_height;
-        
-        uint32_t w, h;
-        
-        auto &fnt = Font::getSelectedFont(w, h, tmp2.char_height, tmp2.char_width, tmp2.font_width, tmp2.font_height);
-        
-        fontTexture.LoadRGBA8(fnt.data(), w, h);
-        
-        LogDebug("Text Font Loaded");
-        
-        textBuffer.Init(&tmp2);
-        
-        textBufferData = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBuffer.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
-        
-        textArea.addUBO(&textBuffer);
-        
-        glCheckErrors();
-        SetTextColor(Config::getEnumOr("TextColor", textColorNames, ETextColor::AMBER));
-        
-        LogDebug("Text Info Loaded");
-    }
-    
-    textFrameBuffer.Init(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
-    textFrameBuffer2.Init(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
-    frameBuffer.Init(window_width, window_height);
-    
-    crtProgram.setInt(3, 8 * max_screen_width, 8 *max_screen_height); // fake out 8-width chars for CRT shader, looks bad otherwise for high-res fonts
-    //crtProgram.setInt(3, textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
-    
-    textArea.addTexture(std::array { &fontTexture, &textFrameBuffer.colorTexture });
-    mainArea.addTexture(std::array { &textFrameBuffer2.colorTexture, &frameBuffer.colorTexture });
-    
-    for(size_t i = 0; i < numPhosphorBuffers; i++)
-    {
-        phosphorBuffers[i].InitNew(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
-        textArea.addTexture(std::array { (GLTexture*)nullptr, phosphorBuffers + i });
-    }
-    
-    LogDebug("Framebuffer Generated");
     
     glCheckErrors();
     
@@ -525,7 +539,7 @@ void Renderer::SetTextColor(ETextColor color)
     
     currentTextColor = color;
     float *c = textColors[uint8_t(color)];
-    textDrawer.setFloat(6, c[0], c[1], c[2], c[3]);
+    if(textDrawer.program) textDrawer.setFloat(6, c[0], c[1], c[2], c[3]);
     Config::setEnum("TextColor", textColorNames, color);
 }
 

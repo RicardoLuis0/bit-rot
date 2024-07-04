@@ -65,8 +65,11 @@ static void LoadShader(GLuint shader, const std::string &source)
 
 namespace Renderer
 {
-    std::map<std::string, GLuint> vertexShaderCache;
-    std::map<std::string, GLuint> fragShaderCache;
+    namespace Internal
+    {
+        std::map<std::string, GLuint> vertexShaderCache;
+        std::map<std::string, GLuint> fragShaderCache;
+    }
     
     void GLProgram::CompileAndLink(const std::string &programName, const std::string &vertexFilename, const std::string &fragmentFilename)
     {

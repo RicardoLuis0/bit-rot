@@ -58,6 +58,10 @@ void Menu::MainMenuResponder(SDL_Event *e)
             {
                 showSecondNewGamePopup = false;
             }
+            else if(e->key == SDLK_r)
+            {
+                Renderer::Compile();
+            }
         }
         else
         {
@@ -100,6 +104,10 @@ void Menu::MainMenuResponder(SDL_Event *e)
                     RunGame = false;
                     break;
                 }
+            }
+            else if(e->key == SDLK_r)
+            {
+                Renderer::Compile();
             }
         }
     }

@@ -74,7 +74,8 @@ namespace Renderer
             float x1 = -1.0,
             float y1 = -1.0,
             float x2 =  1.0,
-            float y2 =  1.0
+            float y2 =  1.0,
+            bool doClear = true
         );
         
         void Gen(

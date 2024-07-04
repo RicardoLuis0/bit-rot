@@ -52,6 +52,10 @@ void Menu::PauseMenuResponder(SDL_Event *e)
                 break;
             }
         }
+        else if(e->key == SDLK_r)
+        {
+            Renderer::Compile();
+        }
         break;
     }
 }

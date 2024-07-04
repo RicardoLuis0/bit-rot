@@ -143,4 +143,5 @@ namespace Renderer
     }
     
     void ResetTimer();
+    void Compile();
 }

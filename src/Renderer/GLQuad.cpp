@@ -7,7 +7,7 @@ using namespace Renderer::Internal;
 
 namespace Renderer
 {
-    void GLQuad::Gen(float x1, float y1, float x2, float y2)
+    void GLQuad::Gen(float x1, float y1, float x2, float y2, bool doClear)
     {
         GLfloat verts[] =
         {
@@ -20,6 +20,23 @@ namespace Renderer
             x1, y2,
             0.0, 1.0
         };
+        
+        if(VAO != 0)
+        {
+            glDeleteVertexArrays(1, &VAO);
+        }
+        
+        if(VBO != 0)
+        {
+            glDeleteBuffers(2, &VBO);
+        }
+        
+        if(doClear)
+        {
+            Programs.clear();
+            UniformBuffers.clear();
+            Textures.clear();
+        }
         
         GLuint indices[] = { 0, 1, 2, 3 };
         

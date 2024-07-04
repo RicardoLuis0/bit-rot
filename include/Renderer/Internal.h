@@ -8,11 +8,15 @@
 #include <SDL2/SDL_opengl.h>
 #include <GL/glu.h>
 #include <stdexcept>
+#include <map>
 
 namespace Renderer::Internal
 {
     extern uint32_t window_width;
     extern uint32_t window_height;
+    
+    extern std::map<std::string, GLuint> vertexShaderCache;
+    extern std::map<std::string, GLuint> fragShaderCache;
     
     inline std::string glErrMsg(GLenum err)
     {
