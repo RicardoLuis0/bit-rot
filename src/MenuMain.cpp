@@ -51,6 +51,7 @@ void Menu::MainMenuResponder(SDL_Event *e)
                     break;
                 case 2: // quit
                     showSecondNewGamePopup = false;
+                    Renderer::ResetTimer();
                     break;
                 }
             }

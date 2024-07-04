@@ -9,6 +9,7 @@ layout (location = 1) uniform ivec2 windowResolution;
 layout (location = 3) uniform ivec2 frameBufferResolution;
 
 #define CURVATURE 3.5
+#define SHRINK 0.01
 
 #define BLUR .021
 
@@ -23,13 +24,19 @@ void main()
     vec2 uv = texCoord;
     
     //curving
-    vec2 crtUV = uv * 2. - 1.;
-    vec2 offset = crtUV.yx / CURVATURE;
     
+    //center coords
+    vec2 crtUV = uv * 2. - 1.;
+    
+    //curve
+    vec2 offset = crtUV.yx / CURVATURE;
     crtUV += crtUV * offset * offset;
+    
+    //un-center coords
     crtUV = crtUV * .5 + .5;
     
-    vec2 crtUV2 = crtUV * 1.02 - 0.01;
+    // shrink
+    vec2 crtUV2 = crtUV * (1.0 + SHRINK + SHRINK) - SHRINK;
     
     vec2 edge=smoothstep(0., BLUR, crtUV)*(1.-smoothstep(1.-BLUR, 1., crtUV));
     
