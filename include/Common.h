@@ -3,6 +3,7 @@
 #include "Preprocessor.h"
 
 #include <type_traits>
+#include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <cstdarg>
@@ -10,6 +11,7 @@
 #include <span>
 #include <functional>
 #include <variant>
+#include <stdexcept>
 
 #include "Log.h"
 
@@ -246,6 +248,19 @@ inline consteval unsigned long long int operator"" _M(unsigned long long int n){
 inline consteval unsigned long long int operator"" _G(unsigned long long int n){
     return n*1024_M;
 }
+
+struct FatalError : std::runtime_error
+{
+    std::string trace;
+    
+    FatalError(const std::string &what) : runtime_error(what), trace(CaptureTrace()) {}
+    FatalError(const char *what) : runtime_error(what), trace(CaptureTrace()) {}
+    
+    FatalError(const std::string &what, int skip) : runtime_error(what), trace(CaptureTrace(skip)) {}
+    FatalError(const char *what, int skip) : runtime_error(what), trace(CaptureTrace(skip)) {}
+    
+    static std::string CaptureTrace(int skip = 0);
+};
 
 namespace Util
 {

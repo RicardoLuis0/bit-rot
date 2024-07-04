@@ -64,7 +64,7 @@ namespace JSON
             //TODO: replace it with something sensible
             //(i wrote this many years ago, before i knew better T.T)
             
-            if(i >= data.size()) throw std::runtime_error("Expected Number, got EOF");
+            if(i >= data.size()) throw JSON_Exception("Expected Number, got EOF");
             
             union
             {
@@ -142,11 +142,11 @@ namespace JSON
             {
                 if(data.size() >= i)
                 {
-                    throw std::runtime_error("Expected Number, got EOF");
+                    throw JSON_Exception("Expected Number, got EOF");
                 }
                 else
                 {
-                    throw std::runtime_error("Expected Number, got '"_s + data[i] + "' at pos " + std::to_string(i));
+                    throw JSON_Exception("Expected Number, got '"_s + data[i] + "' at pos " + std::to_string(i));
                 }
             }
             else if(is_double)
@@ -224,7 +224,7 @@ namespace JSON
         
         inline void expect_char(std::string_view data, size_t &i, char c)
         {
-            if(!is_char(data, i, c))  throw std::runtime_error("Expected " + QuoteChar(c) + ", got " + (i >= data.size() ? "EOF" : QuoteChar(data[i])+" at pos "+std::to_string(i)));
+            if(!is_char(data, i, c))  throw JSON_Exception("Expected " + QuoteChar(c) + ", got " + (i >= data.size() ? "EOF" : QuoteChar(data[i])+" at pos "+std::to_string(i)));
             i++;
         }
         
@@ -274,7 +274,7 @@ namespace JSON
                     n++;
                 }
             }
-            throw std::runtime_error("Expected '\"', got EOF");
+            throw JSON_Exception("Expected '\"', got EOF");
         }
         
         void skip_whitespace(std::string_view data, size_t &i)
@@ -351,7 +351,7 @@ namespace JSON
                     return v;
                 }
             }
-            throw std::runtime_error("Expected ']', got EOF");
+            throw JSON_Exception("Expected ']', got EOF");
         }
         
         object_t get_object(std::string_view data, size_t &i)
@@ -400,13 +400,13 @@ namespace JSON
                     return m;
                 }
             }
-            throw std::runtime_error("Expected '}', got EOF");
+            throw JSON_Exception("Expected '}', got EOF");
         }
         
         Element get_element(std::string_view data, size_t &i)
         {
             skip_whitespace(data, i);
-            if(i >= data.size()) throw std::runtime_error("Expected JSON, got EOF");
+            if(i >= data.size()) throw JSON_Exception("Expected JSON, got EOF");
             switch(data[i])
             {
             case '[':
@@ -449,7 +449,7 @@ namespace JSON
                     return JSON_FALSE;
                 }
             }
-            throw std::runtime_error(std::string("Expected JSON, got '") + data[i] + "' at pos " + std::to_string(i));
+            throw JSON_Exception(std::string("Expected JSON, got '") + data[i] + "' at pos " + std::to_string(i));
         }
         
         inline std::string indent(size_t depth)

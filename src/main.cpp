@@ -107,6 +107,20 @@ int doGame()
                 }
             }
         }
+        catch(FatalError &e)
+        {
+            LogError(e.what());
+            Log::Disable();
+            if(e.trace != "")
+            {
+                Util::ShowFatalError("Fatal Error", e.what() + std::string("\n\nstacktrace:\n") + e.trace);
+            }
+            else
+            {
+                Util::ShowFatalError("Fatal Error", e.what());
+            }
+            return EXIT_FAILURE;
+        }
         catch(std::exception &e)
         {
             LogError(e.what());
@@ -114,6 +128,18 @@ int doGame()
             Util::ShowFatalError("Fatal Error", e.what());
             return EXIT_FAILURE;
         }
+    }
+    catch(FatalError &e)
+    {
+        if(e.trace != "")
+        {
+            Util::ShowFatalError("Fatal Error", e.what() + std::string("\n\nstacktrace:\n") + e.trace);
+        }
+        else
+        {
+            Util::ShowFatalError("Fatal Error", e.what());
+        }
+        return EXIT_FAILURE;
     }
     catch(std::exception &e)
     {

@@ -49,7 +49,7 @@ void chanDone(int chan)
     name = Mix_LoadMUS("Data/" #name ".ogg");\
     if(!name)\
     {\
-        throw std::runtime_error(errMsg());\
+        throw FatalError(errMsg());\
     }\
     LogDebug("'Data/" #name ".ogg' Loaded");
 
@@ -57,7 +57,7 @@ void chanDone(int chan)
     name = Mix_LoadWAV("Data/" #name ".wav");\
     if(!name)\
     {\
-        throw std::runtime_error(errMsg());\
+        throw FatalError(errMsg());\
     }\
     LogDebug("'Data/" #name ".wav' Loaded");
 
@@ -66,17 +66,17 @@ void Audio::Init()
 {
     if(Mix_Init(MIX_INIT_OGG) != MIX_INIT_OGG)
     {
-        throw std::runtime_error(errMsg()); // technically this should use Mix_GetError, but that's just a #define for SDL_GetError, so it's fine
+        throw FatalError(errMsg()); // technically this should use Mix_GetError, but that's just a #define for SDL_GetError, so it's fine
     }
     
     if(Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) != 0)
     {
-        throw std::runtime_error(errMsg());
+        throw FatalError(errMsg());
     }
     
     if(Mix_AllocateChannels(128) != 128)
     {
-        throw std::runtime_error(errMsg());
+        throw FatalError(errMsg());
     }
     
     LOADMUS(forest);

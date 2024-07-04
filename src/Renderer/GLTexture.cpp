@@ -16,15 +16,7 @@ namespace Renderer
         glCreateTextures(GL_TEXTURE_2D, 1, &index);
         glTextureStorage2D(index, 1, GL_RGBA8, width, height);
         
-        if(GLenum err = glGetError(); err != GL_NO_ERROR)
-        {
-            std::string msg = glErrMsg(err);
-            while((err = glGetError()) != GL_NO_ERROR)
-            {
-                msg += "\n" + glErrMsg(err);
-            }
-            throw std::runtime_error(msg);
-        }
+        glCheckErrors();
         
         glTextureParameteri(index, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTextureParameteri(index, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
@@ -32,15 +24,7 @@ namespace Renderer
         glTextureParameteri(index, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTextureParameteri(index, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         
-        if(GLenum err = glGetError(); err != GL_NO_ERROR)
-        {
-            std::string msg = glErrMsg(err);
-            while((err = glGetError()) != GL_NO_ERROR)
-            {
-                msg += "\n" + glErrMsg(err);
-            }
-            throw std::runtime_error(msg);
-        }
+        glCheckErrors();
     }
     
     void GLTexture::UpdateRGBA8(const uint32_t * data, uint32_t width, uint32_t height)
@@ -63,16 +47,7 @@ namespace Renderer
         glCreateTextures(GL_TEXTURE_2D, 1, &index);
         glTextureStorage2D(index, 1, GL_RGBA8, width, height);
         
-        
-        if(GLenum err = glGetError(); err != GL_NO_ERROR)
-        {
-            std::string msg = glErrMsg(err);
-            while((err = glGetError()) != GL_NO_ERROR)
-            {
-                msg += "\n" + glErrMsg(err);
-            }
-            throw std::runtime_error(msg);
-        }
+        glCheckErrors();
         
         glTextureSubImage2D(index, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, (const void*)data);
         

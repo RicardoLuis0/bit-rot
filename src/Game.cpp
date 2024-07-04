@@ -241,7 +241,7 @@ void Game::ToGame()
             {
                 if(programs.find(action.info) == programs.end())
                 {
-                    continue; //throw std::runtime_error("Bad Save Data");
+                    continue;
                 }
                 directories["C"]["\\BIN\\"].insert({action.info, {action.info, PROGRAM}});
             }
@@ -261,10 +261,10 @@ void Game::ToGame()
                     file = action.info.substr(split + 1);
                 }
                 auto entries = directories[currentDrive].find(path);
-                if(entries == directories[currentDrive].end()) continue; //throw std::runtime_error("Bad Save Data");
+                if(entries == directories[currentDrive].end()) continue;
                 
                 auto entry = directories[currentDrive][path].find(file);
-                if(entry == entries->second.end()) continue; //throw std::runtime_error("Bad Save Data");
+                if(entry == entries->second.end()) continue;
                 
                 auto &e = directories[currentDrive][path][file];
                 
@@ -274,12 +274,6 @@ void Game::ToGame()
                     {
                         e.hidden = VISIBLE;
                     }
-                    /*
-                    else
-                    {
-                        throw std::runtime_error("Bad Save Data");
-                    }
-                    */
                 }
                 else if(action.type == SaveData::UNLOCK)
                 {
@@ -287,12 +281,6 @@ void Game::ToGame()
                     {
                         e.hidden = VISIBLE;
                     }
-                    /*
-                    else
-                    {
-                        throw std::runtime_error("Bad Save Data");
-                    }
-                    */
                 }
             }
         }

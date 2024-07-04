@@ -66,7 +66,7 @@ void SaveData::Init()
         }
         catch(JSON::JSON_Exception &e)
         {
-            throw std::runtime_error("Malformed JSON in Save Data: "+e.msg_top);
+            throw FatalError("Malformed JSON in Save Data: "+e.msg_top);
         }
         
         save_ok = true;
@@ -153,7 +153,7 @@ void SaveData::GetSave(std::string &savePath, std::vector<SaveData::SaveAction> 
         int type = action["Type"].get_int();
         if(type < 0 || type >= SAVE_ACTION_TYPE_COUNT)
         {
-            throw std::runtime_error("Malformed Save Data: Invalid Action Type");
+            throw FatalError("Malformed Save Data: Invalid Action Type");
         }
         std::string info = action["Info"].get_str();
         std::string extra_info = action["ExtraInfo"].get_str();
@@ -172,5 +172,5 @@ void SaveData::GetSave(std::string &savePath, std::vector<SaveData::SaveAction> 
 }
 catch(JSON::JSON_Exception &e)
 {
-    throw std::runtime_error("Malformed JSON in Save Data: "+e.msg_top);
+    throw FatalError("Malformed JSON in Save Data: "+e.msg_top);
 }

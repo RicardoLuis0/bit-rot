@@ -40,7 +40,7 @@ namespace Renderer::Internal
             {
                 msg += "\n" + glErrMsg(err);
             }
-            throw std::runtime_error(msgPre + msg);
+            throw FatalError(msgPre + msg, 2);
         }
     }
     

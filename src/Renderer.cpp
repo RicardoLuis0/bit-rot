@@ -147,7 +147,7 @@ void Renderer::Init()
 {
     if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
     {
-        throw std::runtime_error(errMsg());
+        throw FatalError(errMsg());
     }
     
     LogDebug("SDL Initialized");
@@ -161,7 +161,7 @@ void Renderer::Init()
     if(!(
             win = SDL_CreateWindow("Bit Rot", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE)
     )) {
-        throw std::runtime_error(errMsg());
+        throw FatalError(errMsg());
     }
     
     LogDebug("SDL Window Created");
@@ -169,7 +169,7 @@ void Renderer::Init()
     if(!(
             ctx = SDL_GL_CreateContext(win)
     )) {
-        throw std::runtime_error(errMsg());
+        throw FatalError(errMsg());
     }
     
     LogDebug("SDL GL Context Created");
@@ -177,7 +177,7 @@ void Renderer::Init()
     glewExperimental = true;
     if(auto err = glewInit(); err != GLEW_OK)
     {
-        throw std::runtime_error(reinterpret_cast<const char *>(glewGetErrorString(err)));
+        throw FatalError(reinterpret_cast<const char *>(glewGetErrorString(err)));
     }
     SetVSync(Config::getStringOr("VSync", "Adaptive"));
     
@@ -211,7 +211,6 @@ void Renderer::Init()
     LogDebug("Geometry Generated");
     
     {
-        textDrawer.setFloat(1, 1.0, 0.0, 1.0, 1.0);
         
         TextInfo tmp2 = {};
         

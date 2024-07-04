@@ -97,7 +97,7 @@ namespace Util
         
         if(calcSize > realSize || (file_header->info.offset + realSize) > rawData.size())
         {
-            throw std::runtime_error("Failed to open bitmap "+Util::QuoteString(filename)+" : EOF");
+            throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : EOF");
         }
         
         std::vector<uint32_t> output;
@@ -140,7 +140,7 @@ namespace Util
                 }
                 if(index >= palette_max)
                 {
-                    throw std::runtime_error("Failed to open bitmap "+Util::QuoteString(filename)+" : Palette Index Out of Bounds");
+                    throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : Palette Index Out of Bounds");
                 }
                 
                 output[x + (y * width)] = (((*reinterpret_cast<const uint32_t*>(palette_start + (index * 3))) & 0xFFFFFF) << 8) | 0x000000FF;
@@ -174,7 +174,7 @@ namespace Util
     {
         if((header->bpp % 8) != 0 || header->bpp > 32)
         {
-            throw std::runtime_error("Failed to open bitmap "+Util::QuoteString(filename)+" : Invalid bpp for non-Paletted BMP");
+            throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : Invalid bpp for non-Paletted BMP");
         }
         uint8_t shiftR = maskR ? ctz(maskR) : 0;
         uint8_t shiftG = maskG ? ctz(maskG) : 0;
@@ -201,12 +201,12 @@ namespace Util
         
         if(maxMask > header->bpp)
         {
-            throw std::runtime_error("Failed to open bitmap "+Util::QuoteString(filename)+" : Mask doesn't fit for bpp");
+            throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : Mask doesn't fit for bpp");
         }
         
         if(maxLen > 8)
         {
-            throw std::runtime_error("Failed to open bitmap "+Util::QuoteString(filename)+" : Mask doesn't fit in 8 bits");
+            throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : Mask doesn't fit in 8 bits");
         }
         
         bool width_direction = header->width < 0;
@@ -234,7 +234,7 @@ namespace Util
         
         if(calcSize > realSize || (file_header->info.offset + realSize) > rawData.size())
         {
-            throw std::runtime_error("Failed to open bitmap "+Util::QuoteString(filename)+" : EOF");
+            throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : EOF");
         }
         
         std::vector<uint32_t> output;
@@ -291,7 +291,7 @@ namespace Util
         }
         
         return output;
-        throw std::runtime_error("ReadMaskedBitmap unimplemented");
+        throw FatalError("ReadMaskedBitmap unimplemented");
     }
         */
     
@@ -338,14 +338,14 @@ namespace Util
                             0x000000FFu,
                             0xFF000000u);*/
         default:
-            throw std::runtime_error("Unsupported bpp for bitmap");
+            throw FatalError("Unsupported bpp for bitmap");
         }
     }
     
     #define CHECK_BITMAP_HEADER_SIZE(ver)\
             if(rawData.size() < (sizeof(bitmap_file_header_t) + sizeof(bitmap_header_v##ver##_t)))\
             {\
-                throw std::runtime_error("Failed to open bitmap "+Util::QuoteString(filename)+" : EOF");\
+                throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : EOF");\
             }\
             return ReadBitmap(filename, rawData, hdr, &hdr->v##ver, width, height);
     
@@ -354,14 +354,14 @@ namespace Util
         std::vector<std::byte> rawData = ReadFileBinary(filename);
         if(rawData.size() < (sizeof(bitmap_file_header_t) + 4))
         {
-            throw std::runtime_error("Failed to open bitmap "+Util::QuoteString(filename)+" : EOF");
+            throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : EOF");
         }
         
         const bitmap_header_t * hdr = reinterpret_cast<const bitmap_header_t*>(rawData.data());
         
         if(hdr->info.magic != BITMAP_MAGIC)
         {
-            throw std::runtime_error("Failed to open bitmap "+Util::QuoteString(filename)+" : Not a Bitmap file");
+            throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : Not a Bitmap file");
         }
         
         switch(hdr->header_size)
@@ -373,7 +373,7 @@ namespace Util
         case sizeof(bitmap_header_v4_t):
         case sizeof(bitmap_header_v5_t):
         default:
-            throw std::runtime_error("Failed to open bitmap "+Util::QuoteString(filename)+" : Unsupported Bitmap file");
+            throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : Unsupported Bitmap file");
         }
     }
 }

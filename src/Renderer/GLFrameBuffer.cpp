@@ -24,7 +24,6 @@ namespace Renderer
     
     void GLFrameBuffer::ResizeInternal(uint32_t _width, uint32_t _height)
     {
-        
         width = _width;
         height = _height;
         colorTexture.InitNew(width, height);
@@ -34,7 +33,7 @@ namespace Renderer
         
         if(GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER); status != GL_FRAMEBUFFER_COMPLETE)
         {
-            throw std::runtime_error("Failed to create/resize framebuffer, status: "+std::to_string(status));
+            throw FatalError("Failed to create/resize framebuffer, status: "+std::to_string(status));
         }
         
         glBindFramebuffer(GL_FRAMEBUFFER, 0);

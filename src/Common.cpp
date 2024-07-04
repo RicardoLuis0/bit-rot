@@ -10,6 +10,99 @@
 
 #include <zlib.h>
 
+#include <cxxabi.h>
+#include <backtrace.h>
+
+backtrace_state * trace_state = nullptr;
+
+struct trace_info
+{
+    std::string str;
+    int num = 0;
+};
+
+void trace_create_state_callback(void * data, const char * msg, int errnum)
+{
+    std::string * str = reinterpret_cast<std::string*>(data);
+    
+    (*str) += (msg ? std::string(msg) + " (" : "(") + std::to_string(errnum) + ")";
+}
+
+void trace_callback_err(void * data, const char * msg, int errnum)
+{
+    trace_info * info = reinterpret_cast<trace_info*>(data);
+    
+    info->str += (msg ? std::string(msg) + " (" : "(") + std::to_string(errnum) + ")";
+}
+
+char char_buffer[4096];
+
+std::string strip_filename(std::string fname)
+{
+    ssize_t src1 = fname.rfind("/src/");
+    ssize_t src2 = fname.rfind("\\src\\");
+    ssize_t inc1 = fname.rfind("/include/");
+    ssize_t inc2 = fname.rfind("\\include\\");
+    
+    if(src1 == std::string::npos) src1 = 0;
+    if(src2 == std::string::npos) src2 = 0;
+    if(inc1 == std::string::npos) inc1 = 0;
+    if(inc2 == std::string::npos) inc2 = 0;
+    
+    return fname.substr(std::max({src1, src2, inc1, inc2}));
+}
+
+int trace_callback(void *data, uintptr_t pc, const char *filename, int lineno, const char *function)
+{
+    trace_info * info = reinterpret_cast<trace_info*>(data);
+    
+    int ok = 0;
+    if(function)
+    {
+        char * demangled = abi::__cxa_demangle(function, nullptr, nullptr, &ok);
+        
+        std::string fn_name(ok == 0 ? demangled : function);
+        if(filename)
+        {
+            info->str += "#" + std::to_string(info->num) + " [" + fn_name + " @ " + strip_filename(filename) + ":" + std::to_string(lineno) + "] 0x" + ulltoa(pc, char_buffer, 16) + "\n";
+        }
+        else
+        {
+            info->str += "#" + std::to_string(info->num) + " [" + fn_name + " @ ??? :" + std::to_string(lineno) + "] 0x" + ulltoa(pc, char_buffer, 16) + "\n";
+        }
+        
+        if(demangled) free(demangled);
+    }
+    else if(filename)
+    {
+        info->str += "#" + std::to_string(info->num) + " [ ??? @ " + strip_filename(filename) + ":" + std::to_string(lineno) + "] 0x" + ulltoa(pc, char_buffer, 16) + "\n";
+    }
+    else
+    {
+        info->str += "#" + std::to_string(info->num) + " [ ??? ] 0x" + ulltoa(pc, char_buffer, 16) + "\n";
+    }
+    info->num++;
+    
+    return 0;
+}
+
+std::string FatalError::CaptureTrace(int skip)
+{
+    if(!trace_state)
+    {
+        std::string state_err;
+        trace_state = backtrace_create_state(nullptr, 0, trace_create_state_callback, reinterpret_cast<void*>(&state_err));
+        
+        if(!trace_state)
+        {
+            return state_err;
+        }
+    }
+    trace_info info;
+    backtrace_full(trace_state, skip + 2, trace_callback, trace_callback_err, reinterpret_cast<void*>(&info));
+    return info.str;
+}
+
 namespace Util
 {
     
@@ -83,13 +176,13 @@ namespace Util
     {
         std::ostringstream ss;
         std::ifstream f(filename);
-        if(!f) throw std::runtime_error(strerror(errno));
+        if(!f) throw FatalError(strerror(errno));
         ss << f.rdbuf();
         return ss.str();
     }
     catch(std::exception &e)
     {
-        throw std::runtime_error("Failed to open/read file "+Util::QuoteString(filename)+" : "+e.what());
+        throw FatalError("Failed to open/read file "+Util::QuoteString(filename)+" : "+e.what());
     }
     
     std::vector<std::byte> ReadFileBinary(const std::string &filename) try
@@ -104,7 +197,7 @@ namespace Util
     }
     catch(std::exception &e)
     {
-        throw std::runtime_error("Failed to open/read file "+Util::QuoteString(filename)+" : "+e.what());
+        throw FatalError("Failed to open/read file "+Util::QuoteString(filename)+" : "+e.what());
     }
     
     void WriteFile(const std::string & filename, std::string_view data) try
@@ -114,7 +207,7 @@ namespace Util
     }
     catch(std::exception &e)
     {
-        throw std::runtime_error("Failed to open/write file "+Util::QuoteString(filename)+" : "+e.what());
+        throw FatalError("Failed to open/write file "+Util::QuoteString(filename)+" : "+e.what());
     }
     
     void WriteFileBinary(const std::string & filename, std::span<const std::byte> data) try
@@ -124,7 +217,7 @@ namespace Util
     }
     catch(std::exception &e)
     {
-        throw std::runtime_error("Failed to open/write file "+Util::QuoteString(filename)+" : "+e.what());
+        throw FatalError("Failed to open/write file "+Util::QuoteString(filename)+" : "+e.what());
     }
     
     std::vector<std::string_view> SplitLines(std::string_view text, uint32_t maxWidth)
@@ -340,7 +433,7 @@ namespace Util
         z.next_in = nullptr;
         if(int err = inflateInit(&z); err != Z_OK)
         {
-            throw std::runtime_error("ZLib Decompress Failed: "+std::to_string(err));
+            throw FatalError("ZLib Decompress Failed: "+std::to_string(err));
         }
         
         z.avail_in = data.size();
@@ -353,7 +446,7 @@ namespace Util
             int err = inflate(&z, Z_NO_FLUSH);
             if(err != Z_OK && err != Z_STREAM_END)
             {
-                throw std::runtime_error("ZLib Decompress Failed: "+std::to_string(err));
+                throw FatalError("ZLib Decompress Failed: "+std::to_string(err));
             }
             int bufFill = bufSiz - z.avail_out;
             out += std::string_view(buf, bufFill);
@@ -372,7 +465,7 @@ namespace Util
         unsigned long realLen = maxLen;
         if(int err = compress2(reinterpret_cast<unsigned char *>(buf.data()), &realLen, (unsigned char *)(str.data()), str.length(), Z_BEST_COMPRESSION); err != Z_OK)
         {
-            throw std::runtime_error("ZLib Compress Failed: "+std::to_string(err));
+            throw FatalError("ZLib Compress Failed: "+std::to_string(err));
         }
         buf.resize(realLen);
         return buf;

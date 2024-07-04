@@ -21,7 +21,7 @@ void Config::Init()
         }
         catch(JSON::JSON_Exception &e)
         {
-            throw std::runtime_error("Malformed JSON in Config: "+e.msg_top);
+            throw FatalError("Malformed JSON in Config: "+e.msg_top);
         }
     }
     else
@@ -60,7 +60,7 @@ std::string_view Config::mustGetString(const std::string &key)
     }
     else
     {
-        throw std::runtime_error("Missing config key "+Util::QuoteString(key));
+        throw FatalError("Missing config key "+Util::QuoteString(key));
     }
 }
 

@@ -80,7 +80,7 @@ namespace Renderer
         
         if(!program)
         {
-            throw std::runtime_error(glErrMsg());
+            throw FatalError(glErrMsg());
         }
         
         LogDebug("GL Program Created for "+Util::QuoteString(programName));
@@ -100,7 +100,7 @@ namespace Renderer
             if(!(
                     vertexShader = glCreateShader(GL_VERTEX_SHADER)
             )) {
-                throw std::runtime_error(glErrMsg());
+                throw FatalError(glErrMsg());
             }
             
             LogDebug("Vertex Shader Created");
@@ -109,14 +109,14 @@ namespace Renderer
             
             if(GLenum err = glGetError(); err != GL_NO_ERROR)
             {
-                throw std::runtime_error(glErrMsg(err));
+                throw FatalError(glErrMsg(err));
             }
             
             LogDebug("Vertex Shader Loaded");
             
             if(!CompileShader(vertexShader))
             {
-                throw std::runtime_error("Failed to compile Vertex Shader "+Util::QuoteString(vertexFilePath)+":\n"+glShaderErrMsg(vertexShader));
+                throw FatalError("Failed to compile Vertex Shader "+Util::QuoteString(vertexFilePath)+":\n"+glShaderErrMsg(vertexShader));
             }
             
             LogDebug("Vertex Shader Compiled");
@@ -130,7 +130,7 @@ namespace Renderer
         
         if(GLenum err = glGetError(); err != GL_NO_ERROR)
         {
-            throw std::runtime_error(glErrMsg(err));
+            throw FatalError(glErrMsg(err));
         }
         
         LogDebug("Vertex Shader Attached");
@@ -150,7 +150,7 @@ namespace Renderer
             if(!(
                     fragShader = glCreateShader(GL_FRAGMENT_SHADER)
             )) {
-                throw std::runtime_error(glErrMsg());
+                throw FatalError(glErrMsg());
             }
             
             LogDebug("Fragment Shader Created");
@@ -159,14 +159,14 @@ namespace Renderer
             
             if(GLenum err = glGetError(); err != GL_NO_ERROR)
             {
-                throw std::runtime_error(glErrMsg(err));
+                throw FatalError(glErrMsg(err));
             }
             
             LogDebug("Fragment Shader Loaded");
             
             if(!CompileShader(fragShader))
             {
-                throw std::runtime_error("Failed to compile Fragment Shader "+Util::QuoteString(fragmentFilePath)+":\n"+glShaderErrMsg(fragShader));
+                throw FatalError("Failed to compile Fragment Shader "+Util::QuoteString(fragmentFilePath)+":\n"+glShaderErrMsg(fragShader));
             }
             
             LogDebug("Fragment Shader Compiled");
@@ -180,21 +180,21 @@ namespace Renderer
         
         if(GLenum err = glGetError(); err != GL_NO_ERROR)
         {
-            throw std::runtime_error(glErrMsg(err));
+            throw FatalError(glErrMsg(err));
         }
         
         LogDebug("Fragment Shader Attached");
         
         if(!LinkProgram(program))
         {
-            throw std::runtime_error("Failed to link Program "+Util::QuoteString(programName)+":\n"+glProgramErrMsg(program));
+            throw FatalError("Failed to link Program "+Util::QuoteString(programName)+":\n"+glProgramErrMsg(program));
         }
         
         LogDebug("Linked Program "+Util::QuoteString(programName));
         
         if(!ValidateProgram(program))
         {
-            throw std::runtime_error("Failed to validate Program "+Util::QuoteString(programName)+":\n"+glProgramErrMsg(program));
+            throw FatalError("Failed to validate Program "+Util::QuoteString(programName)+":\n"+glProgramErrMsg(program));
         }
         
         LogDebug("Validated Program "+Util::QuoteString(programName));

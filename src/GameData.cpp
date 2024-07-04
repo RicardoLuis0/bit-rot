@@ -116,7 +116,7 @@ void Game::LoadData()
                     //type
                     if(!dir_entry_types.contains(arr[1].get_str()))
                     {
-                        throw std::runtime_error("Invalid directory type in data.json");//TODO improve error
+                        throw FatalError("Invalid directory type in data.json");//TODO improve error
                     }
                     entries.emplace(std::pair{files.first, dir_entry(arr[0].get_str(), dir_entry_types[arr[1].get_str()])});
                     break;
@@ -124,11 +124,11 @@ void Game::LoadData()
                     //type + attr
                     if(!dir_entry_types.contains(arr[1].get_str()))
                     {
-                        throw std::runtime_error("Invalid directory type in data.json");//TODO improve error
+                        throw FatalError("Invalid directory type in data.json");//TODO improve error
                     }
                     if(!hide_types.contains(arr[2].get_str()))
                     {
-                        throw std::runtime_error("Invalid directory attribute in data.json");//TODO improve error
+                        throw FatalError("Invalid directory attribute in data.json");//TODO improve error
                     }
                     entries.emplace(std::pair{files.first, dir_entry(arr[0].get_str(), dir_entry_types[arr[1].get_str()], hide_types[arr[2].get_str()])});
                     break;
@@ -136,7 +136,7 @@ void Game::LoadData()
                     //type + encrypted attr + pass
                     if(!dir_entry_types.contains(arr[1].get_str()))
                     {
-                        throw std::runtime_error("Invalid directory type in data.json");//TODO improve error
+                        throw FatalError("Invalid directory type in data.json");//TODO improve error
                     }
                     if(arr[2].get_str() == "ENCRYPTED")
                     {
@@ -145,7 +145,7 @@ void Game::LoadData()
                     }
                     [[fallthrough]];
                 default:
-                    throw std::runtime_error("Invalid parameter count for directory in data.json");
+                    throw FatalError("Invalid parameter count for directory in data.json");
                 }
             }
             dirs.emplace(std::pair{folder.first, std::move(entries)});

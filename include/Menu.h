@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Common.h"
 #include <string>
 
 union SDL_Event;

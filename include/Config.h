@@ -45,7 +45,7 @@ namespace Config
     {
         if(size_t(newValue) >= std::size(values))
         {
-            throw std::runtime_error("Enum out of Range");
+            throw FatalError("Enum out of Range");
         }
         setString(key, values[size_t(newValue)]);
     }

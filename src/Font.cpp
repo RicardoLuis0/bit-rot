@@ -45,17 +45,17 @@ void Font::Init() try
         
         if((cols * rows) < 256)
         {
-            throw std::runtime_error("Font "+Util::QuoteString(name)+" missing characters (has "+std::to_string(cols * rows)+", needs 256)");
+            throw FatalError("Font "+Util::QuoteString(name)+" missing characters (has "+std::to_string(cols * rows)+", needs 256)");
         }
         
         if(!std::filesystem::exists(file))
         {
-            throw std::runtime_error("Font "+Util::QuoteString(file)+" does not exist");
+            throw FatalError("Font "+Util::QuoteString(file)+" does not exist");
         }
         
         if(fontList.contains(name))
         {
-            throw std::runtime_error("Duplicate Font "+Util::QuoteString(name));
+            throw FatalError("Duplicate Font "+Util::QuoteString(name));
         }
         
         fontList[name] = {file, char_width, char_height, cols, rows};
@@ -64,12 +64,12 @@ void Font::Init() try
     
     if(fontList.size() == 0)
     {
-        throw std::runtime_error("No fonts defined in "+Util::QuoteString(fontInfoFile));
+        throw FatalError("No fonts defined in "+Util::QuoteString(fontInfoFile));
     }
     
     if(!fontList.contains(defaultFont))
     {
-        throw std::runtime_error("Invalid DefaultFont in "+Util::QuoteString(fontInfoFile));
+        throw FatalError("Invalid DefaultFont in "+Util::QuoteString(fontInfoFile));
     }
     
     setFont(Config::getStringOr("SelectedFont", defaultFont));
@@ -77,7 +77,7 @@ void Font::Init() try
 
 catch(JSON::JSON_Exception &e)
 {
-    throw std::runtime_error("Malformed JSON in "+Util::QuoteString(fontInfoFile)+": "+e.msg_top);
+    throw FatalError("Malformed JSON in "+Util::QuoteString(fontInfoFile)+": "+e.msg_top);
 }
 
 void Font::setFont(std::string_view _fontName)
