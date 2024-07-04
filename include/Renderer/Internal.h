@@ -76,6 +76,12 @@ namespace Renderer::Internal
             glCheckErrorsLine({}, std::string_view(__func__), std::string_view(__FILE__ + filename_start(__FILE__)) , __LINE__)
     #endif
     
+    #ifdef NDEBUG
+        #define glCheckErrorsDebug()
+    #else
+        #define glCheckErrorsDebug glCheckErrors
+    #endif
+    
     constexpr double ratio = 4.0/3.0;
     constexpr double ratio_tolerance = 0.1;
     

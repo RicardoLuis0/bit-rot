@@ -39,10 +39,10 @@ char char_buffer[4096];
 
 std::string strip_filename(std::string fname)
 {
-    ssize_t src1 = fname.rfind("/src/");
-    ssize_t src2 = fname.rfind("\\src\\");
-    ssize_t inc1 = fname.rfind("/include/");
-    ssize_t inc2 = fname.rfind("\\include\\");
+    size_t src1 = fname.rfind("/src/");
+    size_t src2 = fname.rfind("\\src\\");
+    size_t inc1 = fname.rfind("/include/");
+    size_t inc2 = fname.rfind("\\include\\");
     
     if(src1 == std::string::npos) src1 = 0;
     if(src2 == std::string::npos) src2 = 0;

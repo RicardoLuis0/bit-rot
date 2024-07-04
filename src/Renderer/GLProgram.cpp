@@ -76,6 +76,10 @@ namespace Renderer
         GLuint vertexShader = 0;
         GLuint fragShader = 0;
         
+        if(program) glDeleteProgram(program);
+        
+        glCheckErrorsDebug();
+        
         program = glCreateProgram();
         
         if(!program)
@@ -107,10 +111,7 @@ namespace Renderer
             
             LoadShader(vertexShader, vertexShaderSource);
             
-            if(GLenum err = glGetError(); err != GL_NO_ERROR)
-            {
-                throw FatalError(glErrMsg(err));
-            }
+            glCheckErrors();
             
             LogDebug("Vertex Shader Loaded");
             
@@ -128,10 +129,7 @@ namespace Renderer
         
         glAttachShader(program, vertexShader);
         
-        if(GLenum err = glGetError(); err != GL_NO_ERROR)
-        {
-            throw FatalError(glErrMsg(err));
-        }
+        glCheckErrors();
         
         LogDebug("Vertex Shader Attached");
         
@@ -157,10 +155,7 @@ namespace Renderer
             
             LoadShader(fragShader, fragShaderSource);
             
-            if(GLenum err = glGetError(); err != GL_NO_ERROR)
-            {
-                throw FatalError(glErrMsg(err));
-            }
+            glCheckErrors();
             
             LogDebug("Fragment Shader Loaded");
             
@@ -178,10 +173,7 @@ namespace Renderer
         
         glAttachShader(program, fragShader);
         
-        if(GLenum err = glGetError(); err != GL_NO_ERROR)
-        {
-            throw FatalError(glErrMsg(err));
-        }
+        glCheckErrors();
         
         LogDebug("Fragment Shader Attached");
         
