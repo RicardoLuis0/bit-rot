@@ -1,6 +1,7 @@
 #include "Common.h"
 #include "Bitmap.h"
 
+#include <cinttypes>
 #include <bit>
 #include <fstream>
 #include <sstream>
@@ -52,6 +53,12 @@ std::string strip_filename(std::string fname)
     return fname.substr(std::max({src1, src2, inc1, inc2}));
 }
 
+char * hex_to_str(uint64_t hexval)
+{
+    snprintf(char_buffer, 1024, "0x%" PRIx64, hexval);
+    return char_buffer;
+}
+
 int trace_callback(void *data, uintptr_t pc, const char *filename, int lineno, const char *function)
 {
     trace_info * info = reinterpret_cast<trace_info*>(data);
@@ -64,22 +71,22 @@ int trace_callback(void *data, uintptr_t pc, const char *filename, int lineno, c
         std::string fn_name(ok == 0 ? demangled : function);
         if(filename)
         {
-            info->str += "#" + std::to_string(info->num) + " [" + fn_name + " @ " + strip_filename(filename) + ":" + std::to_string(lineno) + "] 0x" + ulltoa(pc, char_buffer, 16) + "\n";
+            info->str += "#" + std::to_string(info->num) + " [" + fn_name + " @ " + strip_filename(filename) + ":" + std::to_string(lineno) + "] " + hex_to_str(pc) + "\n";
         }
         else
         {
-            info->str += "#" + std::to_string(info->num) + " [" + fn_name + " @ ??? :" + std::to_string(lineno) + "] 0x" + ulltoa(pc, char_buffer, 16) + "\n";
+            info->str += "#" + std::to_string(info->num) + " [" + fn_name + " @ ??? :" + std::to_string(lineno) + "] 0x" + hex_to_str(pc)  + "\n";
         }
         
         if(demangled) free(demangled);
     }
     else if(filename)
     {
-        info->str += "#" + std::to_string(info->num) + " [ ??? @ " + strip_filename(filename) + ":" + std::to_string(lineno) + "] 0x" + ulltoa(pc, char_buffer, 16) + "\n";
+        info->str += "#" + std::to_string(info->num) + " [ ??? @ " + strip_filename(filename) + ":" + std::to_string(lineno) + "] 0x" + hex_to_str(pc)  + "\n";
     }
     else
     {
-        info->str += "#" + std::to_string(info->num) + " [ ??? ] 0x" + ulltoa(pc, char_buffer, 16) + "\n";
+        info->str += "#" + std::to_string(info->num) + " [ ??? ] 0x" + hex_to_str(pc)  + "\n";
     }
     info->num++;
     
