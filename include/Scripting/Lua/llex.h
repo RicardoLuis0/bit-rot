@@ -8,6 +8,8 @@
 #define llex_h
 
 #include <climits>
+#include <string>
+#include <vector>
 
 #include "Scripting/Lua/lobject.h"
 #include "Scripting/Lua/lzio.h"
@@ -75,6 +77,7 @@ typedef struct LexState {
   struct Dyndata *dyd;  /* dynamic structures used by the parser */
   TString *source;  /* current source name */
   TString *envn;  /* environment variable name */
+  std::vector<std::string> funcStack;
 } LexState;
 
 

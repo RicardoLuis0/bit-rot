@@ -7,6 +7,9 @@
 #define lparser_c
 #define LUA_CORE
 
+#include "Log.h"
+#include "Common.h"
+
 #include "Scripting/Lua/lprefix.h"
 
 
@@ -65,30 +68,21 @@ typedef struct BlockCnt {
 static void statement (LexState *ls);
 static void expr (LexState *ls, expdesc *v);
 
-static void parser_warning (LexState *ls, const char *msg) {
-  msg = luaO_pushfstring(ls->L, "warning %s", msg);
-  msg = luaG_addinfo(ls->L, msg, ls->source, ls->linenumber);
-  //TODO change from fprintf
-  fprintf(stderr, "%s\n", msg);
-  fflush(stderr);
+static void parser_warning(LexState *ls, const char *msg)
+{
+    Log::LogFull(LogPriority::WARN, "", ls->funcStack.back(), ls->source ? std::string(getstr(ls->source), tsslen(ls->source)) : "", ls->linenumber, msg);
 }
 
-static l_noret error_expected (LexState *ls, int token) {
-  luaX_syntaxerror(ls,
-      luaO_pushfstring(ls->L, "%s expected", luaX_token2str(ls, token)));
+static l_noret error_expected (LexState *ls, int token)
+{
+    luaX_syntaxerror(ls, luaO_pushfstring(ls->L, "%s expected", luaX_token2str(ls, token)));
 }
 
 
-static l_noret errorlimit (FuncState *fs, int limit, const char *what) {
-  lua_State *L = fs->ls->L;
-  const char *msg;
-  int line = fs->f->linedefined;
-  const char *where = (line == 0)
-                      ? "main function"
-                      : luaO_pushfstring(L, "function at line %d", line);
-  msg = luaO_pushfstring(L, "too many %s (limit is %d) in %s",
-                             what, limit, where);
-  luaX_syntaxerror(fs->ls, msg);
+static l_noret errorlimit (FuncState *fs, int limit, const char *what)
+{
+    std::string msg = "too many "_s + what + " (limit is " + std::to_string(limit) + ") in " + fs->ls->funcStack.back();
+    luaX_syntaxerror(fs->ls, msg.c_str());
 }
 
 
@@ -171,8 +165,11 @@ static void codestring (expdesc *e, TString *s) {
 }
 
 
-static void codename (LexState *ls, expdesc *e) {
-  codestring(e, str_checkname(ls));
+static void codename (LexState *ls, expdesc *e, std::string * fname)
+{
+    TString * str = str_checkname(ls);
+    if(fname) (*fname) += std::string(getstr(str), tsslen(str));
+    codestring(e, str);
 }
 
 
@@ -501,8 +498,9 @@ static void singlevaraux (FuncState *fs, TString *n, expdesc *var, int base) {
 ** Find a variable with the given name 'n', handling global variables
 ** too.
 */
-static void singlevar (LexState *ls, expdesc *var) {
+static void singlevar (LexState *ls, expdesc *var, std::string * fname) {
   TString *varname = str_checkname(ls);
+  if(fname) (*fname) += std::string(getstr(varname), tsslen(varname));
   FuncState *fs = ls->fs;
   singlevaraux(fs, varname, var, 1);
   if (var->k == VVOID) {  /* global name? */
@@ -856,13 +854,13 @@ static void statlist (LexState *ls) {
 }
 
 
-static void fieldsel (LexState *ls, expdesc *v) {
+static void fieldsel (LexState *ls, expdesc *v, std::string * fname) {
   /* fieldsel -> ['.' | ':'] NAME */
   FuncState *fs = ls->fs;
   expdesc key;
   luaK_exp2anyregup(fs, v);
   luaX_next(ls);  /* skip the dot or colon */
-  codename(ls, &key);
+  codename(ls, &key, fname);
   luaK_indexed(fs, v, &key);
 }
 
@@ -899,7 +897,7 @@ static void recfield (LexState *ls, ConsControl *cc) {
   expdesc tab, key, val;
   if (ls->t.token == TK_NAME) {
     checklimit(fs, cc->nh, MAX_INT, "items in a constructor");
-    codename(ls, &key);
+    codename(ls, &key, nullptr);
   }
   else  /* ls->t.token == '[' */
     yindex(ls, &key);
@@ -1140,7 +1138,7 @@ static void primaryexp (LexState *ls, expdesc *v) {
       return;
     }
     case TK_NAME: {
-      singlevar(ls, v);
+      singlevar(ls, v, nullptr);
       return;
     }
     default: {
@@ -1158,7 +1156,7 @@ static void suffixedexp (LexState *ls, expdesc *v) {
   for (;;) {
     switch (ls->t.token) {
       case '.': {  /* fieldsel */
-        fieldsel(ls, v);
+        fieldsel(ls, v, nullptr);
         break;
       }
       case '[': {  /* '[' exp ']' */
@@ -1171,7 +1169,7 @@ static void suffixedexp (LexState *ls, expdesc *v) {
       case ':': {  /* ':' NAME funcargs */
         expdesc key;
         luaX_next(ls);
-        codename(ls, &key);
+        codename(ls, &key, nullptr);
         luaK_self(fs, v, &key);
         funcargs(ls, v);
         break;
@@ -1230,7 +1228,9 @@ static void simpleexp (LexState *ls, expdesc *v) {
     }
     case TK_FUNCTION: {
       luaX_next(ls);
+      ls->funcStack.push_back("anonymous function @ line " + std::to_string(ls->linenumber));
       body(ls, v, 0, ls->linenumber, 0);
+      ls->funcStack.pop_back();
       return;
     }
     default: {
@@ -1736,24 +1736,30 @@ static void ifstat (LexState *ls, int line) {
 }
 
 
-static void localfunc (LexState *ls, int defer) {
-  expdesc b;
-  FuncState *fs = ls->fs;
-  int fvar = fs->nactvar;  /* function's variable index */
-  if (defer) {
-    static const char funcname[] = "(deferred function)";
-    new_localvar(ls, luaX_newstring(ls, funcname, sizeof funcname-1));  /* new local variable */
-    markupval(fs, fs->nactvar);
-    fs->bl->insidetbc = 1;  /* in the scope of a defer closure variable */
-  }
-  else
-  {
-    new_localvar(ls, str_checkname(ls));  /* new local variable */
-  }
-  adjustlocalvars(ls, 1);  /* enter its scope */
-  body(ls, &b, 0, ls->linenumber, defer);  /* function created in next register */
-  /* debug information will only see the variable after this point! */
-  localdebuginfo(fs, fvar)->startpc = fs->pc;
+static void localfunc (LexState *ls, int defer)
+{
+    expdesc b;
+    FuncState *fs = ls->fs;
+    int fvar = fs->nactvar;  /* function's variable index */
+    if (defer)
+    {
+        ls->funcStack.push_back("deferred function @ line " + std::to_string(ls->linenumber));
+        static const char funcname[] = "(deferred function)";
+        new_localvar(ls, luaX_newstring(ls, funcname, sizeof funcname-1));  /* new local variable */
+        markupval(fs, fs->nactvar);
+        fs->bl->insidetbc = 1;  /* in the scope of a defer closure variable */
+    }
+    else
+    {
+        TString * fname = str_checkname(ls);
+        ls->funcStack.push_back("local function " + std::string(getstr(fname), tsslen(fname)) + " @ line " + std::to_string(ls->linenumber));
+        new_localvar(ls, fname);  /* new local variable */
+    }
+    adjustlocalvars(ls, 1);  /* enter its scope */
+    body(ls, &b, 0, ls->linenumber, defer);  /* function created in next register */
+    /* debug information will only see the variable after this point! */
+    ls->funcStack.pop_back();
+    localdebuginfo(fs, fvar)->startpc = fs->pc;
 }
 
 
@@ -1824,30 +1830,42 @@ static void localstat (LexState *ls) {
 }
 
 
-static int funcname (LexState *ls, expdesc *v) {
-  /* funcname -> NAME {fieldsel} [':' NAME] */
-  int ismethod = 0;
-  singlevar(ls, v);
-  while (ls->t.token == '.')
-    fieldsel(ls, v);
-  if (ls->t.token == ':') {
-    ismethod = 1;
-    fieldsel(ls, v);
-  }
-  return ismethod;
+static int funcname (LexState *ls, expdesc *v, std::string * fname) {
+    /* funcname -> NAME {fieldsel} [':' NAME] */
+    int ismethod = 0;
+    singlevar(ls, v, fname);
+    while (ls->t.token == '.')
+    {
+        if(fname) (*fname) += ".";
+        fieldsel(ls, v, fname);
+    }
+    if (ls->t.token == ':')
+    {
+        if(fname) (*fname) += ":";
+        ismethod = 1;
+        fieldsel(ls, v, fname);
+    }
+    return ismethod;
 }
 
 
 static void funcstat (LexState *ls, int line) {
-  /* funcstat -> FUNCTION funcname body */
-  int ismethod;
-  expdesc v, b;
-  luaX_next(ls);  /* skip FUNCTION */
-  ismethod = funcname(ls, &v);
-  body(ls, &b, ismethod, line, 0);
-  check_readonly(ls, &v);
-  luaK_storevar(ls->fs, &v, &b);
-  luaK_fixline(ls->fs, line);  /* definition "happens" in the first line */
+    /* funcstat -> FUNCTION funcname body */
+    int ismethod;
+    expdesc v, b;
+    luaX_next(ls);  /* skip FUNCTION */
+    
+    {
+        std::string fname;
+        ismethod = funcname(ls, &v, &fname);
+        ls->funcStack.push_back("function " + fname + " @ line " + std::to_string(ls->linenumber));
+    }
+    
+    body(ls, &b, ismethod, line, 0);
+    ls->funcStack.pop_back();
+    check_readonly(ls, &v);
+    luaK_storevar(ls->fs, &v, &b);
+    luaK_fixline(ls->fs, line);  /* definition "happens" in the first line */
 }
 
 
@@ -2021,6 +2039,7 @@ LClosure *luaY_parser (lua_State *L, ZIO *z, Mbuffer *buff,
   lexstate.dyd = dyd;
   dyd->actvar.n = dyd->gt.n = dyd->label.n = 0;
   luaX_setinput(L, &lexstate, z, funcstate.f->source, firstchar);
+  lexstate.funcStack.push_back("main function");
   mainfunc(&lexstate, &funcstate);
   lua_assert(!funcstate.prev && funcstate.nups == 1 && !lexstate.fs);
   /* all scopes should be correctly finished */
