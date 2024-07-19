@@ -118,10 +118,6 @@ typedef struct CallInfo CallInfo;
 
 
 
-
-struct lua_longjmp;  /* defined in ldo.c */
-
-
 /*
 ** Atomic type (relative to signals) to better ensure that 'lua_sethook'
 ** is thread safe
@@ -320,7 +316,6 @@ struct lua_State {
   StkIdRel tbclist;  /* list of to-be-closed variables */
   GCObject *gclist;
   struct lua_State *twups;  /* list of threads with open upvalues */
-  struct lua_longjmp *errorJmp;  /* current error recover point */
   CallInfo base_ci;  /* CallInfo for first level (C calling Lua) */
   volatile lua_Hook hook;
   ptrdiff_t errfunc;  /* current error handling function (stack index) */

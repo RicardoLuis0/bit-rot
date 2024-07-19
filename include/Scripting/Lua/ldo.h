@@ -7,6 +7,15 @@
 #ifndef ldo_h
 #define ldo_h
 
+#include <stdexcept>
+#include <string>
+
+class LuaError : public std::runtime_error
+{
+public:
+    int status;
+    LuaError(int err) : runtime_error("luaD_throw("+std::to_string(err)+")"), status(err){}
+};
 
 #include "Scripting/Lua/llimits.h"
 #include "Scripting/Lua/lobject.h"

@@ -253,7 +253,6 @@ static void preinit_thread (lua_State *L, global_State *g) {
   L->nci = 0;
   L->twups = L;  /* thread has no upvalues */
   L->nCcalls = 0;
-  L->errorJmp = NULL;
   L->hook = NULL;
   L->hookmask = 0;
   L->basehookcount = 0;
