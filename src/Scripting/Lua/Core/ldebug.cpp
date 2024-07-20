@@ -844,6 +844,15 @@ l_noret luaG_runerror (lua_State *L, const char *fmt, ...) {
   va_start(argp, fmt);
   msg = luaO_pushvfstring(L, fmt, argp);  /* format message */
   va_end(argp);
+  
+  if (isLua(ci)) {
+    Log::LuaLogFull(LogPriority::ERROR, "", "", ci_func(ci)->p->source ? std::string(getstr(ci_func(ci)->p->source), tsslen(ci_func(ci)->p->source)) : "", getcurrentline(ci), msg);
+  }
+  else
+  {
+    Log::LuaLogFull(LogPriority::ERROR, "", "", "", 0, msg);
+  }
+  
   if (isLua(ci)) {  /* if Lua function, add source:line information */
     luaG_addinfo(L, msg, ci_func(ci)->p->source, getcurrentline(ci));
     setobjs2s(L, L->top.p - 2, L->top.p - 1);  /* remove 'msg' */

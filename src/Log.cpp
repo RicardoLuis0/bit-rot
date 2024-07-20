@@ -36,6 +36,7 @@ const char * LogCategoryStrings[]
     "RESERVED",
     "RESERVED",
     //custom
+    "LUA",
     "INVALID",
 };
 
@@ -186,6 +187,12 @@ void Log::LogFull(LogPriority priority, std::string_view fn_namespace, std::stri
 {
     time_t timestamp = time(NULL);
     AddLog({std::string(fn_namespace), std::string(fn_name), std::string(file_name), line, std::string(msg), timestamp, priority, LogCategory::APPLICATION});
+}
+
+void Log::LuaLogFull(LogPriority priority, std::string_view fn_namespace, std::string_view fn_name, std::string_view file_name, int line, const std::string &msg)
+{
+    time_t timestamp = time(NULL);
+    AddLog({std::string(fn_namespace), std::string(fn_name), std::string(file_name), line, msg, timestamp, priority, LogCategory::LUA});
 }
 
 void Log::Disable()

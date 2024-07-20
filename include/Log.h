@@ -8,7 +8,8 @@
 enum class LogCategory : uint8_t
 {
     APPLICATION = 0, // = SDL_LOG_CATEGORY_APPLICATION
-    INVALID = 19, // = SDL_LOG_CATEGORY_CUSTOM,
+    LUA = 19, // = SDL_LOG_CATEGORY_CUSTOM,
+    INVALID,
     COUNT
 };
 
@@ -160,4 +161,7 @@ namespace Log
     void LogFull(LogPriority priority, std::string_view fn_namespace, std::string_view fn_name, std::string_view file_name, int line, const std::string &msg);
     void LogFull(LogPriority priority, std::string_view fn_namespace, std::string_view fn_name, std::string_view file_name, int line, std::string_view msg);
     void LogFull(LogPriority priority, std::string_view fn_namespace, std::string_view fn_name, std::string_view file_name, int line, const char * fmt, ...);
+    
+    void LuaLogFull(LogPriority priority, std::string_view fn_namespace, std::string_view fn_name, std::string_view file_name, int line, const std::string &msg);
+    
 };

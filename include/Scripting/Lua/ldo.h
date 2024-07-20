@@ -10,11 +10,15 @@
 #include <stdexcept>
 #include <string>
 
-class LuaError : public std::runtime_error
+#include "Common.h"
+
+class LuaError : public Util::RecoverableError
 {
 public:
     int status;
-    LuaError(int err) : runtime_error("luaD_throw("+std::to_string(err)+")"), status(err){}
+    LuaError(int err) : RecoverableError("Lua Error ("+std::to_string(err)+")"), status(err){}
+    LuaError(int err, lua_State *L, const char * msg);
+    LuaError(int err, lua_State *L, const std::string &msg);
 };
 
 #include "Scripting/Lua/llimits.h"
@@ -90,6 +94,8 @@ LUAI_FUNC void luaD_shrinkstack (lua_State *L);
 LUAI_FUNC void luaD_inctop (lua_State *L);
 
 LUAI_FUNC l_noret luaD_throw (lua_State *L, int errcode);
+LUAI_FUNC l_noret luaD_throw (lua_State *L, int errcode, const char * msg);
+LUAI_FUNC l_noret luaD_throw (lua_State *L, int errcode, const std::string &msg);
 LUAI_FUNC int luaD_rawrunprotected (lua_State *L, Pfunc f, void *ud);
 
 #endif

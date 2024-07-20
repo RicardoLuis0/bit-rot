@@ -265,6 +265,11 @@ struct FatalError : std::runtime_error
 namespace Util
 {
     
+    class RecoverableError : public std::runtime_error
+    {
+    public:
+        using runtime_error::runtime_error;
+    };
     
     template<typename T, typename V>
     concept ContainerOf = std::same_as<std::remove_cvref_t<decltype(*std::begin(std::declval<T>()))>, V>;

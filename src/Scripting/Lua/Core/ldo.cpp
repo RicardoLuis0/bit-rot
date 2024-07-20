@@ -34,6 +34,16 @@
 
 #define errorstatus(s) ((s) > LUA_YIELD)
 
+LuaError::LuaError(int err, lua_State *L, const char * msg) :  RecoverableError("Lua Error: "_s+msg+" ("+std::to_string(err)+")"), status(err)
+{
+    luaO_pushfstring(L, "%s", msg);
+}
+
+LuaError::LuaError(int err, lua_State *L, const std::string &msg) : RecoverableError("Lua Error: "+msg+" ("+std::to_string(err)+")"), status(err)
+{
+    luaO_pushfstring(L, "%s", msg.c_str());
+}
+
 /*
 ** {======================================================
 ** Error-recovery functions
@@ -69,6 +79,16 @@ l_noret luaD_throw (lua_State *L, int errcode)
     throw LuaError(errcode);
 }
 
+l_noret luaD_throw (lua_State *L, int errcode, const char * msg)
+{
+    throw LuaError(errcode, L, msg);
+}
+
+l_noret luaD_throw (lua_State *L, int errcode, const std::string &msg)
+{
+    throw LuaError(errcode, L, msg);
+}
+
 
 int luaD_rawrunprotected (lua_State *L, Pfunc f, void *ud) {
     l_uint32 oldnCcalls = L->nCcalls;
@@ -81,6 +101,11 @@ int luaD_rawrunprotected (lua_State *L, Pfunc f, void *ud) {
     catch(LuaError &e)
     {
         status = (e.status == 0) ? -1 : e.status;
+    }
+    catch(Util::RecoverableError &e)
+    {
+        luaO_pushfstring(L, "%s", e.what());
+        status = -1;
     }
     
     L->nCcalls = oldnCcalls;
@@ -918,12 +943,12 @@ struct SParser {  /* data to 'f_parser' */
 };
 
 
-static void checkmode (lua_State *L, const char *mode, const char *x) {
-  if (mode && strchr(mode, x[0]) == NULL) {
-    luaO_pushfstring(L,
-       "attempt to load a %s chunk (mode is '%s')", x, mode);
-    luaD_throw(L, LUA_ERRSYNTAX);
-  }
+static void checkmode (lua_State *L, const char *mode, const char *x)
+{
+    if (mode && strchr(mode, x[0]) == NULL)
+    {
+        luaD_throw(L, LUA_ERRSYNTAX, "attempt to load a "_s + x + " chunk (mode is '" + mode + "')");
+    }
 }
 
 

@@ -68,9 +68,9 @@ typedef struct BlockCnt {
 static void statement (LexState *ls);
 static void expr (LexState *ls, expdesc *v);
 
-static void parser_warning(LexState *ls, const char *msg)
+static void parser_warning(LexState *ls, const std::string &msg)
 {
-    Log::LogFull(LogPriority::WARN, "", ls->funcStack.back(), ls->source ? std::string(getstr(ls->source), tsslen(ls->source)) : "", ls->linenumber, msg);
+    Log::LuaLogFull(LogPriority::WARN, "", ls->funcStack.back(), ls->source ? std::string(getstr(ls->source), tsslen(ls->source)) : "", ls->linenumber, msg);
 }
 
 static l_noret error_expected (LexState *ls, int token)
@@ -134,9 +134,7 @@ static void check_match (LexState *ls, int what, int who, int where) {
     if (where == ls->linenumber)  /* all in the same line? */
       error_expected(ls, what);  /* do not need a complex message */
     else {
-      luaX_syntaxerror(ls, luaO_pushfstring(ls->L,
-             "%s expected (to close %s at line %d)",
-              luaX_token2str(ls, what), luaX_token2str(ls, who), where));
+      luaX_syntaxerror(ls, luaX_token2str(ls, what) + " expected (to close " + luaX_token2str(ls, who) + " at line " + std::to_string(where) + ")");
     }
   }
 }
@@ -207,15 +205,13 @@ static void var_check_unique_or_shadow (LexState *ls, FuncState *fs, TString *na
     for (; vidx < nactvar_n; ++vidx) {
       LocVar *lv = &fs->f->locvars[dyd->actvar.arr[vidx].vd.ridx];
       if (lv && name == lv->varname) {
-        if(vidx <= first_block_local) {
-          int saved_top = lua_gettop(ls->L);
-          parser_warning(ls, luaO_pushfstring(ls->L,
-                 "Name [%s] already declared will be shadowed", str_name));
-          lua_settop(ls->L, saved_top);
+        if(vidx <= first_block_local)
+        {
+          parser_warning(ls, "Name ["_s + str_name + "] already declared will be shadowed");
         }
-        else if(!shadowOnly) {
-          luaX_syntaxerror(ls, luaO_pushfstring(ls->L,
-                 "Name [%s] already declared", str_name));
+        else if(!shadowOnly)
+        {
+          luaX_syntaxerror(ls, "Name ["_s + str_name + "] already declared");
         }
       }
     }
