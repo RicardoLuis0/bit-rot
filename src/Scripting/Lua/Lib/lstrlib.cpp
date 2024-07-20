@@ -208,43 +208,6 @@ static int str_char (lua_State *L) {
 
 
 /*
-** Buffer to store the result of 'string.dump'. It must be initialized
-** after the call to 'lua_dump', to ensure that the function is on the
-** top of the stack when 'lua_dump' is called. ('luaL_buffinit' might
-** push stuff.)
-*/
-struct str_Writer {
-  int init;  /* true iff buffer has been initialized */
-  luaL_Buffer B;
-};
-
-
-static int writer (lua_State *L, const void *b, size_t size, void *ud) {
-  struct str_Writer *state = (struct str_Writer *)ud;
-  if (!state->init) {
-    state->init = 1;
-    luaL_buffinit(L, &state->B);
-  }
-  luaL_addlstring(&state->B, (const char *)b, size);
-  return 0;
-}
-
-
-static int str_dump (lua_State *L) {
-  struct str_Writer state;
-  int strip = lua_toboolean(L, 2);
-  luaL_checktype(L, 1, LUA_TFUNCTION);
-  lua_settop(L, 1);  /* ensure function is on the top of the stack */
-  state.init = 0;
-  if (l_unlikely(lua_dump(L, writer, &state, strip) != 0))
-    return luaL_error(L, "unable to dump given function");
-  luaL_pushresult(&state.B);
-  return 1;
-}
-
-
-
-/*
 ** {======================================================
 ** METAMETHODS
 ** =======================================================
@@ -1830,7 +1793,6 @@ static int str_unpack (lua_State *L) {
 static const luaL_Reg strlib[] = {
   {"byte", str_byte},
   {"char", str_char},
-  {"dump", str_dump},
   {"find", str_find},
   {"format", str_format},
   {"gmatch", gmatch},

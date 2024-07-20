@@ -117,7 +117,6 @@
 		<Unit filename="include/Scripting/Lua/lua.h" />
 		<Unit filename="include/Scripting/Lua/luaconf.h" />
 		<Unit filename="include/Scripting/Lua/lualib.h" />
-		<Unit filename="include/Scripting/Lua/lundump.h" />
 		<Unit filename="include/Scripting/Lua/lvm.h" />
 		<Unit filename="include/Scripting/Lua/lzio.h" />
 		<Unit filename="include/System.h">
@@ -197,7 +196,6 @@
 		<Unit filename="src/Scripting/Lua/Core/lctype.cpp" />
 		<Unit filename="src/Scripting/Lua/Core/ldebug.cpp" />
 		<Unit filename="src/Scripting/Lua/Core/ldo.cpp" />
-		<Unit filename="src/Scripting/Lua/Core/ldump.cpp" />
 		<Unit filename="src/Scripting/Lua/Core/lfunc.cpp" />
 		<Unit filename="src/Scripting/Lua/Core/lgc.cpp" />
 		<Unit filename="src/Scripting/Lua/Core/llex.cpp" />
@@ -209,7 +207,6 @@
 		<Unit filename="src/Scripting/Lua/Core/lstring.cpp" />
 		<Unit filename="src/Scripting/Lua/Core/ltable.cpp" />
 		<Unit filename="src/Scripting/Lua/Core/ltm.cpp" />
-		<Unit filename="src/Scripting/Lua/Core/lundump.cpp" />
 		<Unit filename="src/Scripting/Lua/Core/lvm.cpp" />
 		<Unit filename="src/Scripting/Lua/Core/lzio.cpp" />
 		<Unit filename="src/Scripting/Lua/Lib/lauxlib.cpp" />
