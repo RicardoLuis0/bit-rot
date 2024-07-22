@@ -74,7 +74,6 @@ void Font::Init() try
     
     setFont(Config::getStringOr("SelectedFont", defaultFont));
 }
-
 catch(JSON::JSON_Exception &e)
 {
     throw FatalError("Malformed JSON in "+Util::QuoteString(fontInfoFile)+": "+e.msg_top);

@@ -60,6 +60,7 @@ std::string JoinText(JSON::Element e)
 
 std::map<std::string, std::string> textFilesCorrupted;
 std::map<std::string, std::string> textFiles;
+std::map<std::string, std::string> texts;
 
 std::map<std::string, dir_entry_type> dir_entry_types
 {
@@ -80,10 +81,14 @@ std::map<std::string, hide_type> hide_types
     {"FORBIDDEN", FORBIDDEN},
 };
 
-void Game::LoadData()
+constexpr const char * dataFile = "GameData/data.json";
+
+std::vector<initTextLine> initText;
+uint32_t numRecoveryTexts;
+
+void Game::LoadData() try
 {
-    std::string texts = Util::ReadFile("GameData/data.json");
-    JSON::Element e = JSON::Parse(texts);
+    JSON::Element e = JSON::Parse(Util::ReadFile(dataFile));
     
     JSON::Element corruptedfiles = e["CorruptedTextFiles"];
     int corruptedseed = 123;
@@ -97,6 +102,31 @@ void Game::LoadData()
     {
         textFiles[pair.first] = JoinText(pair.second);
     }
+    
+    JSON::Element game_texts = e["Texts"];
+    for(auto &pair : game_texts.get_obj())
+    {
+        texts[pair.first] = JoinText(pair.second);
+    }
+    
+    JSON::Element game_intro_texts = e["IntroTexts"];
+    for(JSON::Element &line : game_intro_texts.get_arr())
+    {
+        initTextLine l;
+        l.timer = line[0].get_int();
+        l.text = line[1].get_str();
+        l.beep = line[2].get_bool();
+        l.recovery = line[3].get_bool();
+        l.intro = line[4].get_bool();
+        initText.push_back(std::move(l));
+    }
+    
+    numRecoveryTexts = Util::Reduce<uint32_t>(initText,
+        [](const initTextLine& line, uint32_t acc)
+        {
+            return (line.intro) ? acc : acc + 1;
+        }
+    );
     
     JSON::Element drives = e["Drives"];
     
@@ -154,4 +184,8 @@ void Game::LoadData()
         directories.emplace(std::pair{drive.first, std::move(dirs)});
         
     }
+}
+catch(JSON::JSON_Exception &e)
+{
+    throw FatalError("Malformed JSON in "+Util::QuoteString(dataFile)+": "+e.msg_top);
 }

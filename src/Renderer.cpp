@@ -738,9 +738,16 @@ void Renderer::DrawClear(uint8_t text_char, uint8_t prop)
     memset(textBufferData->char_properties, prop, bufSiz);
 }
 
-void Renderer::DrawLineTextCentered(uint32_t y, std::string_view newText)
+void Renderer::DrawLineTextCentered(uint32_t y, std::string_view newText, char prop)
 {
     assert(std::size(newText) <= textBufferData->screen_width);
     uint32_t x = (textBufferData->screen_width - std::size(newText)) / 2;
-    DrawLineText(x, y, newText);
+    if(prop)
+    {
+        DrawLineTextFillProp(x, y, newText, prop);
+    }
+    else
+    {
+        DrawLineText(x, y, newText);
+    }
 }

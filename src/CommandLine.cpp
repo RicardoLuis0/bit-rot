@@ -287,31 +287,53 @@ void Game::Responder(SDL_Event *e)
     }
 }
 
-void Game::RunCommand(const std::string &command)
+void Game::RunCommand(const std::string &command, bool isQueue)
 {
-    std::vector<std::string> programsList = Game::ListPrograms();
+    std::vector<std::string> commandQueue = Util::SplitString(command, ';', true, true, true);
     
-    std::vector<std::string> args = Util::SplitString(command, ' ', true, true);
-    if(args.size() > 0)
+    if(commandQueue.size() > 1)
     {
-        std::string cmd = Util::StrToUpper(args[0]);
+        commandHistory.insert(commandHistory.begin(), command);
+        SaveData::PushHistory(command);
         
-        if(args.size() > 1 || (cmd != "EXIT" && cmd != "666")) // TODO: stop muting 666 after expanding the story
+        for(const std::string &cmd : commandQueue)
         {
-            Game::AddConsoleLine(">"+command);
-            commandHistory.insert(commandHistory.begin(), command);
-            SaveData::PushHistory(command);
+            RunCommand(cmd, true);
+            if(currentScreen != 4) break;
         }
         
-        if(std::find(programsList.begin(), programsList.end(), cmd) != programsList.end())
+    }
+    else
+    {
+        std::vector<std::string> programsList = Game::ListPrograms();
+        
+        
+        
+        std::vector<std::string> args = Util::SplitString(command, ' ', true, true);
+        if(args.size() > 0)
         {
-            programs[cmd](args);
-        }
-        else
-        {
-            Game::AddConsoleLine("");
-            Game::AddConsoleLine("Could not find program "+Util::QuoteString(cmd));
-            Game::AddConsoleLine("");
+            std::string cmd = Util::StrToUpper(args[0]);
+            
+            if(args.size() > 1 || (cmd != "EXIT" && cmd != "666")) // TODO: stop muting 666 after expanding the story
+            {
+                Game::AddConsoleLine(">"+command);
+                if(!isQueue)
+                {
+                    commandHistory.insert(commandHistory.begin(), command);
+                    SaveData::PushHistory(command);
+                }
+            }
+            
+            if(std::find(programsList.begin(), programsList.end(), cmd) != programsList.end())
+            {
+                programs[cmd](args);
+            }
+            else
+            {
+                Game::AddConsoleLine("");
+                Game::AddConsoleLine("Could not find program "+Util::QuoteString(cmd));
+                Game::AddConsoleLine("");
+            }
         }
     }
 }

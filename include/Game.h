@@ -165,13 +165,26 @@ struct program_help
     }
 };
 
+struct initTextLine
+{
+    uint32_t timer;
+    std::string text;
+    bool beep = false;
+    bool recovery = true;
+    bool intro = true;
+};
+
 extern std::map<std::string, CommandProc> programs;
 extern std::string currentDrive;
 extern std::string currentFolder;
 extern std::map<std::string, std::string> textFiles;
 extern std::map<std::string, std::string> textFilesCorrupted;
+extern std::map<std::string, std::string> texts;
 extern std::map<std::string, std::map<std::string, std::map<std::string, dir_entry>>> directories;
 extern std::map<std::vector<std::string>, program_help> programHelp;
+
+extern std::vector<initTextLine> initText;
+extern uint32_t numRecoveryTexts;
 
 namespace Game
 {
@@ -211,7 +224,7 @@ namespace Game
     void TickIntro();
     void Tick();
     void TickEnd();
-    void RunCommand(const std::string &cmd);
+    void RunCommand(const std::string &cmd, bool isQueue = false);
     
     void ClearConsole();
     void AddConsoleLine(std::string_view text);

@@ -286,7 +286,7 @@ namespace Util
     
     
     template<typename FnCheck, typename FnFound>
-    void SplitStringInternal(std::string_view str, bool join_empty, bool use_quotes, FnCheck &&isSpace, FnFound &&found)
+    void SplitStringInternal(std::string_view str, bool join_empty, bool use_quotes, bool keep_quotes, FnCheck &&isSpace, FnFound &&found)
     {
         size_t i = 0;
         size_t lastSection = 0;
@@ -298,7 +298,7 @@ namespace Util
         
         if(join_empty && std::size(str) > 0 && isSpace(str[i])) for(; i < std::size(str) && isSpace(str[i]); i++, lastSection++);
         
-        for(i = 0; i < std::size(str); i++)
+        for(; i < std::size(str); i++)
         {
             if(isSpace(str[i]))
             {
@@ -311,24 +311,42 @@ namespace Util
             }
             else if(use_quotes && (str[i] == '\'' || str[i] == '"'))
             {
-                lastQuoteType = str[i];
-                tmp += str.substr(lastSection, i - lastSection);
-                has_tmp = true;
                 bool wasSlash = false;
                 
-                for(i++;(str[i] != lastQuoteType || wasSlash) && i < std::size(str); i++)
+                if(keep_quotes)
                 {
-                    if(i == '\\' && !wasSlash)
+                    for(i++;(str[i] != lastQuoteType || wasSlash) && i < std::size(str); i++)
                     {
-                        wasSlash = true;
-                    }
-                    else
-                    {
-                        tmp += wasSlash ? unescape(str[i]) : str[i];
-                        wasSlash = false;
+                        if(i == '\\' && !wasSlash)
+                        {
+                            wasSlash = true;
+                        }
+                        else
+                        {
+                            wasSlash = false;
+                        }
                     }
                 }
-                lastSection = i + 1;
+                else
+                {
+                    lastQuoteType = str[i];
+                    tmp += str.substr(lastSection, i - lastSection);
+                    has_tmp = true;
+                    
+                    for(i++;(str[i] != lastQuoteType || wasSlash) && i < std::size(str); i++)
+                    {
+                        if(i == '\\' && !wasSlash)
+                        {
+                            wasSlash = true;
+                        }
+                        else
+                        {
+                            tmp += wasSlash ? unescape(str[i]) : str[i];
+                            wasSlash = false;
+                        }
+                    }
+                    lastSection = i + 1;
+                }
             }
         }
         
@@ -342,11 +360,11 @@ namespace Util
         }
     }
     
-    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on, bool join_empty, bool use_quotes)
+    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on, bool join_empty, bool use_quotes, bool keep_quotes)
     {
         std::vector<SplitPoint> o;
         
-        SplitStringInternal(str, join_empty, use_quotes,
+        SplitStringInternal(str, join_empty, use_quotes, keep_quotes,
         [split_on](char c)
         {
             return c == split_on;
@@ -368,11 +386,11 @@ namespace Util
         return o;
     }
     
-    std::vector<std::string> SplitString(std::string_view str, char split_on, bool join_empty, bool use_quotes)
+    std::vector<std::string> SplitString(std::string_view str, char split_on, bool join_empty, bool use_quotes, bool keep_quotes)
     {
         std::vector<std::string> o;
         
-        SplitStringInternal(str, join_empty, use_quotes,
+        SplitStringInternal(str, join_empty, use_quotes, keep_quotes,
         [split_on](char c)
         {
             return c == split_on;
@@ -385,11 +403,11 @@ namespace Util
         return o;
     }
     
-    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty, bool use_quotes)
+    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty, bool use_quotes, bool keep_quotes)
     {
         std::vector<std::string> o;
         
-        SplitStringInternal(str, join_empty, use_quotes,
+        SplitStringInternal(str, join_empty, use_quotes, keep_quotes,
         [&split_on](char c)
         {
             return split_on.contains(c);

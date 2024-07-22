@@ -54,7 +54,6 @@ void SaveData::Init()
         {
             if(!std::filesystem::exists(saveFilePlain) || std::filesystem::last_write_time(saveFileCompressed) > std::filesystem::last_write_time(saveFilePlain))
             {
-                
                 saveData = JSON::Parse(Util::Decompress(Util::ReadFileBinary(saveFileCompressed)));
             }
             else

@@ -521,11 +521,11 @@ namespace Util
         }
     };
     
-    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true);
+    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true, bool keep_quotes = false);
     
-    std::vector<std::string> SplitString(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true);
+    std::vector<std::string> SplitString(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true, bool keep_quotes = false);
     
-    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty = false, bool use_quotes = true);
+    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty = false, bool use_quotes = true, bool keep_quotes = false);
     
     
     template<typename T>

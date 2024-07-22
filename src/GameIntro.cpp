@@ -39,7 +39,7 @@ uint32_t lastIncrementMs = 0;
 uint32_t memAmount = memIncrement;
 
 template<size_t N = 80 * 40>
-constexpr FakeString<N> randFill(uint8_t min, uint8_t max, uint32_t seed = 123456)
+static constexpr FakeString<N> randFill(uint8_t min, uint8_t max, uint32_t seed = 123456)
 {
     if(min > max) std::swap(min, max);
     uint32_t next = seed;
@@ -121,89 +121,13 @@ void Game::EndResponder(SDL_Event *e)
     }
 }
 
-struct initTextLine
-{
-    uint32_t timer;
-    std::string text;
-    bool beep = false;
-    bool recovery = true;
-    bool intro = true;
-};
-
-std::vector<initTextLine> initText
-{
-    {   0, "", false, true, true},
-    { 750, "Initializing Memory", false, true, true},
-    { 100, "  Detected: 16 MB", false, true, true},
-    { 100, "  Usable: 640 KB", false, true, true},
-    { 500, "Checking CPU Info", false, true, true},
-    { 100, "  CPU: Atel a892", false, true, true},
-    { 500, "Calibrating Hardware Timers", false, true, true},
-    { 500, "  Timer 0 - OK", false, true, true},
-    { 100, "  Timer 1 - OK", false, true, true},
-    {1000, "Calibrating Clock Speed", false, true, true},
-    { 100, "  16MHz", false, true, true},
-    { 100, "Checking Devices", false, true, true},
-    { 500, "  Found:", false, true, true},
-    { 500, "    Graphics - AGA  - 80x40, text-mode monochrome display adapter", true, true, true},
-    { 500, "    Audio    - AD0  - Beeper", true, true, true},
-    { 500, "    Audio    - AD1  - Sound Card", true, true, true},
-    { 500, "    Serial   - TTY0", true, true, true},
-    { 500, "    Serial   - TTY1", true, true, true},
-    { 500, "    Serial   - TTY2", true, true, true},
-    { 500, "    Network  - ETH0", true, true, true},
-    { 500, "    Drive    - FD0  - Floppy", true, true, true},
-    { 500, "    Drive    - FD1  - Floppy", true, true, true},
-    { 100, "    Drive    - SDA  - Disk", true, true, true},
-    { 100, "Checking Drives", false, true, true},
-    { 500, "  FD0 - 1.44 MB - Empty", false, true, true},
-    { 500, "  FD1 - 1.44 MB - Empty", false, true, true},
-    { 100, "  SDA - 120 MB  - Boot Drive", false, true, true},
-    { 100, "Detecting File Systems", false, true, true},
-    { 100, "  FD0 - N/A", false, true, true},
-    { 500, "  FD1 - N/A", false, true, true},
-    { 100, "  SDA - THIN32", false, true, true},
-    {1000, "Loading Kernel", false, true, true},
-    { 100, "  RD-OS Version 6.66", false, true, true},
-    {1000, "Loading Drivers", false, true, true},
-    {1000, "  PowerMgmt.sys     - OK", true, true, true},
-    {1000, "  Display.sys       - OK - 80x40 text display", true, true, true},
-    {1000, "  Console.sys       - OK", true, true, true},
-    {1000, "  ExtMemory.sys     - OK - " MEMORY_MB_TXT " MB Ready", true, true, true},
-    {1000, "  SndBurst.sys      - OK", true, true, true},
-    {1000, "  Command.sys       - OK", true, true, true},
-    {1000, "  Mouse.sys         - OK - No mouse devices detected", true, false, true},
-    {1000, "  Printer.sys       - OK - No printer devices detected", true, false, true},
-    {1000, "  Network.sys       - OK - No network connection on ETH0", true, false, true},
-    {1000, "  666.sys           - ERROR", true, false, true},
-    {1000, "  666.sys           - OK", true, true, false},
-    {1000, "Recovery Mode Drivers Loaded OK", true, true, false},
-    {1000, "Entering Recovery Console", true, true, false},
-};
-
 void Game::TickEnd()
 {
     
     Renderer::DrawClear();
     
-    Menu::DrawBorderSingle(0, 4, 10, 72, endMessageLines.size() + 6);
-    
-    uint32_t offsetY = 12;
-    
-    Util::ForEach(endMessageLines, [&offsetY](std::string_view v){
-        Renderer::DrawLineTextCentered(offsetY++, v);
-    });
-    
-    offsetY++;
-    
-    Renderer::DrawLineTextCentered(offsetY, end_message2);
+    Menu::DrawTextBox(0, texts["EndMessage"], texts["EndMessage2"], true);
 }
-
-uint32_t numRecoveryTexts = Util::Reduce<uint32_t>(initText,
-    [](const initTextLine& line, uint32_t acc)
-    {
-        return (line.intro) ? acc : acc + 1;
-    });
 
 static void DoIntroShared()
 {
@@ -212,17 +136,7 @@ static void DoIntroShared()
     case 0:
         if(!skipText)
         {
-            Menu::DrawBorderSingle(0, 4, 10, 72, messageLines.size() + 4);
-            
-            uint32_t offsetY = 12;
-            
-            Util::ForEach(messageLines, [&offsetY](std::string_view v){
-                Renderer::DrawLineTextCentered(offsetY++, v);
-            });
-            
-            offsetY += 8;
-            
-            Renderer::DrawLineTextCentered(offsetY, message2);
+            Menu::DrawTextBox(0, texts["IntroMessage"], texts["IntroMessage2"], false);
             break;
         }
         else
@@ -489,7 +403,6 @@ static void DoIntro1()
 
 void DoIntro2()
 {
-    
     switch(introStage)
     {
     case 0:
@@ -607,9 +520,8 @@ void DoIntro2()
 
 void Game::TickIntro()
 {
-    static bool sawIntro1 = Config::getStringOr("SawIntro1", "no") == "yes";
     Renderer::DrawClear();
-    if(!sawIntro1)
+    if(!(Game::GameIsSave || Config::getStringOr("SawIntro1", "no") == "yes"))
     {
         DoIntro1();
     }

@@ -156,6 +156,16 @@ namespace JSON {
         //serialize without spaces/newlines
         std::string to_json_min() const;
         
+        Element& operator[](int index) try
+        {   //array access
+            if(index < 0) index = get_arr().size() - index;
+            return get_arr().at(index);
+        }
+        catch(std::out_of_range &e)
+        {
+            throw JSON_Exception("Index '" + std::to_string(index) + "' out of bounds for array");
+        }
+        
         Element& operator[](size_t index) try
         {   //array access
             return get_arr().at(index);

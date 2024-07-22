@@ -81,3 +81,8 @@ void Menu::DrawMenuItemButton(bool selected, int &y, std::string_view text)
     }
     y += 4;
 }
+
+int Menu::DrawTextBox(int y, std::string_view message, std::string_view message_end, bool end_inside)
+{
+    return DrawTextBox(y, Util::SplitLines(message, 50), message_end, end_inside);
+}

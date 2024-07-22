@@ -48,6 +48,7 @@
 			<Add option="-Wno-unused-parameter" />
 			<Add option="-Wno-inline" />
 			<Add option="-fno-omit-frame-pointer" />
+			<Add option="-Wno-maybe-uninitialized" />
 			<Add directory="include" />
 		</Compiler>
 		<Linker>
