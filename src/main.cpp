@@ -60,16 +60,14 @@ int doGame()
                 
                 LogDebug("Starting Main Loop");
                 
-                #ifndef DEBUG_BUILD
-                    if(Config::getStringOr("SawIntro1", "no") == "yes" || SaveData::HasSave())
-                    {
-                        Audio::PlayMusic("tension");
-                    }
-                    else
-                    {
-                        Audio::PlayMusic("loop");
-                    }
-                #endif
+                if(Config::getStringOr("SawIntro1", "no") == "yes" || SaveData::HasSave())
+                {
+                    Audio::PlayMusic("tension");
+                }
+                else
+                {
+                    Audio::PlayMusic("loop");
+                }
                 
                 Mix_MasterVolume(GetSoundVolume());
                 Mix_VolumeMusic(GetMusicVolume());

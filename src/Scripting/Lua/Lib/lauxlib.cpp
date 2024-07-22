@@ -8,6 +8,7 @@
 #define LUA_LIB
 
 #include "Scripting/Lua/lprefix.h"
+#include "Common.h"
 
 
 #include <cerrno>
@@ -1042,8 +1043,7 @@ static int panic (lua_State *L) {
   const char *msg = (lua_type(L, -1) == LUA_TSTRING)
                   ? lua_tostring(L, -1)
                   : "error object is not a string";
-  lua_writestringerror("PANIC: unprotected error in call to Lua API (%s)\n",
-                        msg);
+  Log::LuaLogFull(LogPriority::ERROR, "", "", "", 0, "PANIC: unprotected error in call to Lua API ("_s + msg + ")\n");
   return 0;  /* return to Lua to abort */
 }
 
@@ -1087,11 +1087,10 @@ static void warnfoff (void *ud, const char *message, int tocont) {
 */
 static void warnfcont (void *ud, const char *message, int tocont) {
   lua_State *L = (lua_State *)ud;
-  lua_writestringerror("%s", message);  /* write message */
+  Log::LuaLogFull(LogPriority::ERROR, "", "", "", 0, message);  /* write message */
   if (tocont)  /* not the last part? */
     lua_setwarnf(L, warnfcont, L);  /* to be continued */
   else {  /* last part */
-    lua_writestringerror("%s", "\n");  /* finish message with end-of-line */
     lua_setwarnf(L, warnfon, L);  /* next call is a new message */
   }
 }
@@ -1100,7 +1099,7 @@ static void warnfcont (void *ud, const char *message, int tocont) {
 static void warnfon (void *ud, const char *message, int tocont) {
   if (checkcontrol((lua_State *)ud, message, tocont))  /* control message? */
     return;  /* nothing else to be done */
-  lua_writestringerror("%s", "Lua warning: ");  /* start a new warning */
+  Log::LuaLogFull(LogPriority::ERROR, "", "", "", 0, "Lua warning: ");  /* start a new warning */
   warnfcont(ud, message, tocont);  /* finish processing */
 }
 

@@ -12,6 +12,8 @@
 #include <cstddef>
 #include <cstdio>
 
+#include "Log.h"
+
 #include "Scripting/Lua/luaconf.h"
 #include "Scripting/Lua/lua.h"
 
@@ -257,18 +259,12 @@ typedef struct luaL_Stream {
 
 /* print a string */
 #if !defined(lua_writestring)
-#define lua_writestring(s,l)   fwrite((s), sizeof(char), (l), stdout)
+#define lua_writestring(s,l) Log::LuaLogFull(LogPriority::INFO, "", "", "", 0, std::string((s), (l)));
 #endif
 
 /* print a newline and flush the output */
 #if !defined(lua_writeline)
-#define lua_writeline()        (lua_writestring("\n", 1), fflush(stdout))
-#endif
-
-/* print an error message */
-#if !defined(lua_writestringerror)
-#define lua_writestringerror(s,p) \
-        (fprintf(stderr, (s), (p)), fflush(stderr))
+#define lua_writeline() Log::LuaLogFull(LogPriority::INFO, "", "", "", 0, "");
 #endif
 
 /* }================================================================== */
