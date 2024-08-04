@@ -93,7 +93,7 @@ int trace_callback(void *data, uintptr_t pc, const char *filename, int lineno, c
     return 0;
 }
 
-std::string FatalError::CaptureTrace(int skip)
+std::string TracedError::CaptureTrace(int skip)
 {
     if(!trace_state)
     {

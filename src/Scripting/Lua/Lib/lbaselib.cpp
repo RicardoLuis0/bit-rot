@@ -45,9 +45,9 @@ static int luaB_print (lua_State *L) {
 static int luaB_warn (lua_State *L) {
   int n = lua_gettop(L);  /* number of arguments */
   int i;
-  luaL_checkstring(L, 1);  /* at least one argument */
+  luaL_checkcstring(L, 1);  /* at least one argument */
   for (i = 2; i <= n; i++)
-    luaL_checkstring(L, i);  /* make sure all arguments are strings */
+    luaL_checkcstring(L, i);  /* make sure all arguments are strings */
   for (i = 1; i < n; i++)  /* compose warning */
     lua_warning(L, lua_tocstring(L, i), 1);
   lua_warning(L, lua_tocstring(L, n), 0);  /* close warning */

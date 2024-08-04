@@ -12,7 +12,7 @@
 
 #include "Common.h"
 
-class LuaError : public Util::RecoverableError
+class LuaError : public RecoverableError
 {
 public:
     int status;

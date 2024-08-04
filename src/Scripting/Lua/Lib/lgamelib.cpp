@@ -24,7 +24,7 @@ static int luaG_MsTime(lua_State *L)
 {
     checkargs("game.MsTime", 0);
     
-    lua_pushnumber(L, Util::MsTime());
+    lua_pushinteger(L, Util::MsTime());
     return 1;
 }
 
@@ -51,6 +51,22 @@ static int luaG_ToGame(lua_State *L)
     return 0;
 }
 
+static int luaG_ClearSave(lua_State *L)
+{
+    checkargs("game.ClearSave", 0);
+    SaveData::Clear();
+    return 0;
+}
+
+extern bool RunGame;
+
+static int luaG_Close(lua_State *L)
+{
+    checkargs("game.Close", 0);
+    RunGame = false;
+    return 0;
+}
+
 extern std::map<std::string, std::string> texts;
 
 static int luaG_GetText(lua_State *L)
@@ -72,6 +88,35 @@ static int luaG_GetText(lua_State *L)
         luaG_runerror(L, ("Trying to get inexistent text '" + index + "' in game.GetText").c_str());
         return 0;
     }
+}
+
+static int luaG_GetInitText(lua_State *L)
+{
+    checkargs("game.GetInitText", 1);
+    
+    int index = lua_tointeger(L, 1);
+    lua_pop(L, nargs);
+    
+    auto & txt = initText.at(index);
+    
+    lua_newtable(L);
+    
+    lua_pushinteger(L, txt.timer);
+    lua_setfield(L, -2, "timer");
+    
+    lua_pushlstring(L, txt.text.c_str(), txt.text.length());
+    lua_setfield(L, -2, "text");
+    
+    lua_pushboolean(L, txt.beep);
+    lua_setfield(L, -2, "beep");
+    
+    lua_pushboolean(L, txt.recovery);
+    lua_setfield(L, -2, "recovery");
+    
+    lua_pushboolean(L, txt.intro);
+    lua_setfield(L, -2, "intro");
+    
+    return 1;
 }
 
 static int luaG_Log(lua_State *L)
@@ -99,6 +144,19 @@ static int luaC_GetStringOr(lua_State *L)
     return 1;
 }
 
+static int luaC_SetString(lua_State *L)
+{
+    checkargs("config.SetString", 2);
+    
+    std::string key = lua_tostring(L, 1);
+    std::string value = lua_tostring(L, 2);
+    
+    lua_pop(L, nargs);
+    
+    Config::setScriptString(key, value);
+    return 0;
+}
+
 static int luaA_PlaySample(lua_State *L)
 {
     checkargs("audio.PlaySample", 1);
@@ -122,6 +180,26 @@ static int luaA_PlaySample(lua_State *L)
     }
     
     return 0;
+}
+
+static int luaA_IsSamplePlaying(lua_State *L)
+{
+    checkargs("audio.IsSamplePlaying", 1);
+    
+    std::string sample(Util::StrToLower(lua_tostring_view(L, 1)));
+    
+    lua_pop(L, nargs);
+    
+    if(sample == "error")
+    {
+        lua_pushboolean(L, Audio::ErrorPlaying());
+        return 1;
+    }
+    else
+    {
+        luaG_runerror(L, ("Trying to check inexistent sample '" + sample + "' in audio.IsSamplePlaying").c_str());
+        return 0;
+    }
 }
 
 static int luaA_StartLoop(lua_State *L)
@@ -171,7 +249,7 @@ static int luaA_FadeMusic(lua_State *L)
 {
     checkargs("audio.FadeMusic", 1);
     
-    Audio::FadeMusic(lua_tonumber(L, 1));
+    Audio::FadeMusic(lua_tointeger(L, 1));
     
     lua_pop(L, nargs);
     return 0;
@@ -181,16 +259,22 @@ static const luaL_Reg game_funcs[]
 {
     {"MsTime", luaG_MsTime},
     {"GetText", luaG_GetText},
+    {"GetInitText", luaG_GetInitText},
     {"IsLoadingSave", luaG_IsLoadingSave},
     {"HasSave", luaG_HasSave},
     {"ToGame", luaG_ToGame},
     {"Log", luaG_Log},
+    {"ClearSave", luaG_ClearSave},
+    {"Close", luaG_Close},
+    {"NumInitTexts", NULL},
+    {"NumRecoveryInitTexts", NULL},
     {NULL, NULL}
 };
 
 static const luaL_Reg config_funcs[]
 {
     {"GetStringOr", luaC_GetStringOr},
+    {"SetString", luaC_SetString},
     {NULL, NULL}
 };
 
@@ -200,12 +284,19 @@ static const luaL_Reg audio_funcs[]
     {"StartLoop", luaA_StartLoop},
     {"PlayMusic", luaA_PlayMusic},
     {"FadeMusic", luaA_FadeMusic},
+    {"IsSamplePlaying", luaA_IsSamplePlaying},
     {NULL, NULL}
 };
 
 LUAMOD_API int luaopen_game(lua_State *L)
 {
     luaL_newlib(L, game_funcs);
+    
+    lua_pushinteger(L, initText.size());
+    lua_setfield(L, -2, "NumInitTexts");
+    lua_pushinteger(L, numRecoveryTexts);
+    lua_setfield(L, -2, "NumRecoveryInitTexts");
+    
     return 1;
 }
 

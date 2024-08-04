@@ -1564,7 +1564,7 @@ static void copywithendian (char *dest, const char *src,
 static int str_pack (lua_State *L) {
   luaL_Buffer b;
   Header h;
-  const char *fmt = luaL_checkstring(L, 1);  /* format string */
+  const char *fmt = luaL_checkcstring(L, 1);  /* format string */
   int arg = 1;  /* current argument to pack */
   size_t totalsize = 0;  /* accumulate total size of result */
   initheader(L, &h);
@@ -1662,7 +1662,7 @@ static int str_pack (lua_State *L) {
 
 static int str_packsize (lua_State *L) {
   Header h;
-  const char *fmt = luaL_checkstring(L, 1);  /* format string */
+  const char *fmt = luaL_checkcstring(L, 1);  /* format string */
   size_t totalsize = 0;  /* accumulate total size of result */
   initheader(L, &h);
   while (*fmt != '\0') {
@@ -1716,7 +1716,7 @@ static lua_Integer unpackint (lua_State *L, const char *str,
 
 static int str_unpack (lua_State *L) {
   Header h;
-  const char *fmt = luaL_checkstring(L, 1);
+  const char *fmt = luaL_checkcstring(L, 1);
   size_t ld;
   const char *data = luaL_checklstring(L, 2, &ld);
   size_t pos = posrelatI(luaL_optinteger(L, 3, 1), ld) - 1;

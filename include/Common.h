@@ -249,27 +249,31 @@ inline consteval unsigned long long int operator"" _G(unsigned long long int n){
     return n*1024_M;
 }
 
-struct FatalError : std::runtime_error
+struct TracedError : std::runtime_error
 {
     std::string trace;
     
-    FatalError(const std::string &what) : runtime_error(what), trace(CaptureTrace()) {}
-    FatalError(const char *what) : runtime_error(what), trace(CaptureTrace()) {}
+    TracedError(const std::string &what) : runtime_error(what), trace(CaptureTrace()) {}
+    TracedError(const char *what) : runtime_error(what), trace(CaptureTrace()) {}
     
-    FatalError(const std::string &what, int skip) : runtime_error(what), trace(CaptureTrace(skip)) {}
-    FatalError(const char *what, int skip) : runtime_error(what), trace(CaptureTrace(skip)) {}
+    TracedError(const std::string &what, int skip) : runtime_error(what), trace(CaptureTrace(skip)) {}
+    TracedError(const char *what, int skip) : runtime_error(what), trace(CaptureTrace(skip)) {}
     
     static std::string CaptureTrace(int skip = 0);
 };
 
+struct FatalError : TracedError
+{
+    using TracedError::TracedError;
+};
+
+struct RecoverableError : TracedError
+{
+    using TracedError::TracedError;
+};
+
 namespace Util
 {
-    
-    class RecoverableError : public std::runtime_error
-    {
-    public:
-        using runtime_error::runtime_error;
-    };
     
     template<typename T, typename V>
     concept ContainerOf = std::same_as<std::remove_cvref_t<decltype(*std::begin(std::declval<T>()))>, V>;

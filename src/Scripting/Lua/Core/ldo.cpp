@@ -102,7 +102,12 @@ int luaD_rawrunprotected (lua_State *L, Pfunc f, void *ud) {
     {
         status = (e.status == 0) ? -1 : e.status;
     }
-    catch(Util::RecoverableError &e)
+    catch(RecoverableError &e)
+    {
+        luaO_pushfstring(L, "%s", e.what());
+        status = -1;
+    }
+    catch(std::out_of_range &e)
     {
         luaO_pushfstring(L, "%s", e.what());
         status = -1;

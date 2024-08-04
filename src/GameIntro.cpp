@@ -24,13 +24,12 @@ void Game::EndResponder(SDL_Event *e)
 
 void Game::TickEnd()
 {
-    
     Renderer::DrawClear();
     
     Menu::DrawTextBox(0, texts["EndMessage"], texts["EndMessage2"], true);
 }
 
-#define NOLUA
+//#define NOLUA
 
 #ifdef NOLUA
 
@@ -89,7 +88,7 @@ void Game::ToIntro()
 {
     currentScreen = DEBUG_START_SCREEN;
     
-    if(Game::GameIsSave || Config::getStringOr("SawIntro1", "no") == "yes")
+    if(Game::GameIsSave || Config::getScriptStringOr("SawIntro1", "no") == "yes")
     {
         introStage = DEBUG_START_STAGE2;
         Audio::FadeMusic(500);
@@ -521,7 +520,7 @@ void DoIntro2()
 void Game::TickIntro()
 {
     Renderer::DrawClear();
-    if(!(Game::GameIsSave || Config::getStringOr("SawIntro1", "no") == "yes"))
+    if(!(Game::GameIsSave || Config::getScriptStringOr("SawIntro1", "no") == "yes"))
     {
         DoIntro1();
     }
@@ -535,22 +534,33 @@ void Game::TickIntro()
 #else
 
 static lua_State * IntroVM = nullptr;
+/*
+void Game::EndIntro()
+{
+    lua_close(IntroVM);
+    IntroVM = nullptr;
+}
+*/
 
 void Game::ToIntro()
 {
-    currentScreen = 3;
+    currentScreen = 999;
     
-    lua_State *  L = IntroVM = luaL_newstate();
-    luaL_openlibs(L);
-    if(luaL_loadfile(L, "GameData/intro.lua") != LUA_OK)
+    if(!IntroVM)
     {
-        throw std::runtime_error(lua_tostring(L, -1));
+        IntroVM = luaL_newstate();
+        luaL_openlibs(IntroVM);
+        if(luaL_loadfile(IntroVM, "GameData/intro.lua") != LUA_OK)
+        {
+            throw std::runtime_error(lua_tostring(IntroVM, -1));
+        }
+        
+        if(lua_pcall(IntroVM, 0, 0, 0) != LUA_OK)
+        {
+            throw std::runtime_error(lua_tostring(IntroVM, -1));
+        }
     }
-    
-    if(lua_pcall(L, 0, 0, 0) != LUA_OK)
-    {
-        throw std::runtime_error(lua_tostring(L, -1));
-    }
+    lua_State *  L = IntroVM;
     
     lua_getglobal(L, "init");
     
@@ -565,6 +575,8 @@ void Game::ToIntro()
     }
     
     lua_pop(L, lua_gettop(L));
+    
+    currentScreen = 3;
 }
 
 void Game::IntroResponder(SDL_Event *e)

@@ -23,14 +23,20 @@ bool InGame = false;
 
 int currentScreen = 0;
 
-Input::Responder responders[]
+
+void NullResponder(SDL_Event *e)
 {
-    &Menu::MainMenuResponder,
-    &Menu::SettingsMenuResponder,
-    &Menu::PauseMenuResponder,
-    &Game::IntroResponder,
-    &Game::Responder,
-    &Game::EndResponder,
+}
+
+std::map<uint32_t, Input::Responder> responders
+{
+    {0, &Menu::MainMenuResponder},
+    {1, &Menu::SettingsMenuResponder},
+    {2, &Menu::PauseMenuResponder},
+    {3, &Game::IntroResponder},
+    {4, &Game::Responder},
+    {5, &Game::EndResponder},
+    {999, &NullResponder},
 };
 
 int GetSoundVolume();
@@ -78,6 +84,7 @@ int doGame()
                     
                     switch(currentScreen)
                     {
+                    case 999:
                     case 0:
                         InGame = false;
                         Menu::DrawMainMenu();
@@ -105,7 +112,7 @@ int doGame()
                 }
             }
         }
-        catch(FatalError &e)
+        catch(TracedError &e)
         {
             LogError(e.what());
             Log::Disable();
@@ -127,7 +134,7 @@ int doGame()
             return EXIT_FAILURE;
         }
     }
-    catch(FatalError &e)
+    catch(TracedError &e)
     {
         if(e.trace != "")
         {

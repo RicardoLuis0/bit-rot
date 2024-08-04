@@ -68,15 +68,28 @@ static int luaS_LowRes(lua_State *L)
     return 0;
 }
 
+static int luaS_DrawClear(lua_State *L)
+{
+    checkargs("screen.DrawClear", 2);
+    
+    int c = lua_tointeger(L, 1);
+    int prop = lua_tointeger(L, 2);
+    
+    Renderer::DrawClear(c, prop);
+    
+    lua_pop(L, nargs);
+    return 0;
+}
+
 static int luaS_DrawBorderSingle(lua_State *L)
 {
     checkargs("screen.DrawBorderSingle", 5);
     
-    int prop = lua_tonumber(L, 1);
-    int x = lua_tonumber(L, 2);
-    int y = lua_tonumber(L, 3);
-    int w = lua_tonumber(L, 4);
-    int h = lua_tonumber(L, 5);
+    int prop = lua_tointeger(L, 1);
+    int x = lua_tointeger(L, 2);
+    int y = lua_tointeger(L, 3);
+    int w = lua_tointeger(L, 4);
+    int h = lua_tointeger(L, 5);
     
     Menu::DrawBorderSingle(prop, x, y, w, h);
     
@@ -88,11 +101,11 @@ static int luaS_DrawBorderDouble(lua_State *L)
 {
     checkargs("screen.DrawBorderDouble", 5);
     
-    int prop = lua_tonumber(L, 1);
-    int x = lua_tonumber(L, 2);
-    int y = lua_tonumber(L, 3);
-    int w = lua_tonumber(L, 4);
-    int h = lua_tonumber(L, 5);
+    int prop = lua_tointeger(L, 1);
+    int x = lua_tointeger(L, 2);
+    int y = lua_tointeger(L, 3);
+    int w = lua_tointeger(L, 4);
+    int h = lua_tointeger(L, 5);
     
     Menu::DrawBorderDouble(prop, x, y, w, h);
     
@@ -104,10 +117,10 @@ static int luaS_DrawFillLineProp(lua_State *L)
 {
     checkargs("screen.DrawFillLineProp", 4);
     
-    int x = lua_tonumber(L, 1);
-    int y = lua_tonumber(L, 2);
-    int prop = lua_tonumber(L, 3);
-    int width = lua_tonumber(L, 4);
+    int x = lua_tointeger(L, 1);
+    int y = lua_tointeger(L, 2);
+    int prop = lua_tointeger(L, 3);
+    int width = lua_tointeger(L, 4);
     
     Renderer::DrawFillLineProp(x, y, prop, width);
     
@@ -121,10 +134,10 @@ static int luaS_DrawLineText(lua_State *L)
 {
     checkargs2("screen.DrawLineText", 3, 4);
     
-    int x = lua_tonumber(L, 1);
-    int y = lua_tonumber(L, 2);
+    int x = lua_tointeger(L, 1);
+    int y = lua_tointeger(L, 2);
     std::string_view newText = lua_tostring_view(L, 3);
-    int width = nargs < 4 ? 0 : lua_tonumber(L, 4);
+    int width = nargs < 4 ? 0 : lua_tointeger(L, 4);
     
     Renderer::DrawLineText(x, y, newText, width);
     
@@ -136,11 +149,11 @@ static int luaS_DrawLineTextFillProp(lua_State *L)
 {
     checkargs2("screen.DrawLineTextFillProp", 4, 5);
     
-    int x = lua_tonumber(L, 1);
-    int y = lua_tonumber(L, 2);
+    int x = lua_tointeger(L, 1);
+    int y = lua_tointeger(L, 2);
     std::string_view newText = lua_tostring_view(L, 3);
-    int newProp = lua_tonumber(L, 4);
-    int width = nargs < 5 ? 0 : lua_tonumber(L, 5);
+    int newProp = lua_tointeger(L, 4);
+    int width = nargs < 5 ? 0 : lua_tointeger(L, 5);
     
     Renderer::DrawLineTextFillProp(x, y, newText, newProp, width);
     
@@ -152,7 +165,7 @@ static int luaS_DrawLineTextCentered(lua_State *L)
 {
     checkargs("screen.DrawLineTextCentered", 2);
     
-    int y = lua_tonumber(L, 1);
+    int y = lua_tointeger(L, 1);
     std::string_view str = lua_tostring_view(L, 2);
     
     Renderer::DrawLineTextCentered(y, str);
@@ -165,7 +178,7 @@ static int luaS_DrawTextBox(lua_State *L)
 {
     checkargs("screen.DrawTextBox", 4);
     
-    int y = lua_tonumber(L, 1);
+    int y = lua_tointeger(L, 1);
     std::string_view str = lua_tostring_view(L, 2);
     std::string_view str_end = lua_tostring_view(L, 3);
     bool end_inside = lua_toboolean(L, 4);
@@ -180,6 +193,7 @@ static int luaS_DrawTextBox(lua_State *L)
 
 static const luaL_Reg screen_funcs[]
 {
+    {"DrawClear", luaS_DrawClear},
     {"RandFillReroll", luaS_RandFillReroll},
     {"RandFillPrint", luaS_RandFillPrint},
     {"HighRes", luaS_HighRes},
@@ -206,24 +220,24 @@ LUAMOD_API int luaopen_screen(lua_State *L)
     luaL_newlib(L, screen_funcs);
     
     lua_pushinteger(L, CHAR_INVERT1);
-    lua_setfield(L, 2, "CHAR_INVERT1");
+    lua_setfield(L, -2, "CHAR_INVERT1");
     
     lua_pushinteger(L, CHAR_INVERT2);
-    lua_setfield(L, 2, "CHAR_INVERT2");
+    lua_setfield(L, -2, "CHAR_INVERT2");
     
     lua_pushinteger(L, CHAR_BLINK_INVERT);
-    lua_setfield(L, 2, "CHAR_BLINK_INVERT");
+    lua_setfield(L, -2, "CHAR_BLINK_INVERT");
     
     lua_pushinteger(L, CHAR_UNDERSCORE);
-    lua_setfield(L, 2, "CHAR_UNDERSCORE");
+    lua_setfield(L, -2, "CHAR_UNDERSCORE");
     
     lua_pushinteger(L, CHAR_BLINK1);
-    lua_setfield(L, 2, "CHAR_BLINK1");
+    lua_setfield(L, -2, "CHAR_BLINK1");
     
     lua_pushinteger(L, CHAR_BLINK2);
-    lua_setfield(L, 2, "CHAR_BLINK2");
+    lua_setfield(L, -2, "CHAR_BLINK2");
     
     lua_pushinteger(L, CHAR_BLINK3);
-    lua_setfield(L, 2, "CHAR_BLINK3");
+    lua_setfield(L, -2, "CHAR_BLINK3");
     return 1;
 }

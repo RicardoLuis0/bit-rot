@@ -138,7 +138,7 @@ LUALIB_API void (luaL_requiref) (lua_State *L, const char *modname,
 #define luaL_argexpected(L,cond,arg,tname)	\
 	((void)(luai_likely(cond) || luaL_typeerror(L, (arg), (tname))))
 
-#define luaL_checkstring(L,n)	(luaL_checklstring(L, (n), NULL))
+#define luaL_checkcstring(L,n)	(luaL_checklstring(L, (n), NULL))
 #define luaL_optstring(L,n,d)	(luaL_optlstring(L, (n), (d), NULL))
 
 #define luaL_typename(L,i)	lua_typename(L, lua_type(L,(i)))

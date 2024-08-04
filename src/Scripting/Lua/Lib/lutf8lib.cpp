@@ -257,7 +257,7 @@ static int iter_auxlax (lua_State *L) {
 
 static int iter_codes (lua_State *L) {
   int lax = lua_toboolean(L, 2);
-  const char *s = luaL_checkstring(L, 1);
+  const char *s = luaL_checkcstring(L, 1);
   luaL_argcheck(L, !iscontp(s), 1, MSGInvalid);
   lua_pushcfunction(L, lax ? iter_auxlax : iter_auxstrict);
   lua_pushvalue(L, 1);
