@@ -207,6 +207,7 @@ namespace Game
     
     void DoLoad();
     
+    void LoadIntro();
     void ToIntro();
     void ToGame();
     

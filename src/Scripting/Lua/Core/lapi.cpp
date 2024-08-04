@@ -550,6 +550,10 @@ LUA_API const char *lua_pushstring (lua_State *L, const char *s) {
   return s;
 }
 
+LUA_API const char *lua_pushstring (lua_State *L, const std::string &s) {
+    return lua_pushlstring(L, s.data(), s.length());
+}
+
 
 LUA_API const char *lua_pushvfstring (lua_State *L, const char *fmt,
                                       va_list argp) {

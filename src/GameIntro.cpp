@@ -30,6 +30,7 @@ void Game::TickEnd()
 }
 
 static lua_State * IntroVM = nullptr;
+static bool intro_ran = false;
 /*
 void Game::EndIntro()
 {
@@ -38,10 +39,9 @@ void Game::EndIntro()
 }
 */
 
-void Game::ToIntro()
+
+void Game::LoadIntro()
 {
-    currentScreen = 999;
-    
     if(!IntroVM)
     {
         IntroVM = luaL_newstate();
@@ -50,7 +50,15 @@ void Game::ToIntro()
         {
             throw std::runtime_error(lua_tostring(IntroVM, -1));
         }
-        
+    }
+}
+
+void Game::ToIntro()
+{
+    currentScreen = 999;
+    
+    if(!intro_ran)
+    {
         if(lua_pcall(IntroVM, 0, 0, 0) != LUA_OK)
         {
             throw std::runtime_error(lua_tostring(IntroVM, -1));

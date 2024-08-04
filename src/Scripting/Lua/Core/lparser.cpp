@@ -75,7 +75,7 @@ static void parser_warning(LexState *ls, const std::string &msg)
 
 static l_noret error_expected (LexState *ls, int token)
 {
-    luaX_syntaxerror(ls, luaO_pushfstring(ls->L, "%s expected", luaX_token2str(ls, token)));
+    luaX_syntaxerror(ls, luaO_pushfstring(ls->L, "%s expected", luaX_token2str(ls, token).c_str()));
 }
 
 

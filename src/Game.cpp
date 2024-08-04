@@ -41,6 +41,7 @@ namespace Game
 void Game::Init()
 {
     LoadData();
+    LoadIntro();
 }
 
 std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string path)
