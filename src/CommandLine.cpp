@@ -301,13 +301,10 @@ void Game::RunCommand(const std::string &command, bool isQueue)
             RunCommand(cmd, true);
             if(currentScreen != 4) break;
         }
-        
     }
     else
     {
         std::vector<std::string> programsList = Game::ListPrograms();
-        
-        
         
         std::vector<std::string> args = Util::SplitString(command, ' ', true, true);
         if(args.size() > 0)

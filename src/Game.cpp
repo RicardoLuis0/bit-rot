@@ -11,6 +11,8 @@ using enum dir_entry_type;
 using enum hide_type;
 
 extern int currentScreen;
+
+/*
 extern int introStage;
 extern uint32_t introStartMs;
 extern uint32_t nextLineMs;
@@ -19,6 +21,7 @@ extern uint32_t memIncrement;
 
 extern uint32_t lastIncrementMs;
 extern uint32_t memAmount;
+*/
 
 namespace Game
 {
@@ -227,6 +230,9 @@ void Game::DoLoad()
 
 void Game::ToGame()
 {
+    if(currentScreen != 3) return;
+    
+    Renderer::HighRes();
     currentScreen = 4;
     GameConsoleOutput.clear();
     if(GameIsSave)

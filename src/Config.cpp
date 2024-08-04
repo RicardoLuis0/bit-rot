@@ -18,6 +18,15 @@ void Config::Init()
         {
             configData = JSON::Parse(Util::ReadFile(configFile));
             configData.get_obj();
+            
+            if(!configData.contains("ScriptValues"))
+            {
+                configData.set("ScriptValues", JSON::Object({}));
+            }
+            else
+            {
+                configData["ScriptValues"].get_obj();
+            }
         }
         catch(JSON::JSON_Exception &e)
         {
@@ -42,9 +51,9 @@ void Config::Quit()
 
 std::string * Config::getStringOrNull(const std::string &key)
 {
-    if(configData.get_obj().contains(key))
+    if(configData.contains(key))
     {
-        return &configData.get_obj()[key].get_str();
+        return &configData[key].get_str();
     }
     else
     {
@@ -54,9 +63,9 @@ std::string * Config::getStringOrNull(const std::string &key)
 
 std::string_view Config::mustGetString(const std::string &key)
 {
-    if(configData.get_obj().contains(key))
+    if(configData.contains(key))
     {
-        return configData.get_obj()[key].get_str();
+        return configData[key].get_str();
     }
     else
     {
@@ -66,9 +75,21 @@ std::string_view Config::mustGetString(const std::string &key)
 
 std::string_view Config::getStringOr(const std::string &key, std::string_view alternative)
 {
-    if(configData.get_obj().contains(key))
+    if(configData.contains(key))
     {
-        return configData.get_obj()[key].get_str();
+        return configData[key].get_str();
+    }
+    else
+    {
+        return alternative;
+    }
+}
+
+std::string_view Config::getScriptStringOr(const std::string &key, std::string_view alternative)
+{
+    if(configData["ScriptValues"].contains(key))
+    {
+        return configData["ScriptValues"][key].get_str();
     }
     else
     {
@@ -78,9 +99,9 @@ std::string_view Config::getStringOr(const std::string &key, std::string_view al
 
 int64_t Config::getIntOr(const std::string &key, int64_t alternative)
 {
-    if(configData.get_obj().contains(key))
+    if(configData.contains(key))
     {
-        return configData.get_obj()[key].get_int();
+        return configData[key].get_int();
     }
     else
     {
@@ -90,12 +111,18 @@ int64_t Config::getIntOr(const std::string &key, int64_t alternative)
 
 std::string_view Config::setString(const std::string &key, std::string_view newValue)
 {
-    configData.get_obj()[key] = std::string(newValue);
+    configData.set(key, std::string(newValue));
+    return newValue;
+}
+
+std::string_view Config::setScriptString(const std::string &key, std::string_view newValue)
+{
+    configData["ScriptValues"].set(key, std::string(newValue));
     return newValue;
 }
 
 int64_t Config::setInt(const std::string &key, int64_t newValue)
 {
-    configData.get_obj()[key] = newValue;
+    configData.set(key, newValue);
     return newValue;
 }

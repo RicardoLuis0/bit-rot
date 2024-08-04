@@ -83,7 +83,7 @@ static int pushglobalfuncname (lua_State *L, lua_Debug *ar) {
   lua_getfield(L, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
   luaL_checkstack(L, 6, "not enough stack");  /* slots for 'findfield' */
   if (findfield(L, top + 1, 2)) {
-    const char *name = lua_tostring(L, -1);
+    const char *name = lua_tocstring(L, -1);
     if (strncmp(name, LUA_GNAME ".", 3) == 0) {  /* name start with '_G.'? */
       lua_pushstring(L, name + 3);  /* push name without prefix */
       lua_remove(L, -2);  /* remove original name */
@@ -101,7 +101,7 @@ static int pushglobalfuncname (lua_State *L, lua_Debug *ar) {
 
 static void pushfuncname (lua_State *L, lua_Debug *ar) {
   if (pushglobalfuncname(L, ar)) {  /* try first a global name */
-    lua_pushfstring(L, "function '%s'", lua_tostring(L, -1));
+    lua_pushfstring(L, "function '%s'", lua_tocstring(L, -1));
     lua_remove(L, -2);  /* remove name */
   }
   else if (*ar->namewhat != '\0')  /* is there a name from code? */
@@ -186,7 +186,7 @@ LUALIB_API int luaL_argerror (lua_State *L, int arg, const char *extramsg) {
                            ar.name, extramsg);
   }
   if (ar.name == NULL)
-    ar.name = (pushglobalfuncname(L, &ar)) ? lua_tostring(L, -1) : "?";
+    ar.name = (pushglobalfuncname(L, &ar)) ? lua_tocstring(L, -1) : "?";
   return luaL_error(L, "bad argument #%d to '%s' (%s)",
                         arg, ar.name, extramsg);
 }
@@ -196,7 +196,7 @@ LUALIB_API int luaL_typeerror (lua_State *L, int arg, const char *tname) {
   const char *msg;
   const char *typearg;  /* name for the type of the actual argument */
   if (luaL_getmetafield(L, arg, "__name") == LUA_TSTRING)
-    typearg = lua_tostring(L, -1);  /* use the given type name */
+    typearg = lua_tocstring(L, -1);  /* use the given type name */
   else if (lua_type(L, arg) == LUA_TLIGHTUSERDATA)
     typearg = "light userdata";  /* special name for messages */
   else
@@ -737,7 +737,7 @@ static const char *getF (lua_State *L, void *ud, size_t *size) {
 
 static int errfile (lua_State *L, const char *what, int fnameindex) {
   int err = errno;
-  const char *filename = lua_tostring(L, fnameindex) + 1;
+  const char *filename = lua_tocstring(L, fnameindex) + 1;
   if (err != 0)
     lua_pushfstring(L, "cannot %s %s: %s", what, filename, strerror(err));
   else
@@ -813,7 +813,7 @@ LUALIB_API int luaL_loadfilex (lua_State *L, const char *filename,
   if (c != EOF)
     lf.buff[lf.n++] = c;  /* 'c' is the first character of the stream */
   errno = 0;
-  status = lua_load(L, getF, &lf, lua_tostring(L, -1), mode);
+  status = lua_load(L, getF, &lf, lua_tocstring(L, -1), mode);
   readstatus = ferror(lf.f);
   if (filename) fclose(lf.f);  /* close file (even in case of errors) */
   if (readstatus) {
@@ -922,7 +922,7 @@ LUALIB_API const char *luaL_tolstring (lua_State *L, int idx, size_t *len) {
         break;
       default: {
         int tt = luaL_getmetafield(L, idx, "__name");  /* try name */
-        const char *kind = (tt == LUA_TSTRING) ? lua_tostring(L, -1) :
+        const char *kind = (tt == LUA_TSTRING) ? lua_tocstring(L, -1) :
                                                  luaL_typename(L, idx);
         lua_pushfstring(L, "%s: %p", kind, lua_topointer(L, idx));
         if (tt != LUA_TNIL)
@@ -1020,7 +1020,7 @@ LUALIB_API const char *luaL_gsub (lua_State *L, const char *s,
   luaL_buffinit(L, &b);
   luaL_addgsub(&b, s, p, r);
   luaL_pushresult(&b);
-  return lua_tostring(L, -1);
+  return lua_tocstring(L, -1);
 }
 
 
@@ -1037,11 +1037,11 @@ static void *l_alloc (void *ud, void *ptr, size_t osize, size_t nsize) {
 
 /*
 ** Standard panic funcion just prints an error message. The test
-** with 'lua_type' avoids possible memory errors in 'lua_tostring'.
+** with 'lua_type' avoids possible memory errors in 'lua_tocstring'.
 */
 static int panic (lua_State *L) {
   const char *msg = (lua_type(L, -1) == LUA_TSTRING)
-                  ? lua_tostring(L, -1)
+                  ? lua_tocstring(L, -1)
                   : "error object is not a string";
   Log::LuaLogFull(LogPriority::ERROR, "", "", "", 0, "PANIC: unprotected error in call to Lua API ("_s + msg + ")\n");
   return 0;  /* return to Lua to abort */

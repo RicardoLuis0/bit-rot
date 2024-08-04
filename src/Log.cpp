@@ -77,8 +77,13 @@ static std::string formatTimestamp(time_t timestamp)
 static std::string formatMessage(const log_item_t & log, int formatFlags = 0)
 {
     std::string fmt = "[" + formatTimestamp(log.timestamp) + " - " + LogPriorityStrings[uint8_t(log.priority)];
-    if(log.category == LogCategory::APPLICATION)
+    if(log.category == LogCategory::APPLICATION || log.category == LogCategory::LUA)
     {
+        if(log.category != LogCategory::APPLICATION)
+        {
+            fmt += " - ";
+            fmt += LogCategoryStrings[uint8_t(log.category)];
+        }
         if(log.fn_namespace.size() > 0)
         {
             assert(log.fn_name.size() > 0);
@@ -123,6 +128,8 @@ static void AddLog(log_item_t && orig_log)
     {
         FilterLog(Logs.size() - 1);
     }
+    
+    //Util::WriteFile("info.log", Util::Join(Util::Map(Logs, std::bind(formatMessage, std::placeholders::_1, 0)), "\n"));
 }
 
 static void LogHandler(void *,int cat, SDL_LogPriority pri, const char * msg);

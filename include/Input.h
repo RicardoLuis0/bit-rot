@@ -13,6 +13,9 @@ namespace Audio
     void StartFan();
     void Beep();
     void Error();
+    
+    bool ErrorPlaying();
+    
     //music
     void FadeMusic(int ms);
     void PlayMusic(const std::string &name);

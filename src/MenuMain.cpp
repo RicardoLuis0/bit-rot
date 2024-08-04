@@ -42,11 +42,11 @@ void Menu::MainMenuResponder(SDL_Event *e)
                 switch(currentMainMenuPopupItem)
                 {
                 case 0: // first intro
-                    Config::setString("SawIntro1", "no");
+                    Config::setScriptString("SawIntro1", "no");
                     Game::ToIntro();
                     break;
                 case 1: // new game
-                    Config::setString("SawIntro1", "yes");
+                    Config::setScriptString("SawIntro1", "yes");
                     Game::ToIntro();
                     break;
                 case 2: // quit
@@ -129,7 +129,7 @@ void Menu::DrawMainMenu()
     
     if(hasSave) DrawMenuItemButton(currentMainMenuItem == -1, y, "Continue");
     
-    DrawMenuItemButton(currentMainMenuItem == 0, y, (!hasSave && Config::getStringOr("SawIntro1", "no") == "yes") ? "Continue...?" : "New Game");
+    DrawMenuItemButton(currentMainMenuItem == 0, y, (!hasSave && Config::getScriptStringOr("SawIntro1", "no") == "yes") ? "Continue...?" : "New Game");
     
     DrawMenuItemButton(currentMainMenuItem == 1, y, "Settings");
     DrawMenuItemButton(currentMainMenuItem == 2, y, "Quit");

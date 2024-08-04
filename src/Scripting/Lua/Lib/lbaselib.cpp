@@ -49,8 +49,8 @@ static int luaB_warn (lua_State *L) {
   for (i = 2; i <= n; i++)
     luaL_checkstring(L, i);  /* make sure all arguments are strings */
   for (i = 1; i < n; i++)  /* compose warning */
-    lua_warning(L, lua_tostring(L, i), 1);
-  lua_warning(L, lua_tostring(L, n), 0);  /* close warning */
+    lua_warning(L, lua_tocstring(L, i), 1);
+  lua_warning(L, lua_tocstring(L, n), 0);  /* close warning */
   return 0;
 }
 
@@ -412,7 +412,7 @@ static int luaB_assert (lua_State *L) {
 
 static int luaB_select (lua_State *L) {
   int n = lua_gettop(L);
-  if (lua_type(L, 1) == LUA_TSTRING && *lua_tostring(L, 1) == '#') {
+  if (lua_type(L, 1) == LUA_TSTRING && *lua_tocstring(L, 1) == '#') {
     lua_pushinteger(L, n-1);
     return 1;
   }

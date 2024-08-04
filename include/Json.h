@@ -193,6 +193,36 @@ namespace JSON {
             throw JSON_Exception("Missing key '"_s + index + "' in object");
         }
         
+        bool contains(const char * index)
+        {   //object access
+            return get_obj().contains(index);
+        }
+        
+        bool contains(std::string index)
+        {   //object access
+            return get_obj().contains(index);
+        }
+        
+        void set(const char * index, JSON::Element && e)
+        {   //object access
+            get_obj().insert_or_assign(index, std::move(e));
+        }
+        
+        void set(std::string index, JSON::Element && e)
+        {   //object access
+            get_obj().insert_or_assign(index, std::move(e));
+        }
+        
+        void set(const char * index, const JSON::Element & e)
+        {   //object access
+            get_obj().insert_or_assign(index, e);
+        }
+        
+        void set(std::string index, const JSON::Element & e)
+        {   //object access
+            get_obj().insert_or_assign(index, e);
+        }
+        
         operator int64_t(){
             return is_int()?get_int():is_double()?get_double():throw std::bad_variant_access();
         }

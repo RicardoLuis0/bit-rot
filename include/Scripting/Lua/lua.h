@@ -11,6 +11,8 @@
 
 #include <cstdarg>
 #include <cstddef>
+#include <string>
+#include <string_view>
 
 
 #include "Scripting/Lua/luaconf.h"
@@ -393,8 +395,21 @@ LUA_API void (lua_closeslot) (lua_State *L, int idx);
 #define lua_pushglobaltable(L)  \
 	((void)lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS))
 
-#define lua_tostring(L,i)	lua_tolstring(L, (i), NULL)
+#define lua_tocstring(L,i)	lua_tolstring(L, (i), NULL)
 
+inline std::string lua_tostring(lua_State *L, int idx)
+{
+    size_t len;
+    const char * s = lua_tolstring(L, idx, &len);
+    return std::string(s, len);
+}
+
+inline std::string_view lua_tostring_view(lua_State *L, int idx)
+{
+    size_t len;
+    const char * s = lua_tolstring(L, idx, &len);
+    return std::string_view(s, len);
+}
 
 #define lua_insert(L,idx)	lua_rotate(L, (idx), 1)
 

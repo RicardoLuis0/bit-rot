@@ -116,7 +116,7 @@ static l_noret lexerror(LexState *ls, std::string msg, int token)
     }
     
     Log::LuaLogFull(LogPriority::ERROR, "", ls->funcStack.back(), ls->source ? std::string(getstr(ls->source), tsslen(ls->source)) : "", ls->linenumber, msg);
-    msg = (ls->source ? std::string(getstr(ls->source), tsslen(ls->source)) : "?") + std::to_string(ls->linenumber) + ": " + msg;
+    msg = (ls->source ? std::string(getstr(ls->source), tsslen(ls->source)) : "?") + ":" + std::to_string(ls->linenumber) + ": " + msg;
     luaD_throw(ls->L, LUA_ERRSYNTAX, msg);
 }
 

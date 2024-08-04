@@ -23,9 +23,13 @@ namespace Config
     std::string_view mustGetString(const std::string &key);
     std::string_view getStringOr(const std::string &key, std::string_view alternative);
     
+    std::string_view getScriptStringOr(const std::string &key, std::string_view alternative);
+    
     int64_t getIntOr(const std::string &key, int64_t alternative);
     
     std::string_view setString(const std::string &key, std::string_view newValue);
+    
+    std::string_view setScriptString(const std::string &key, std::string_view newValue);
     
     int64_t setInt(const std::string &key, int64_t newValue);
     

@@ -506,7 +506,7 @@ namespace Util
 {
     bool hasFreq = false;
     uint64_t PerformanceFreq;
-    uint64_t MsTime()
+    static uint64_t MsTimeRaw()
     {
         #ifdef _WIN32
             LARGE_INTEGER i;
@@ -525,6 +525,13 @@ namespace Util
         #else
             return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
         #endif
+    }
+    
+    uint64_t base = MsTimeRaw();
+    
+    uint64_t MsTime()
+    {
+        return MsTimeRaw() - base;
     }
     
     extern "C" uint64_t Custom_GetTics()

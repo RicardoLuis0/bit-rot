@@ -38,11 +38,11 @@ void chanDone(int chan)
     {
         Mix_PlayChannel(CHANNEL_FAN_LOOP, fan_loop, -1);
     }
-    else if(chan == CHANNEL_ERROR)
-    {
-        introStage = 7;
-        introStartMs = Util::MsTime();
-    }
+}
+
+bool Audio::ErrorPlaying()
+{
+    return Mix_Playing(CHANNEL_ERROR);
 }
 
 #define LOADMUS(name)\
@@ -132,7 +132,8 @@ void Audio::FadeMusic(int ms)
 }
 void Audio::PlayMusic(const std::string &name)
 {
-    Mix_PlayMusic(*music.at(name), -1);
+    std::string n = Util::StrToLower(name);
+    Mix_PlayMusic(*music.at(n), -1);
 }
 
 int shiftCount = 0;

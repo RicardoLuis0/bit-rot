@@ -60,7 +60,7 @@ int doGame()
                 
                 LogDebug("Starting Main Loop");
                 
-                if(Config::getStringOr("SawIntro1", "no") == "yes" || SaveData::HasSave())
+                if(Config::getScriptStringOr("SawIntro1", "no") == "yes" || SaveData::HasSave())
                 {
                     Audio::PlayMusic("tension");
                 }

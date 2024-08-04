@@ -7,18 +7,37 @@
 #include "Menu.h"
 #include "SaveData.h"
 
-#ifdef DEBUG_BUILD
-    #define DEBUG_START_SCREEN 4
-    #define DEBUG_START_STAGE2 1
-    #define DEBUG_START_STAGE 0
-#else
-    #define DEBUG_START_SCREEN 3
-    #define DEBUG_START_STAGE2 1
-    #define DEBUG_START_STAGE 0
-#endif
+#include "Scripting/Lua/lua.h"
+#include "Scripting/Lua/lualib.h"
+#include "Scripting/Lua/lauxlib.h"
 
 extern bool RunGame;
 extern int currentScreen;
+
+void Game::EndResponder(SDL_Event *e)
+{
+    if(e->type == SDL_KEYDOWN && e->key == SDLK_ESCAPE)
+    {
+        RunGame = false;
+    }
+}
+
+void Game::TickEnd()
+{
+    
+    Renderer::DrawClear();
+    
+    Menu::DrawTextBox(0, texts["EndMessage"], texts["EndMessage2"], true);
+}
+
+#define NOLUA
+
+#ifdef NOLUA
+
+#define DEBUG_START_SCREEN 3
+#define DEBUG_START_STAGE2 1
+#define DEBUG_START_STAGE 0
+
 int introStage = 0;
 uint32_t introStartMs = 0;
 uint32_t glitchStartMs = 0;
@@ -30,10 +49,6 @@ uint32_t memAmountTarget = 1024 * MEMORY_MB;
 uint32_t memIncrement = 64;
 uint32_t memIncrementTimer = 25;
 
-/*
-uint32_t memIncrement = 8192;
-uint32_t memIncrementTimer = 1;
-*/
 
 uint32_t lastIncrementMs = 0;
 uint32_t memAmount = memIncrement;
@@ -74,25 +89,18 @@ void Game::ToIntro()
 {
     currentScreen = DEBUG_START_SCREEN;
     
-    if constexpr(DEBUG_START_SCREEN == 4)
+    if(Game::GameIsSave || Config::getStringOr("SawIntro1", "no") == "yes")
     {
-        ToGame();
+        introStage = DEBUG_START_STAGE2;
+        Audio::FadeMusic(500);
+        Audio::StartFan();
+        Audio::PlayMusic("lost");
     }
     else
     {
-        if(Game::GameIsSave || Config::getStringOr("SawIntro1", "no") == "yes")
-        {
-            introStage = DEBUG_START_STAGE2;
-            Audio::FadeMusic(500);
-            Audio::StartFan();
-            Audio::PlayMusic("lost");
-        }
-        else
-        {
-            introStage = DEBUG_START_STAGE;
-            Audio::FadeMusic(500);
-            Audio::PlayMusic("forest");
-        }
+        introStage = DEBUG_START_STAGE;
+        Audio::FadeMusic(500);
+        Audio::PlayMusic("forest");
     }
 }
 
@@ -107,26 +115,8 @@ void Game::IntroResponder(SDL_Event *e)
     }
     else if(skipText && SaveData::HasSave() && introStage > 1 && e->type == SDL_KEYDOWN && e->key == SDLK_ESCAPE)
     {
-        Renderer::HighRes();
-        currentScreen = 4;
         ToGame();
     }
-}
-
-void Game::EndResponder(SDL_Event *e)
-{
-    if(e->type == SDL_KEYDOWN && e->key == SDLK_ESCAPE)
-    {
-        RunGame = false;
-    }
-}
-
-void Game::TickEnd()
-{
-    
-    Renderer::DrawClear();
-    
-    Menu::DrawTextBox(0, texts["EndMessage"], texts["EndMessage2"], true);
 }
 
 static void DoIntroShared()
@@ -386,7 +376,17 @@ static void DoIntro1()
             glitchStartMs = Util::MsTime();
             randPrintErr = randFill(1, 254, glitchStartMs);
         }
-        break;
+        
+        if(Audio::ErrorPlaying())
+        {
+            break;
+        }
+        else
+        {
+            introStartMs = Util::MsTime();
+            introStage = 7;
+        }
+        [[fallthrough]];
     case 7:
         Renderer::DrawClear(' ', CHAR_INVERT1);
         if((Util::MsTime() - introStartMs) >= 1000)
@@ -532,3 +532,89 @@ void Game::TickIntro()
     //TODO
 }
 
+#else
+
+static lua_State * IntroVM = nullptr;
+
+void Game::ToIntro()
+{
+    currentScreen = 3;
+    
+    lua_State *  L = IntroVM = luaL_newstate();
+    luaL_openlibs(L);
+    if(luaL_loadfile(L, "GameData/intro.lua") != LUA_OK)
+    {
+        throw std::runtime_error(lua_tostring(L, -1));
+    }
+    
+    if(lua_pcall(L, 0, 0, 0) != LUA_OK)
+    {
+        throw std::runtime_error(lua_tostring(L, -1));
+    }
+    
+    lua_getglobal(L, "init");
+    
+    if(!lua_isfunction(L, -1))
+    {
+        throw std::runtime_error("init missing or not a function in intro.lua");
+    }
+    
+    if(lua_pcall(L, 0, 0, 0) != LUA_OK)
+    {
+        throw std::runtime_error(lua_tostring(L, -1));
+    }
+    
+    lua_pop(L, lua_gettop(L));
+}
+
+void Game::IntroResponder(SDL_Event *e)
+{
+    if(!IntroVM) return;
+    
+    if(e->type == SDL_KEYDOWN)
+    {
+        lua_State *  L = IntroVM;
+        
+        lua_getglobal(L, "responder");
+        
+        if(!lua_isfunction(L, -1))
+        {
+            throw std::runtime_error("responder missing or not a function in intro.lua");
+        }
+        
+        lua_pushnumber(L, e->key.keysym.sym);
+        
+        
+        if(lua_pcall(L, 1, 0, 0) != LUA_OK)
+        {
+            throw std::runtime_error(lua_tostring(L, -1));
+        }
+        
+        lua_pop(L, lua_gettop(L));
+    }
+}
+
+void Game::TickIntro()
+{
+    if(!IntroVM) return;
+    
+    Renderer::DrawClear();
+    
+    lua_State *  L = IntroVM;
+    
+    lua_getglobal(L, "tick");
+    
+    if(!lua_isfunction(L, -1))
+    {
+        throw std::runtime_error("tick missing or not a function in intro.lua");
+    }
+    
+    if(lua_pcall(L, 0, 0, 0) != LUA_OK)
+    {
+        throw std::runtime_error(lua_tostring(L, -1));
+    }
+    
+    lua_pop(L, lua_gettop(L));
+}
+
+#endif

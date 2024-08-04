@@ -213,8 +213,10 @@
 		<Unit filename="src/Scripting/Lua/Lib/lauxlib.cpp" />
 		<Unit filename="src/Scripting/Lua/Lib/lbaselib.cpp" />
 		<Unit filename="src/Scripting/Lua/Lib/lcorolib.cpp" />
+		<Unit filename="src/Scripting/Lua/Lib/lgamelib.cpp" />
 		<Unit filename="src/Scripting/Lua/Lib/linit.cpp" />
 		<Unit filename="src/Scripting/Lua/Lib/lmathlib.cpp" />
+		<Unit filename="src/Scripting/Lua/Lib/lscreenlib.cpp" />
 		<Unit filename="src/Scripting/Lua/Lib/lstrlib.cpp" />
 		<Unit filename="src/Scripting/Lua/Lib/ltablib.cpp" />
 		<Unit filename="src/Scripting/Lua/Lib/lutf8lib.cpp" />
