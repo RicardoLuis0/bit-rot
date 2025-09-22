@@ -150,7 +150,7 @@ inline consteval FakeString<N - 1> fixString(const char32_t (&str)[N])
     return tmp;
 }
 
-inline std::string operator""fixString(const char32_t * str, size_t len)
+inline std::string operator"" _fixString(const char32_t * str, size_t len)
 {
     std::string tmp;
     tmp.resize(len);
