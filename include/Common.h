@@ -150,7 +150,7 @@ inline consteval FakeString<N - 1> fixString(const char32_t (&str)[N])
     return tmp;
 }
 
-inline std::string operator"" _fixString(const char32_t * str, size_t len)
+inline std::string operator ""_fixString(const char32_t * str, size_t len)
 {
     std::string tmp;
     tmp.resize(len);
@@ -229,23 +229,23 @@ inline std::string stringRandReplace(std::string_view str, char replace, uint32_
     return tmp;
 }
 
-inline constexpr std::string operator"" _s(const char * s,size_t n){
+inline constexpr std::string operator ""_s(const char * s,size_t n){
     return {s,n};
 }
 
-inline constexpr std::string_view operator"" _sv(const char * s,size_t n){
+inline constexpr std::string_view operator ""_sv(const char * s,size_t n){
     return {s,n};
 }
 
-inline consteval unsigned long long int operator"" _K(unsigned long long int n){
+inline consteval unsigned long long int operator ""_K(unsigned long long int n){
     return n*1024;
 }
 
-inline consteval unsigned long long int operator"" _M(unsigned long long int n){
+inline consteval unsigned long long int operator ""_M(unsigned long long int n){
     return n*1024_K;
 }
 
-inline consteval unsigned long long int operator"" _G(unsigned long long int n){
+inline consteval unsigned long long int operator ""_G(unsigned long long int n){
     return n*1024_M;
 }
 

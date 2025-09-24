@@ -235,7 +235,7 @@ void Renderer::Init()
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 5 );
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
     
-    LogDebug("OpenGL version set to 4.6 Core");
+    LogDebug("OpenGL version set to 4.5 Core");
     
     if(!(
             win = SDL_CreateWindow("Bit Rot", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN | SDL_WINDOW_RESIZABLE)

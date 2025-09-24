@@ -315,9 +315,9 @@ namespace Util
                 
                 if(keep_quotes)
                 {
-                    for(i++;(str[i] != lastQuoteType || wasSlash) && i < std::size(str); i++)
+                    for(i++;i < std::size(str) && (str[i] != lastQuoteType || wasSlash); i++)
                     {
-                        if(i == '\\' && !wasSlash)
+                        if(str[i] == '\\' && !wasSlash)
                         {
                             wasSlash = true;
                         }
@@ -333,9 +333,9 @@ namespace Util
                     tmp += str.substr(lastSection, i - lastSection);
                     has_tmp = true;
                     
-                    for(i++;(str[i] != lastQuoteType || wasSlash) && i < std::size(str); i++)
+                    for(i++;i < std::size(str) && (str[i] != lastQuoteType || wasSlash); i++)
                     {
-                        if(i == '\\' && !wasSlash)
+                        if(str[i] == '\\' && !wasSlash)
                         {
                             wasSlash = true;
                         }
