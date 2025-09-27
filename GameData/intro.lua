@@ -1,6 +1,7 @@
 local introStage = 0;
 local nextLine = 0;
 local introStartMs = 0;
+local errorStartMs = 0;
 local lastIncrementMs = 0;
 local nextLineMs = 0;
 
@@ -41,10 +42,6 @@ function responder(key)
     then
         game.ToGame();
     end
-end
-
-function drawIntroMemCount()
-    
 end
 
 function drawIntroShared()
@@ -268,6 +265,7 @@ function drawIntro1()
             if(nextLine == (game.NumInitTexts - game.NumRecoveryInitTexts) and introStage == 4)
             then
                 introStartMs = game.MsTime();
+                errorStartMs = introStartMs;
                 introStage = 5;
                 audio.PlaySample("Error");
             end
@@ -281,10 +279,8 @@ function drawIntro1()
                 screen.RandFillReroll();
             end
             
-            if(audio.IsSamplePlaying("Error"))
+            if((game.MsTime() - errorStartMs) >= 6500)
             then
-                return;
-            else
                 introStartMs = game.MsTime();
                 introStage = 7;
             end
