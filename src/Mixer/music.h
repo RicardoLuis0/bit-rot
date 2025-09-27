@@ -27,21 +27,8 @@
 
 typedef enum
 {
-    MIX_MUSIC_CMD,
     MIX_MUSIC_WAVE,
-    MIX_MUSIC_MODPLUG,
-    MIX_MUSIC_FLUIDSYNTH,
-    MIX_MUSIC_TIMIDITY,
-    MIX_MUSIC_NATIVEMIDI,
     MIX_MUSIC_OGG,
-    MIX_MUSIC_MINIMP3,
-    MIX_MUSIC_MPG123,
-    MIX_MUSIC_DRFLAC,
-    MIX_MUSIC_FLAC,
-    MIX_MUSIC_OPUS,
-    MIX_MUSIC_LIBXMP,
-    MIX_MUSIC_WAVPACK,
-    MIX_MUSIC_GME,
     MIX_MUSIC_LAST
 } Mix_MusicAPI;
 
@@ -174,7 +161,6 @@ extern void pause_async_music(int pause_on);
 extern void close_music(void);
 extern void unload_music(void);
 
-extern char *music_cmd;
 extern SDL_AudioSpec music_spec;
 
 #endif /* MUSIC_H_ */

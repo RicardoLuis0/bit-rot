@@ -108,13 +108,7 @@ extern DECLSPEC const SDL_version * SDLCALL Mix_Linked_Version(void);
  */
 typedef enum MIX_InitFlags
 {
-    MIX_INIT_FLAC   = 0x00000001,
-    MIX_INIT_MOD    = 0x00000002,
-    MIX_INIT_MP3    = 0x00000008,
     MIX_INIT_OGG    = 0x00000010,
-    MIX_INIT_MID    = 0x00000020,
-    MIX_INIT_OPUS   = 0x00000040,
-    MIX_INIT_WAVPACK= 0x00000080
 } MIX_InitFlags;
 
 /**
@@ -249,18 +243,8 @@ typedef enum Mix_Fading {
  */
 typedef enum Mix_MusicType {
     MUS_NONE,
-    MUS_CMD,
     MUS_WAV,
-    MUS_MOD,
-    MUS_MID,
     MUS_OGG,
-    MUS_MP3,
-    MUS_MP3_MAD_UNUSED,
-    MUS_FLAC,
-    MUS_MODPLUG_UNUSED,
-    MUS_OPUS,
-    MUS_WAVPACK,
-    MUS_GME
 } Mix_MusicType;
 
 /**
@@ -1241,7 +1225,7 @@ extern DECLSPEC void SDLCALL Mix_HookMusicFinished(Mix_MusicFinishedCallback mus
  */
 extern DECLSPEC void * SDLCALL Mix_GetMusicHookData(void);
 
-typedef void (SDLCALL *Mix_ChannelFinishedCallback)(int channel);
+typedef void (SDLCALL *Mix_ChannelFinishedCallback)(int channel, int interrupted);
 
 /**
  * Set a callback that runs when a channel has finished playing.
@@ -1652,6 +1636,7 @@ extern DECLSPEC int SDLCALL Mix_ReserveChannels(int num);
  * \since This function is available since SDL_mixer 2.0.0.
  */
 extern DECLSPEC int SDLCALL Mix_GroupChannel(int which, int tag);
+extern DECLSPEC int SDLCALL Mix_GetChannelGroup(int which);
 
 /**
  * Assign several consecutive channels to the same tag.
@@ -1776,6 +1761,7 @@ extern DECLSPEC int SDLCALL Mix_GroupNewer(int tag);
  *        since 2.0.0).
  */
 extern DECLSPEC int SDLCALL Mix_PlayChannel(int channel, Mix_Chunk *chunk, int loops);
+extern DECLSPEC int SDLCALL Mix_PlayChannelSetTag(int channel, Mix_Chunk *chunk, int loops, int tag);
 
 /**
  * Play an audio chunk on a specific channel for a maximum time.
@@ -1809,6 +1795,7 @@ extern DECLSPEC int SDLCALL Mix_PlayChannel(int channel, Mix_Chunk *chunk, int l
  * \since This function is available since SDL_mixer 2.0.0.
  */
 extern DECLSPEC int SDLCALL Mix_PlayChannelTimed(int channel, Mix_Chunk *chunk, int loops, int ticks);
+extern DECLSPEC int SDLCALL Mix_PlayChannelTimedSetTag(int channel, Mix_Chunk *chunk, int loops, int ticks, int tag);
 
 /**
  * Play a new music object.
@@ -1939,6 +1926,7 @@ extern DECLSPEC int SDLCALL Mix_FadeInMusicPos(Mix_Music *music, int loops, int 
  *        since 2.0.0).
  */
 extern DECLSPEC int SDLCALL Mix_FadeInChannel(int channel, Mix_Chunk *chunk, int loops, int ms);
+extern DECLSPEC int SDLCALL Mix_FadeInChannelSetTag(int channel, Mix_Chunk *chunk, int loops, int ms, int tag);
 
 /**
  * Play an audio chunk on a specific channel, fading in the audio, for a
@@ -1983,6 +1971,7 @@ extern DECLSPEC int SDLCALL Mix_FadeInChannel(int channel, Mix_Chunk *chunk, int
  * \since This function is available since SDL_mixer 2.0.0.
  */
 extern DECLSPEC int SDLCALL Mix_FadeInChannelTimed(int channel, Mix_Chunk *chunk, int loops, int ms, int ticks);
+extern DECLSPEC int SDLCALL Mix_FadeInChannelTimedSetTag(int channel, Mix_Chunk *chunk, int loops, int ms, int ticks, int tag);
 
 /**
  * Set the volume for a specific channel.
@@ -2576,169 +2565,6 @@ extern DECLSPEC int SDLCALL Mix_Playing(int channel);
  * \since This function is available since SDL_mixer 2.0.0.
  */
 extern DECLSPEC int SDLCALL Mix_PlayingMusic(void);
-
-/**
- * Run an external command as the music stream.
- *
- * This halts any currently-playing music, and next time the music stream is
- * played, SDL_mixer will spawn a process using the command line specified in
- * `command`. This command is not subject to shell expansion, and beyond some
- * basic splitting up of arguments, is passed to execvp() on most platforms,
- * not system().
- *
- * The command is responsible for generating sound; it is NOT mixed by
- * SDL_mixer! SDL_mixer will kill the child process if asked to halt the
- * music, but otherwise does not have any control over what the process does.
- *
- * You are strongly encouraged not to use this function without an extremely
- * good reason.
- *
- * \param command command.
- * \returns 0 if successful, -1 on error.
- *
- * \since This function is available since SDL_mixer 2.0.0.
- */
-extern DECLSPEC int SDLCALL Mix_SetMusicCMD(const char *command);
-
-/**
- * This function does nothing, do not use.
- *
- * This was probably meant to expose a feature, but no codecs support it, so
- * it only remains for binary compatibility.
- *
- * Calling this function is a legal no-op that returns -1.
- *
- * \param value this parameter is ignored.
- * \returns -1.
- *
- * \since This function is available since SDL_mixer 2.0.0.
- */
-extern DECLSPEC int SDLCALL Mix_SetSynchroValue(int value);
-
-/**
- * This function does nothing, do not use.
- *
- * This was probably meant to expose a feature, but no codecs support it, so
- * it only remains for binary compatibility.
- *
- * Calling this function is a legal no-op that returns -1.
- *
- * \returns -1.
- *
- * \since This function is available since SDL_mixer 2.0.0.
- */
-extern DECLSPEC int SDLCALL Mix_GetSynchroValue(void);
-
-/**
- * Set SoundFonts paths to use by supported MIDI backends.
- *
- * You may specify multiple paths in a single string by separating them with
- * semicolons; they will be searched in the order listed.
- *
- * This function replaces any previously-specified paths.
- *
- * Passing a NULL path will remove any previously-specified paths.
- *
- * Note that unlike most SDL and SDL_mixer functions, this function returns
- * zero if there's an error, not on success. We apologize for the API design
- * inconsistency here.
- *
- * \param paths Paths on the filesystem where SoundFonts are available,
- *              separated by semicolons.
- * \returns 1 if successful, 0 on error (out of memory).
- *
- * \since This function is available since SDL_mixer 2.0.0.
- */
-extern DECLSPEC int SDLCALL Mix_SetSoundFonts(const char *paths);
-
-/**
- * Get SoundFonts paths to use by supported MIDI backends.
- *
- * There are several factors that determine what will be reported by this
- * function:
- *
- * - If the boolean _SDL hint_ `"SDL_FORCE_SOUNDFONTS"` is set, AND the
- *   `"SDL_SOUNDFONTS"` _environment variable_ is also set, this function will
- *   return that environment variable regardless of whether
- *   Mix_SetSoundFounts() was ever called.
- * - Otherwise, if Mix_SetSoundFonts() was successfully called with a non-NULL
- *   path, this function will return the string passed to that function.
- * - Otherwise, if the `"SDL_SOUNDFONTS"` variable is set, this function will
- *   return that environment variable.
- * - Otherwise, this function will search some common locations on the
- *   filesystem, and if it finds a SoundFont there, it will return that.
- * - Failing everything else, this function returns NULL.
- *
- * This returns a pointer to internal (possibly read-only) memory, and it
- * should not be modified or free'd by the caller.
- *
- * \returns semicolon-separated list of sound font paths.
- *
- * \since This function is available since SDL_mixer 2.0.0.
- */
-extern DECLSPEC const char* SDLCALL Mix_GetSoundFonts(void);
-
-typedef int (SDLCALL *Mix_EachSoundFontCallback)(const char*, void*);
-
-/**
- * Iterate SoundFonts paths to use by supported MIDI backends.
- *
- * This function will take the string reported by Mix_GetSoundFonts(), split
- * it up into separate paths, as delimited by semicolons in the string, and
- * call a callback function for each separate path.
- *
- * If there are no paths available, this returns 0 without calling the
- * callback at all.
- *
- * If the callback returns non-zero, this function stops iterating and returns
- * non-zero. If the callback returns 0, this function will continue iterating,
- * calling the callback again for further paths. If the callback never returns
- * 1, this function returns 0, so this can be used to decide if an available
- * soundfont is acceptable for use.
- *
- * \param function the callback function to call once per path.
- * \param data a pointer to pass to the callback for its own personal use.
- * \returns non-zero if callback ever returned non-zero, 0 on error or the
- *          callback never returned non-zero.
- *
- * \since This function is available since SDL_mixer 2.0.0.
- *
- * \sa Mix_GetSoundFonts
- */
-extern DECLSPEC int SDLCALL Mix_EachSoundFont(Mix_EachSoundFontCallback function, void *data);
-
-/**
- * Set full path of the Timidity config file.
- *
- * For example, "/etc/timidity.cfg"
- *
- * This is obviously only useful if SDL_mixer is using Timidity internally to
- * play MIDI files.
- *
- * \param path path to a Timidity config file.
- * \returns 1 if successful, 0 on error.
- *
- * \since This function is available since SDL_mixer 2.6.0.
- */
-extern DECLSPEC int SDLCALL Mix_SetTimidityCfg(const char *path);
-
-/**
- * Get full path of a previously-specified Timidity config file.
- *
- * For example, "/etc/timidity.cfg"
- *
- * If a path has never been specified, this returns NULL.
- *
- * This returns a pointer to internal memory, and it should not be modified or
- * free'd by the caller.
- *
- * \returns the previously-specified path, or NULL if not set.
- *
- * \since This function is available since SDL_mixer 2.6.0.
- *
- * \sa Mix_SetTimidityCfg
- */
-extern DECLSPEC const char* SDLCALL Mix_GetTimidityCfg(void);
 
 /**
  * Get the Mix_Chunk currently associated with a mixer channel.

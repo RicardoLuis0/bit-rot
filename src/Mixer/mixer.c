@@ -185,26 +185,8 @@ static int get_loaded_mix_init_flags(void)
         interface = get_music_interface(i);
         if (interface->loaded) {
             switch (interface->type) {
-            case MUS_FLAC:
-                loaded_init_flags |= MIX_INIT_FLAC;
-                break;
-            case MUS_WAVPACK:
-                loaded_init_flags |= MIX_INIT_WAVPACK;
-                break;
-            case MUS_MOD:
-                loaded_init_flags |= MIX_INIT_MOD;
-                break;
-            case MUS_MP3:
-                loaded_init_flags |= MIX_INIT_MP3;
-                break;
             case MUS_OGG:
                 loaded_init_flags |= MIX_INIT_OGG;
-                break;
-            case MUS_MID:
-                loaded_init_flags |= MIX_INIT_MID;
-                break;
-            case MUS_OPUS:
-                loaded_init_flags |= MIX_INIT_OPUS;
                 break;
             default:
                 break;
@@ -220,38 +202,6 @@ int Mix_Init(int flags)
     int result = 0;
     int already_loaded = get_loaded_mix_init_flags();
 
-    if (flags & MIX_INIT_FLAC) {
-        if (load_music_type(MUS_FLAC)) {
-            open_music_type(MUS_FLAC);
-            result |= MIX_INIT_FLAC;
-        } else {
-            Mix_SetError("FLAC support not available");
-        }
-    }
-    if (flags & MIX_INIT_WAVPACK) {
-        if (load_music_type(MUS_WAVPACK)) {
-            open_music_type(MUS_WAVPACK);
-            result |= MIX_INIT_WAVPACK;
-        } else {
-            Mix_SetError("WavPack support not available");
-        }
-    }
-    if (flags & MIX_INIT_MOD) {
-        if (load_music_type(MUS_MOD)) {
-            open_music_type(MUS_MOD);
-            result |= MIX_INIT_MOD;
-        } else {
-            Mix_SetError("MOD support not available");
-        }
-    }
-    if (flags & MIX_INIT_MP3) {
-        if (load_music_type(MUS_MP3)) {
-            open_music_type(MUS_MP3);
-            result |= MIX_INIT_MP3;
-        } else {
-            Mix_SetError("MP3 support not available");
-        }
-    }
     if (flags & MIX_INIT_OGG) {
         if (load_music_type(MUS_OGG)) {
             open_music_type(MUS_OGG);
@@ -260,22 +210,7 @@ int Mix_Init(int flags)
             Mix_SetError("OGG support not available");
         }
     }
-    if (flags & MIX_INIT_OPUS) {
-        if (load_music_type(MUS_OPUS)) {
-            open_music_type(MUS_OPUS);
-            result |= MIX_INIT_OPUS;
-        } else {
-            Mix_SetError("OPUS support not available");
-        }
-    }
-    if (flags & MIX_INIT_MID) {
-        if (load_music_type(MUS_MID)) {
-            open_music_type(MUS_MID);
-            result |= MIX_INIT_MID;
-        } else {
-            Mix_SetError("MIDI support not available");
-        }
-    }
+    
     result |= already_loaded;
 
     return result;
@@ -293,10 +228,10 @@ static int _Mix_remove_all_effects(int channel, effect_info **e);
  *  MAKE SURE Mix_LockAudio() is called before this (or you're in the
  *   audio callback).
  */
-static void _Mix_channel_done_playing(int channel)
+static void _Mix_channel_done_playing(int channel, int interrupted)
 {
     if (channel_done_callback) {
-        channel_done_callback(channel);
+        channel_done_callback(channel, interrupted);
     }
 
     /*
@@ -363,7 +298,7 @@ mix_channels(void *udata, Uint8 *stream, int len)
                 mix_channel[i].looping = 0;
                 mix_channel[i].fading = MIX_NO_FADING;
                 mix_channel[i].expire = 0;
-                _Mix_channel_done_playing(i);
+                _Mix_channel_done_playing(i, false);
             } else if (mix_channel[i].fading != MIX_NO_FADING) {
                 Uint32 ticks = sdl_ticks - mix_channel[i].ticks_fade;
                 if (ticks >= mix_channel[i].fade_length) {
@@ -372,7 +307,7 @@ mix_channels(void *udata, Uint8 *stream, int len)
                         mix_channel[i].playing = 0;
                         mix_channel[i].looping = 0;
                         mix_channel[i].expire = 0;
-                        _Mix_channel_done_playing(i);
+                        _Mix_channel_done_playing(i, false);
                     }
                     mix_channel[i].fading = MIX_NO_FADING;
                 } else {
@@ -408,7 +343,7 @@ mix_channels(void *udata, Uint8 *stream, int len)
                     if (!mix_channel[i].playing && !mix_channel[i].looping) {
                         mix_channel[i].fading = MIX_NO_FADING;
                         mix_channel[i].expire = 0;
-                        _Mix_channel_done_playing(i);
+                        _Mix_channel_done_playing(i, false);
 
                         /* Update the volume after the application callback */
                         volume = (master_vol * (mix_channel[i].volume * mix_channel[i].chunk->volume)) / (MIX_MAX_VOLUME * MIX_MAX_VOLUME);
@@ -655,12 +590,6 @@ static SDL_AudioSpec *Mix_LoadMusic_RW(SDL_RWops *src, int freesrc, SDL_AudioSpe
             continue;
         }
         if (!interface->CreateFromRW || !interface->GetAudio) {
-            continue;
-        }
-
-        /* These music interfaces are not safe to use while music is playing */
-        if (interface->api == MIX_MUSIC_CMD ||
-             interface->api == MIX_MUSIC_NATIVEMIDI) {
             continue;
         }
 
@@ -963,7 +892,7 @@ static void  Mix_HaltChannel_locked(int which)
     if (Mix_Playing(which)) {
         mix_channel[which].playing = 0;
         mix_channel[which].looping = 0;
-        _Mix_channel_done_playing(which);
+        _Mix_channel_done_playing(which, true);
     }
     mix_channel[which].expire = 0;
     if (mix_channel[which].fading != MIX_NO_FADING) /* Restore volume */
@@ -1072,7 +1001,7 @@ static int checkchunkintegral(Mix_Chunk *chunk)
    if there is no limit.
    Returns which channel was used to play the sound.
 */
-int Mix_PlayChannelTimed(int which, Mix_Chunk *chunk, int loops, int ticks)
+static int Mix_PlayChannelTimedSetTagInternal(int which, Mix_Chunk *chunk, int loops, int ticks, int tag, int settag)
 {
     int i;
 
@@ -1101,7 +1030,7 @@ int Mix_PlayChannelTimed(int which, Mix_Chunk *chunk, int loops, int ticks)
             }
         } else {
             if (Mix_Playing(which))
-                _Mix_channel_done_playing(which);
+                _Mix_channel_done_playing(which, true);
         }
 
         /* Queue up the audio data for this channel */
@@ -1115,6 +1044,10 @@ int Mix_PlayChannelTimed(int which, Mix_Chunk *chunk, int loops, int ticks)
             mix_channel[which].fading = MIX_NO_FADING;
             mix_channel[which].start_time = sdl_ticks;
             mix_channel[which].expire = (ticks > 0) ? (sdl_ticks + (Uint32)ticks) : 0;
+            if(settag)
+            {
+                mix_channel[which].tag = tag;
+            }
         }
     }
     Mix_UnlockAudio();
@@ -1123,9 +1056,24 @@ int Mix_PlayChannelTimed(int which, Mix_Chunk *chunk, int loops, int ticks)
     return which;
 }
 
+int Mix_PlayChannelTimedSetTag(int which, Mix_Chunk *chunk, int loops, int ticks, int tag)
+{
+    return Mix_PlayChannelTimedSetTagInternal(which, chunk, loops, ticks, tag, true);
+}
+
+int Mix_PlayChannelTimed(int which, Mix_Chunk *chunk, int loops, int ticks)
+{
+    return Mix_PlayChannelTimedSetTagInternal(which, chunk, loops, ticks, -1, false);
+}
+
+int Mix_PlayChannelSetTag(int channel, Mix_Chunk *chunk, int loops, int tag)
+{
+    return Mix_PlayChannelTimedSetTagInternal(channel, chunk, loops, -1, tag, true);
+}
+
 int Mix_PlayChannel(int channel, Mix_Chunk *chunk, int loops)
 {
-    return Mix_PlayChannelTimed(channel, chunk, loops, -1);
+    return Mix_PlayChannelTimedSetTagInternal(channel, chunk, loops, -1, -1, false);
 }
 
 /* Change the expiration delay for a channel */
@@ -1148,7 +1096,7 @@ int Mix_ExpireChannel(int which, int ticks)
 }
 
 /* Fade in a sound on a channel, over ms milliseconds */
-int Mix_FadeInChannelTimed(int which, Mix_Chunk *chunk, int loops, int ms, int ticks)
+static int Mix_FadeInChannelTimedSetTagInternal(int which, Mix_Chunk *chunk, int loops, int ms, int ticks, int tag, int settag)
 {
     int i;
 
@@ -1176,7 +1124,7 @@ int Mix_FadeInChannelTimed(int which, Mix_Chunk *chunk, int loops, int ms, int t
             }
         } else {
             if (Mix_Playing(which))
-                _Mix_channel_done_playing(which);
+                _Mix_channel_done_playing(which, true);
         }
 
         /* Queue up the audio data for this channel */
@@ -1196,6 +1144,10 @@ int Mix_FadeInChannelTimed(int which, Mix_Chunk *chunk, int loops, int ms, int t
             mix_channel[which].fade_length = (Uint32)ms;
             mix_channel[which].start_time = mix_channel[which].ticks_fade = sdl_ticks;
             mix_channel[which].expire = (ticks > 0) ? (sdl_ticks+(Uint32)ticks) : 0;
+            if(settag)
+            {
+                mix_channel[which].tag = tag;
+            }
         }
     }
     Mix_UnlockAudio();
@@ -1204,9 +1156,24 @@ int Mix_FadeInChannelTimed(int which, Mix_Chunk *chunk, int loops, int ms, int t
     return which;
 }
 
+int Mix_FadeInChannelTimedSetTag(int which, Mix_Chunk *chunk, int loops, int ms, int ticks, int tag)
+{
+    return Mix_FadeInChannelTimedSetTagInternal(which, chunk, loops, ms, ticks, tag, true);
+}
+
+int Mix_FadeInChannelTimed(int which, Mix_Chunk *chunk, int loops, int ms, int ticks)
+{
+    return Mix_FadeInChannelTimedSetTagInternal(which, chunk, loops, ms, ticks, -1, false);
+}
+
+int Mix_FadeInChannelSetTag(int channel, Mix_Chunk *chunk, int loops, int ms, int tag)
+{
+    return Mix_FadeInChannelTimedSetTagInternal(channel, chunk, loops, ms, -1, tag, true);
+}
+
 int Mix_FadeInChannel(int channel, Mix_Chunk *chunk, int loops, int ms)
 {
-    return Mix_FadeInChannelTimed(channel, chunk, loops, ms, -1);
+    return Mix_FadeInChannelTimedSetTagInternal(channel, chunk, loops, ms, -1, -1, false);
 }
 
 
@@ -1390,7 +1357,6 @@ void Mix_CloseAudio(void)
             }
             Mix_UnregisterAllEffects(MIX_CHANNEL_POST);
             close_music();
-            Mix_SetMusicCMD(NULL);
             Mix_HaltChannel(-1);
             _Mix_DeinitEffects();
             SDL_CloseAudioDevice(audio_device);
@@ -1483,6 +1449,19 @@ int Mix_GroupChannel(int which, int tag)
     mix_channel[which].tag = tag;
     Mix_UnlockAudio();
     return 1;
+}
+
+/* Change the group of a channel */
+int Mix_GetChannelGroup(int which)
+{
+    if (which < 0 || which > num_channels) {
+        return 0;
+    }
+
+    Mix_LockAudio();
+    int tag = mix_channel[which].tag;
+    Mix_UnlockAudio();
+    return tag;
 }
 
 /* Assign several consecutive channels to a group */

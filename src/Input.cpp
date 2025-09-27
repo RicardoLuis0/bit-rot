@@ -32,7 +32,7 @@ std::map<std::string, Mix_Music**> music
 
 extern int introStage;
 extern uint32_t introStartMs;
-void chanDone(int chan)
+void chanDone(int chan, int interrupted)
 {
     if(chan == CHANNEL_FAN_START)
     {
