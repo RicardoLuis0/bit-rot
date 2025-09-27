@@ -14,6 +14,8 @@
 #include <cxxabi.h>
 #include <backtrace.h>
 
+#include <SDL2/SDL.h>
+
 backtrace_state * trace_state = nullptr;
 
 struct trace_info
@@ -536,6 +538,10 @@ namespace Util
     
     extern "C" uint64_t Custom_GetTics()
     {
-        return MsTime();
+        #ifdef _WIN32
+            return MsTime();
+        #else
+            return SDL_GetTicks();
+        #endif
     }
 }
