@@ -23,6 +23,10 @@
 
 #include "SDL_mixer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Supported music APIs, in order of preference */
 
 typedef enum
@@ -162,6 +166,10 @@ extern void close_music(void);
 extern void unload_music(void);
 
 extern SDL_AudioSpec music_spec;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MUSIC_H_ */
 

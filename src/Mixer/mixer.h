@@ -21,11 +21,19 @@
 #ifndef MIXER_H_
 #define MIXER_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Locking wrapper functions */
 extern void Mix_LockAudio(void);
 extern void Mix_UnlockAudio(void);
 
 extern void add_chunk_decoder(const char *decoder);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* MIXER_H_ */
 

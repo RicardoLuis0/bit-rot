@@ -250,7 +250,7 @@ typedef enum Mix_MusicType {
 /**
  * The internal format for a music chunk interpreted via codecs
  */
-typedef struct _Mix_Music Mix_Music;
+typedef struct Mix_Music Mix_Music;
 
 /**
  * Open the default audio device for playback.
@@ -976,129 +976,7 @@ extern DECLSPEC SDL_bool SDLCALL Mix_HasMusicDecoder(const char *name);
  * \since This function is available since SDL_mixer 2.0.0
  */
 extern DECLSPEC Mix_MusicType SDLCALL Mix_GetMusicType(const Mix_Music *music);
-
-/**
- * Get the title for a music object, or its filename.
- *
- * This returns format-specific metadata. Not all file formats supply this!
- *
- * If `music` is NULL, this will query the currently-playing music.
- *
- * If music's title tag is missing or empty, the filename will be returned. If
- * you'd rather have the actual metadata or nothing, use
- * Mix_GetMusicTitleTag() instead.
- *
- * Please note that if the music was loaded from an SDL_RWops instead of a
- * filename, the filename returned will be an empty string ("").
- *
- * This function never returns NULL! If no data is available, it will return
- * an empty string ("").
- *
- * \param music the music object to query, or NULL for the currently-playing
- *              music.
- * \returns the music's title if available, or the filename if not, or "".
- *
- * \since This function is available since SDL_mixer 2.6.0.
- *
- * \sa Mix_GetMusicTitleTag
- * \sa Mix_GetMusicArtistTag
- * \sa Mix_GetMusicAlbumTag
- * \sa Mix_GetMusicCopyrightTag
- */
-extern DECLSPEC const char *SDLCALL Mix_GetMusicTitle(const Mix_Music *music);
-
-/**
- * Get the title for a music object.
- *
- * This returns format-specific metadata. Not all file formats supply this!
- *
- * If `music` is NULL, this will query the currently-playing music.
- *
- * Unlike this function, Mix_GetMusicTitle() produce a string with the music's
- * filename if a title isn't available, which might be preferable for some
- * applications.
- *
- * This function never returns NULL! If no data is available, it will return
- * an empty string ("").
- *
- * \param music the music object to query, or NULL for the currently-playing
- *              music.
- * \returns the music's title if available, or "".
- *
- * \since This function is available since SDL_mixer 2.6.0.
- *
- * \sa Mix_GetMusicTitle
- * \sa Mix_GetMusicArtistTag
- * \sa Mix_GetMusicAlbumTag
- * \sa Mix_GetMusicCopyrightTag
- */
-extern DECLSPEC const char *SDLCALL Mix_GetMusicTitleTag(const Mix_Music *music);
-
-/**
- * Get the artist name for a music object.
- *
- * This returns format-specific metadata. Not all file formats supply this!
- *
- * If `music` is NULL, this will query the currently-playing music.
- *
- * This function never returns NULL! If no data is available, it will return
- * an empty string ("").
- *
- * \param music the music object to query, or NULL for the currently-playing
- *              music.
- * \returns the music's artist name if available, or "".
- *
- * \since This function is available since SDL_mixer 2.6.0.
- *
- * \sa Mix_GetMusicTitleTag
- * \sa Mix_GetMusicAlbumTag
- * \sa Mix_GetMusicCopyrightTag
- */
-extern DECLSPEC const char *SDLCALL Mix_GetMusicArtistTag(const Mix_Music *music);
-
-/**
- * Get the album name for a music object.
- *
- * This returns format-specific metadata. Not all file formats supply this!
- *
- * If `music` is NULL, this will query the currently-playing music.
- *
- * This function never returns NULL! If no data is available, it will return
- * an empty string ("").
- *
- * \param music the music object to query, or NULL for the currently-playing
- *              music.
- * \returns the music's album name if available, or "".
- *
- * \since This function is available since SDL_mixer 2.6.0.
- *
- * \sa Mix_GetMusicTitleTag
- * \sa Mix_GetMusicArtistTag
- * \sa Mix_GetMusicCopyrightTag
- */
-extern DECLSPEC const char *SDLCALL Mix_GetMusicAlbumTag(const Mix_Music *music);
-
-/**
- * Get the copyright text for a music object.
- *
- * This returns format-specific metadata. Not all file formats supply this!
- *
- * If `music` is NULL, this will query the currently-playing music.
- *
- * This function never returns NULL! If no data is available, it will return
- * an empty string ("").
- *
- * \param music the music object to query, or NULL for the currently-playing
- *              music.
- * \returns the music's copyright text if available, or "".
- *
- * \since This function is available since SDL_mixer 2.6.0.
- *
- * \sa Mix_GetMusicTitleTag
- * \sa Mix_GetMusicArtistTag
- * \sa Mix_GetMusicAlbumTag
- */
-extern DECLSPEC const char *SDLCALL Mix_GetMusicCopyrightTag(const Mix_Music *music);
+extern DECLSPEC Mix_MusicType SDLCALL Mix_GetMusicChannelType(int channel);
 
 typedef void (SDLCALL *Mix_MixCallback)(void *udata, Uint8 *stream, int len);
 
@@ -1186,7 +1064,7 @@ extern DECLSPEC void SDLCALL Mix_SetPostMix(Mix_MixCallback mix_func, void *arg)
  */
 extern DECLSPEC void SDLCALL Mix_HookMusic(Mix_MixCallback mix_func, void *arg);
 
-typedef void (SDLCALL *Mix_MusicFinishedCallback)(void);
+typedef void (SDLCALL *Mix_MusicFinishedCallback)(int chan);
 
 /**
  * Set a callback that runs when a music object has stopped playing.
@@ -1818,7 +1696,7 @@ extern DECLSPEC int SDLCALL Mix_PlayChannelTimedSetTag(int channel, Mix_Chunk *c
  *
  * \since This function is available since SDL_mixer 2.0.0.
  */
-extern DECLSPEC int SDLCALL Mix_PlayMusic(Mix_Music *music, int loops);
+extern DECLSPEC int SDLCALL Mix_PlayMusic(Mix_Music *music, int channel, int loops);
 
 /**
  * Play a new music object, fading in the audio.
@@ -1845,7 +1723,7 @@ extern DECLSPEC int SDLCALL Mix_PlayMusic(Mix_Music *music, int loops);
  *
  * \since This function is available since SDL_mixer 2.0.0.
  */
-extern DECLSPEC int SDLCALL Mix_FadeInMusic(Mix_Music *music, int loops, int ms);
+extern DECLSPEC int SDLCALL Mix_FadeInMusic(Mix_Music *music, int channel, int loops, int ms);
 
 /**
  * Play a new music object, fading in the audio, from a starting position.
@@ -1884,7 +1762,7 @@ extern DECLSPEC int SDLCALL Mix_FadeInMusic(Mix_Music *music, int loops, int ms)
  *
  * \since This function is available since SDL_mixer 2.0.0.
  */
-extern DECLSPEC int SDLCALL Mix_FadeInMusicPos(Mix_Music *music, int loops, int ms, double position);
+extern DECLSPEC int SDLCALL Mix_FadeInMusicPos(Mix_Music *music, int channel, int loops, int ms, double position);
 
 /**
  * Play an audio chunk on a specific channel, fading in the audio.
@@ -2058,7 +1936,8 @@ extern DECLSPEC int SDLCALL Mix_VolumeMusic(int volume);
  *
  * \since This function is available since SDL_mixer 2.6.0.
  */
-extern DECLSPEC int SDLCALL Mix_GetMusicVolume(Mix_Music *music);
+extern DECLSPEC int SDLCALL Mix_GetMusicVolume();
+extern DECLSPEC int SDLCALL Mix_GetMusicChannelVolume(int channel);
 
 /**
  * Set the master volume for all channels.
@@ -2144,6 +2023,7 @@ extern DECLSPEC int SDLCALL Mix_HaltGroup(int tag);
  * \since This function is available since SDL_mixer 2.0.0.
  */
 extern DECLSPEC int SDLCALL Mix_HaltMusic(void);
+extern DECLSPEC int SDLCALL Mix_HaltMusicChannel(int channel);
 
 /**
  * Change the expiration delay for a particular channel.
@@ -2256,6 +2136,7 @@ extern DECLSPEC int SDLCALL Mix_FadeOutGroup(int tag, int ms);
  * \since This function is available since SDL_mixer 2.0.0.
  */
 extern DECLSPEC int SDLCALL Mix_FadeOutMusic(int ms);
+extern DECLSPEC int SDLCALL Mix_FadeOutMusicChannel(int channel, int ms);
 
 /**
  * Query the fading status of the music stream.
@@ -2272,7 +2153,7 @@ extern DECLSPEC int SDLCALL Mix_FadeOutMusic(int ms);
  *
  * \since This function is available since SDL_mixer 2.0.0.
  */
-extern DECLSPEC Mix_Fading SDLCALL Mix_FadingMusic(void);
+extern DECLSPEC Mix_Fading SDLCALL Mix_FadingMusic(int channel);
 
 /**
  * Query the fading status of a channel.
@@ -2370,6 +2251,7 @@ extern DECLSPEC int SDLCALL Mix_Paused(int channel);
  * \since This function is available since SDL_mixer 2.0.0.
  */
 extern DECLSPEC void SDLCALL Mix_PauseMusic(void);
+extern DECLSPEC void SDLCALL Mix_PauseMusicChannel(int channel);
 
 /**
  * Resume the music stream.
@@ -2380,6 +2262,7 @@ extern DECLSPEC void SDLCALL Mix_PauseMusic(void);
  * \since This function is available since SDL_mixer 2.0.0.
  */
 extern DECLSPEC void SDLCALL Mix_ResumeMusic(void);
+extern DECLSPEC void SDLCALL Mix_ResumeMusicChannel(int channel);
 
 /**
  * Rewind the music stream.
@@ -2391,7 +2274,7 @@ extern DECLSPEC void SDLCALL Mix_ResumeMusic(void);
  *
  * \since This function is available since SDL_mixer 2.0.0.
  */
-extern DECLSPEC void SDLCALL Mix_RewindMusic(void);
+extern DECLSPEC void SDLCALL Mix_RewindMusic(int channel);
 
 /**
  * Query whether the music stream is paused.
@@ -2406,44 +2289,6 @@ extern DECLSPEC void SDLCALL Mix_RewindMusic(void);
 extern DECLSPEC int SDLCALL Mix_PausedMusic(void);
 
 /**
- * Jump to a given order in mod music.
- *
- * This only applies to MOD music formats.
- *
- * \param order order.
- * \returns 0 if successful, or -1 if failed or isn't implemented.
- *
- * \since This function is available since SDL_mixer 2.6.0.
- */
-extern DECLSPEC int SDLCALL Mix_ModMusicJumpToOrder(int order);
-
-/**
- * Start a track in music object.
- *
- * This only applies to GME music formats.
- *
- * \param music the music object.
- * \param track the track number to play. 0 is the first track.
- * \returns 0 if successful, or -1 if failed or isn't implemented.
- *
- * \since This function is available since SDL_mixer 2.8.0.
- */
-extern DECLSPEC int SDLCALL Mix_StartTrack(Mix_Music *music, int track);
-
-/**
- * Get number of tracks in music object.
- *
- * This only applies to GME music formats.
- *
- * \param music the music object.
- * \returns number of tracks if successful, or -1 if failed or isn't
- *          implemented.
- *
- * \since This function is available since SDL_mixer 2.8.0.
- */
-extern DECLSPEC int SDLCALL Mix_GetNumTracks(Mix_Music *music);
-
-/**
  * Set the current position in the music stream, in seconds.
  *
  * To convert from milliseconds, divide by 1000.0.
@@ -2456,7 +2301,7 @@ extern DECLSPEC int SDLCALL Mix_GetNumTracks(Mix_Music *music);
  *
  * \since This function is available since SDL_mixer 2.0.0.
  */
-extern DECLSPEC int SDLCALL Mix_SetMusicPosition(double position);
+extern DECLSPEC int SDLCALL Mix_SetMusicPosition(int channel, double position);
 
 /**
  * Get the time current position of music stream, in seconds.
@@ -2468,7 +2313,7 @@ extern DECLSPEC int SDLCALL Mix_SetMusicPosition(double position);
  *
  * \since This function is available since SDL_mixer 2.6.0.
  */
-extern DECLSPEC double SDLCALL Mix_GetMusicPosition(Mix_Music *music);
+extern DECLSPEC double SDLCALL Mix_GetMusicPosition(int channel);
 
 /**
  * Get a music object's duration, in seconds.
@@ -2483,51 +2328,7 @@ extern DECLSPEC double SDLCALL Mix_GetMusicPosition(Mix_Music *music);
  * \since This function is available since SDL_mixer 2.6.0.
  */
 extern DECLSPEC double SDLCALL Mix_MusicDuration(Mix_Music *music);
-
-/**
- * Get the loop start time position of music stream, in seconds.
- *
- * To convert to milliseconds, multiply by 1000.0.
- *
- * If NULL is passed, returns duration of current playing music.
- *
- * \param music the music object to query.
- * \returns -1.0 if this feature is not used for this music or not supported
- *          for some codec.
- *
- * \since This function is available since SDL_mixer 2.6.0.
- */
-extern DECLSPEC double SDLCALL Mix_GetMusicLoopStartTime(Mix_Music *music);
-
-/**
- * Get the loop end time position of music stream, in seconds.
- *
- * To convert to milliseconds, multiply by 1000.0.
- *
- * If NULL is passed, returns duration of current playing music.
- *
- * \param music the music object to query.
- * \returns -1.0 if this feature is not used for this music or not supported
- *          for some codec.
- *
- * \since This function is available since SDL_mixer 2.6.0.
- */
-extern DECLSPEC double SDLCALL Mix_GetMusicLoopEndTime(Mix_Music *music);
-
-/**
- * Get the loop time length of music stream, in seconds.
- *
- * To convert to milliseconds, multiply by 1000.0.
- *
- * If NULL is passed, returns duration of current playing music.
- *
- * \param music the music object to query.
- * \returns -1.0 if this feature is not used for this music or not supported
- *          for some codec.
- *
- * \since This function is available since SDL_mixer 2.6.0.
- */
-extern DECLSPEC double SDLCALL Mix_GetMusicLoopLengthTime(Mix_Music *music);
+extern DECLSPEC double SDLCALL Mix_MusicChannelDuration(int channel);
 
 /**
  * Check the playing status of a specific channel.

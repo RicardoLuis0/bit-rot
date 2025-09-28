@@ -177,9 +177,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/Mixer/mixer.h" />
-		<Unit filename="src/Mixer/music.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="src/Mixer/music.cpp" />
 		<Unit filename="src/Mixer/music.h" />
 		<Unit filename="src/Mixer/utils.c">
 			<Option compilerVar="CC" />

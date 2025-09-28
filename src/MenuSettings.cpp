@@ -34,7 +34,7 @@ int GetSoundVolume()
     double soundVol = Config::getIntOr("VolumeSound", DefaultSoundVolume) / 100.0;
     double vol = globalVol * soundVol;
     
-    return (vol * vol) * 128;
+    return (vol * vol) * 64; // limit "max" volume to 50% of absolute max
 }
 
 int GetMusicVolume()
@@ -45,7 +45,7 @@ int GetMusicVolume()
     double musicVol = Config::getIntOr("VolumeMusic", DefaultMusicVolume) / 100.0;
     double vol = globalVol * musicVol;
     
-    return (vol * vol) * 128;
+    return (vol * vol) * 64; // limit "max" volume to 50% of absolute max
 }
 
 extern std::vector<SettingItem*> settings;

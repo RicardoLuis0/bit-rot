@@ -32,7 +32,8 @@ std::map<std::string, Mix_Music**> music
 
 extern int introStage;
 extern uint32_t introStartMs;
-void chanDone(int chan, int interrupted)
+
+static void chanDone(int chan, int interrupted)
 {
     if(chan == CHANNEL_FAN_START)
     {
@@ -61,6 +62,8 @@ bool Audio::ErrorPlaying()
     }\
     LogDebug("'Data/" #name ".wav' Loaded");
 
+constexpr int CHAN_MAX = 65535;
+
 void Input::Init() {}
 void Audio::Init()
 {
@@ -74,7 +77,7 @@ void Audio::Init()
         throw FatalError(errMsg());
     }
     
-    if(Mix_AllocateChannels(128) != 128)
+    if(Mix_AllocateChannels(65536) != 65536)
     {
         throw FatalError(errMsg());
     }
@@ -130,10 +133,11 @@ void Audio::FadeMusic(int ms)
 {
     Mix_FadeOutMusic(ms);
 }
+
 void Audio::PlayMusic(const std::string &name)
 {
     std::string n = Util::StrToLower(name);
-    Mix_PlayMusic(*music.at(n), -1);
+    Mix_PlayMusic(*music.at(n), 0, -1);
 }
 
 int shiftCount = 0;
