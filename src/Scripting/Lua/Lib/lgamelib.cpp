@@ -1,6 +1,7 @@
 #include "Common.h"
 #include "Config.h"
 #include "Input.h"
+#include "Sound.h"
 #include "Game.h"
 #include "SaveData.h"
 
@@ -159,25 +160,25 @@ static int luaC_SetString(lua_State *L)
 
 static int luaA_PlaySample(lua_State *L)
 {
-    checkargs("audio.PlaySample", 1);
+    checkargs2("audio.PlaySample", 1, 3);
     
     std::string sample(Util::StrToLower(lua_tostring_view(L, 1)));
+    bool overlap = false;
+    bool loop = false;
+    
+    if(nargs > 1)
+    {
+        overlap = lua_toboolean(L, 2);
+    }
+    
+    if(nargs > 2)
+    {
+        loop = lua_toboolean(L, 3);
+    }
     
     lua_pop(L, nargs);
     
-    if(sample == "beep")
-    {
-        Audio::Beep();
-    }
-    else if(sample == "error")
-    {
-        Audio::Error();
-    }
-    else
-    {
-        luaG_runerror(L, ("Trying to play inexistent sample '" + sample + "' in audio.PlaySample").c_str());
-        return 0;
-    }
+    Sound::PlaySFX(sample, overlap, loop);
     
     return 0;
 }
@@ -190,35 +191,20 @@ static int luaA_IsSamplePlaying(lua_State *L)
     
     lua_pop(L, nargs);
     
-    if(sample == "error")
-    {
-        lua_pushboolean(L, Audio::ErrorPlaying());
-        return 1;
-    }
-    else
-    {
-        luaG_runerror(L, ("Trying to check inexistent sample '" + sample + "' in audio.IsSamplePlaying").c_str());
-        return 0;
-    }
+    lua_pushboolean(L, Sound::IsSamplePlaying(sample));
+    return 1;
 }
 
 static int luaA_StartLoop(lua_State *L)
 {
-    checkargs("audio.StartLoop", 1);
+    checkargs("audio.StartLoop", 2);
     
-    std::string loop(Util::StrToLower(lua_tostring_view(L, 1)));
+    std::string start(Util::StrToLower(lua_tostring_view(L, 1)));
+    std::string loop(Util::StrToLower(lua_tostring_view(L, 2)));
     
     lua_pop(L, nargs);
     
-    if(loop == "fan")
-    {
-        Audio::StartFan();
-    }
-    else
-    {
-        luaG_runerror(L, ("Trying to start inexistent loop '" + loop + "' in audio.StartLoop").c_str());
-        return 0;
-    }
+    Sound::PlaySFXStartLoop(start, loop);
     
     return 0;
 }
@@ -232,15 +218,7 @@ static int luaA_PlayMusic(lua_State *L)
     
     lua_pop(L, nargs);
     
-    try
-    {
-        Audio::PlayMusic(music);
-    }
-    catch(std::out_of_range &e)
-    {
-        luaG_runerror(L, ("Trying to play inexistent music '" + music + "' in audio.PlayMusic").c_str());
-        return 0;
-    }
+    Sound::PlayMusic(music);
     
     return 0;
 }
@@ -249,7 +227,7 @@ static int luaA_FadeMusic(lua_State *L)
 {
     checkargs("audio.FadeMusic", 1);
     
-    Audio::FadeMusic(lua_tointeger(L, 1));
+    Sound::FadeMusic(lua_tointeger(L, 1));
     
     lua_pop(L, nargs);
     return 0;

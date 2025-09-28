@@ -120,6 +120,7 @@
 		<Unit filename="include/Scripting/Lua/lualib.h" />
 		<Unit filename="include/Scripting/Lua/lvm.h" />
 		<Unit filename="include/Scripting/Lua/lzio.h" />
+		<Unit filename="include/Sound.h" />
 		<Unit filename="include/System.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -218,6 +219,7 @@
 		<Unit filename="src/Scripting/Lua/Lib/lstrlib.cpp" />
 		<Unit filename="src/Scripting/Lua/Lib/ltablib.cpp" />
 		<Unit filename="src/Scripting/Lua/Lib/lutf8lib.cpp" />
+		<Unit filename="src/Sound.cpp" />
 		<Unit filename="src/System.cpp" />
 		<Unit filename="src/main.cpp" />
 		<Extensions>

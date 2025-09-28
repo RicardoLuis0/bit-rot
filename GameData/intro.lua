@@ -17,7 +17,7 @@ function init()
     then
         introStartMs = game.MsTime();
         introStage = 1;
-        audio.StartLoop("Fan");
+        audio.StartLoop("Fan_Start", "Fan_Loop");
         audio.PlayMusic("Lost");
     else
         introStartMs = game.MsTime();
@@ -34,7 +34,7 @@ function responder(key)
         game.Log("" .. introStartMs);
         
         introStage = 1;
-        audio.StartLoop("Fan");
+        audio.StartLoop("Fan_Start", "Fan_Loop");
         audio.FadeMusic(1500);
     elseif skipText and game.HasSave() and introStage > 1 and key == 27
     then
@@ -53,7 +53,7 @@ function drawIntroShared()
             lastIncrementMs = introStartMs;
             introStage = 2;
             memAmount = memIncrement;
-            audio.PlaySample("Beep");
+            audio.PlaySample("Beep", true);
         end
     elseif introStage == 2 or introStage == 3 then
         
@@ -91,7 +91,7 @@ function drawIntroShared()
             screen.DrawLineTextFillProp(1, 2, "_", screen.CHAR_BLINK2);
             if(introStage == 2)
             then
-                audio.PlaySample("Beep");
+                audio.PlaySample("Beep", true);
                 introStage = 3;
             end
         end
@@ -119,7 +119,7 @@ function drawIntro1()
                 nextLineMs = nextLineMs + game.GetInitText(nextLine).timer;
                 if(game.GetInitText(nextLine).beep)
                 then
-                    audio.PlaySample("Beep");
+                    audio.PlaySample("Beep", true);
                 end
                 nextLine = nextLine + 1;
             end
@@ -323,7 +323,7 @@ function drawIntro2()
             nextLineMs = introStartMs;
             introStage = 5;
             lineCountRecovery = 0;
-            audio.PlaySample("Beep");
+            audio.PlaySample("Beep", true);
         end
     elseif introStage == 5
     then
@@ -340,7 +340,7 @@ function drawIntro2()
                 nextLineMs = nextLineMs + game.GetInitText(nextLine).timer;
                 if(game.GetInitText(nextLine).beep)
                 then
-                    audio.PlaySample("Beep");
+                    audio.PlaySample("Beep", true);
                 end
                 lineCountRecovery = lineCountRecovery + 1;
             end

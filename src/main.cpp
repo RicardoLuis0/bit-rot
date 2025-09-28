@@ -12,6 +12,7 @@
 #include "Config.h"
 #include "Menu.h"
 #include "Game.h"
+#include "Sound.h"
 #include "SaveData.h"
 #include "SDL2Util.h"
 
@@ -59,7 +60,7 @@ int doGame()
                 UseSubsystem(Exceptions);
                 UseSubsystem(Renderer);
                 UseSubsystem(Input);
-                UseSubsystem(Audio);
+                UseSubsystem(Sound);
                 UseSubsystem(SaveData);
                 UseSubsystem(Menu);
                 UseSubsystem(Game);
@@ -68,11 +69,11 @@ int doGame()
                 
                 if(Config::getScriptStringOr("SawIntro1", "no") == "yes" || SaveData::HasSave())
                 {
-                    Audio::PlayMusic("tension");
+                    Sound::PlayMusic("tension");
                 }
                 else
                 {
-                    Audio::PlayMusic("loop");
+                    Sound::PlayMusic("loop");
                 }
                 
                 Mix_MasterVolume(GetSoundVolume());

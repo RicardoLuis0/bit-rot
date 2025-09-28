@@ -303,13 +303,18 @@ mix_channels(void *udata, Uint8 *stream, int len)
                 Uint32 ticks = sdl_ticks - mix_channel[i].ticks_fade;
                 if (ticks >= mix_channel[i].fade_length) {
                     Mix_Volume(i, mix_channel[i].fade_volume_reset); /* Restore the volume */
-                    if (mix_channel[i].fading == MIX_FADING_OUT) {
+                    if (mix_channel[i].fading == MIX_FADING_OUT)
+                    {
                         mix_channel[i].playing = 0;
                         mix_channel[i].looping = 0;
                         mix_channel[i].expire = 0;
+                        mix_channel[i].fading = MIX_NO_FADING;
                         _Mix_channel_done_playing(i, false);
                     }
-                    mix_channel[i].fading = MIX_NO_FADING;
+                    else
+                    {
+                        mix_channel[i].fading = MIX_NO_FADING;
+                    }
                 } else {
                     if (mix_channel[i].fading == MIX_FADING_OUT) {
                         Mix_Volume(i, (mix_channel[i].fade_volume * (mix_channel[i].fade_length-ticks))
