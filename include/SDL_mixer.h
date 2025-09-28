@@ -1938,6 +1938,7 @@ extern DECLSPEC int SDLCALL Mix_VolumeMusic(int volume);
  */
 extern DECLSPEC int SDLCALL Mix_GetMusicVolume();
 extern DECLSPEC int SDLCALL Mix_GetMusicChannelVolume(int channel);
+extern DECLSPEC int SDLCALL Mix_SetMusicChannelVolume(int channel, int volume);
 
 /**
  * Set the master volume for all channels.
@@ -2366,6 +2367,7 @@ extern DECLSPEC int SDLCALL Mix_Playing(int channel);
  * \since This function is available since SDL_mixer 2.0.0.
  */
 extern DECLSPEC int SDLCALL Mix_PlayingMusic(void);
+extern DECLSPEC int SDLCALL Mix_PlayingMusicChannel(int channel);
 
 /**
  * Get the Mix_Chunk currently associated with a mixer channel.

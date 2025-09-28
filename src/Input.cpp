@@ -134,10 +134,18 @@ void Audio::FadeMusic(int ms)
     Mix_FadeOutMusic(ms);
 }
 
+int currentChannel = 0;
+constexpr int crossfadeMs = 500;
+
 void Audio::PlayMusic(const std::string &name)
 {
     std::string n = Util::StrToLower(name);
-    Mix_PlayMusic(*music.at(n), 0, -1);
+    if(Mix_PlayingMusicChannel(currentChannel))
+    { // crossfade
+        Mix_FadeOutMusicChannel(currentChannel, crossfadeMs);
+        currentChannel = (currentChannel + 1) % 2;
+    }
+    Mix_FadeInMusic(*music.at(n), currentChannel, -1, crossfadeMs);
 }
 
 int shiftCount = 0;

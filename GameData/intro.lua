@@ -17,13 +17,11 @@ function init()
     then
         introStartMs = game.MsTime();
         introStage = 1;
-        audio.FadeMusic(500);
         audio.StartLoop("Fan");
         audio.PlayMusic("Lost");
     else
         introStartMs = game.MsTime();
         introStage = 0;
-        audio.FadeMusic(500);
         audio.PlayMusic("Forest");
     end
 end

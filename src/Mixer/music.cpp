@@ -344,7 +344,10 @@ extern "C" void SDLCALL music_mixer_single(int channel_id, music_channel_t * cha
 /* Mixing function */
 extern "C" void SDLCALL music_mixer(void *, Uint8 *stream, int len)
 {
-    music_mixer_single(0, &music_channels[0], stream, len);
+    for(int i = 0; i < NUM_MUSIC_CHANNELS; i++)
+    {
+        music_mixer_single(i, &music_channels[i], stream, len);
+    }
 }
 
 extern "C" void pause_async_music(int pause_on)
@@ -1218,7 +1221,7 @@ static bool music_internal_playing(Mix_Music * volatile &music_playing)
 
 int Mix_PlayingMusic(void)
 {
-    bool playing;
+    bool playing = false;
 
     Mix_LockAudio();
     
@@ -1226,6 +1229,21 @@ int Mix_PlayingMusic(void)
     {
         playing = music_internal_playing(music_channels[i].music_playing) || playing;
     }
+    Mix_UnlockAudio();
+
+    return playing ? 1 : 0;
+}
+
+int Mix_PlayingMusicChannel(int channel)
+{
+    if(channel < 0 || channel >= NUM_MUSIC_CHANNELS) return 0;
+    
+    bool playing;
+
+    Mix_LockAudio();
+    
+    playing = music_internal_playing(music_channels[channel].music_playing);
+    
     Mix_UnlockAudio();
 
     return playing ? 1 : 0;
@@ -1269,7 +1287,7 @@ void unload_music(void)
         if (!interface || !interface->loaded) {
             continue;
         }
-
+        
         if (interface->Unload) {
             interface->Unload();
         }
