@@ -29,7 +29,7 @@ void Command::Read(const std::vector<std::string> &args)
     {
         Util::ForEach(
             Util::SplitString(
-                (entry->hidden == CORRUPTED) ? textFilesCorrupted[filepath] : textFiles[filepath], '\n'
+                (entry->hidden == CORRUPTED) ? textFilesCorrupted[filepath] : textFiles[filepath], '\n', false, false
             ),
             [](const std::string &s)
             {
