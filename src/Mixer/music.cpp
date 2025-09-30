@@ -690,7 +690,7 @@ extern "C" void Mix_FreeMusic(Mix_Music *music)
                 }
                 if (music == music_channels[i].music_playing)
                 {
-                    music_internal_halt(music);
+                    music_internal_halt(music_channels[i].music_playing);
                 }
             }
         }
