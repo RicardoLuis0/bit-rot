@@ -4,9 +4,11 @@ out vec4 fragColor;
 in vec2 texCoord;
 
 layout (location = 0) uniform sampler2D fontTexture;
-layout (location = 1) uniform vec4 transparentKey; // 1,2,3,4
-layout (location = 5) uniform uint time;
-layout (location = 6) uniform vec4 textColor; // 6,7,8,9
+layout (location = 1) uniform sampler2D backgroundTexture;
+layout (location = 2) uniform bool useBackgroundTexture;
+layout (location = 3) uniform vec4 transparentKey; // 3,4,5,6
+layout (location = 7) uniform uint time;
+layout (location = 8) uniform vec4 textColor; // 8,9,10,11
 
 #define CHAR_BLINK_BITS 0x30
 
@@ -71,5 +73,12 @@ void main()
         pixel = float(((tex != transparentKey) != ((p & CHAR_INVERT1) != 0) && !blink) != ((p & CHAR_INVERT2) != 0));
     }
     
-    fragColor = vec4(pixel, pixel, pixel, 1.0) * textColor;
+    if(useBackgroundTexture && pixel <= 0.01)
+    {
+        fragColor = texture(backgroundTexture, texCoord);
+    }
+    else
+    {
+        fragColor = vec4(pixel, pixel, pixel, 1.0) * textColor;
+    }
 }

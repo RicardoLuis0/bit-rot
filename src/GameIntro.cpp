@@ -24,7 +24,7 @@ void Game::EndResponder(SDL_Event *e)
 
 void Game::TickEnd()
 {
-    Renderer::DrawClear();
+    Renderer::GameText.DrawClear();
     
     Menu::DrawTextBox(0, texts["EndMessage"], texts["EndMessage2"], true);
 }
@@ -114,7 +114,12 @@ void Game::TickIntro()
 {
     if(!IntroVM) return;
     
-    Renderer::DrawClear();
+    Renderer::DrawMenu = false;
+    Renderer::DrawGame = true;
+    
+    Renderer::CurrentBuffer = &Renderer::GameText;
+    
+    Renderer::GameText.DrawClear();
     
     lua_State *  L = IntroVM;
     

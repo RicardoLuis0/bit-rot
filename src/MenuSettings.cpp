@@ -106,14 +106,14 @@ void DrawSetting(bool selected, std::string_view name, std::string_view value, i
     
     if(selected)
     {
-        Renderer::DrawLineText(4, y, ">");
-        Renderer::DrawLineTextFillProp(name_x, y, name, CHAR_INVERT1 | CHAR_BLINK_INVERT | CHAR_BLINK3);
-        Renderer::DrawLineTextFillProp(value_x, y, value, CHAR_INVERT1);
+        Renderer::MenuText.DrawLineText(4, y, ">");
+        Renderer::MenuText.DrawLineTextFillProp(name_x, y, name, CHAR_INVERT1 | CHAR_BLINK_INVERT | CHAR_BLINK3);
+        Renderer::MenuText.DrawLineTextFillProp(value_x, y, value, CHAR_INVERT1);
     }
     else
     {
-        Renderer::DrawLineText(name_x, y, name);
-        Renderer::DrawLineText(value_x, y, value);
+        Renderer::MenuText.DrawLineText(name_x, y, name);
+        Renderer::MenuText.DrawLineText(value_x, y, value);
     }
     
     if(end)
@@ -265,13 +265,15 @@ std::vector<SettingItem*> settings
 
 void Menu::DrawSettingsMenu()
 {
-    Renderer::DrawClear();
+    Renderer::CurrentBuffer = &Renderer::MenuText;
+    
+    Renderer::MenuText.DrawClear();
     
     DrawBorderSingle();
     
-    Renderer::DrawText(16, 1, TitleSettings);
+    Renderer::MenuText.DrawText(16, 1, TitleSettings);
     
-    Renderer::DrawLineText(2, 8, SettingsTop);
+    Renderer::MenuText.DrawLineText(2, 8, SettingsTop);
     
     DrawSettings(currentSettingsMenuItem, settings);
 }

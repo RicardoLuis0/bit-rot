@@ -118,12 +118,14 @@ void Menu::DrawMainMenu()
 {
     bool hasSave = SaveData::HasSave();
     
-    Renderer::DrawClear();
+    Renderer::CurrentBuffer = &Renderer::MenuText;
+    
+    Renderer::MenuText.DrawClear();
     
     DrawBorderSingle();
     
     //Renderer::DrawText(1, 1, Title);
-    Renderer::DrawText(19, 1, Title);
+    Renderer::MenuText.DrawText(19, 1, Title);
     
     int y = 9;
     
@@ -136,9 +138,9 @@ void Menu::DrawMainMenu()
     
     if(showSecondNewGamePopup)
     {
-        Renderer::DrawClear(10, 11, 60, 20);
+        Renderer::MenuText.DrawClear(10, 11, 60, 20);
         Menu::DrawBorderSingle(0, 10, 11, 60, 20);
-        Renderer::DrawLineTextCentered(13, "Start a New Game? Current Progress will be Erased.");
+        Renderer::MenuText.DrawLineTextCentered(13, "Start a New Game? Current Progress will be Erased.");
         
         int y = 18;
         

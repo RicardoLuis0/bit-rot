@@ -31,12 +31,12 @@ namespace Menu
         uint32_t offsetY = 12 + y;
         
         Util::ForEach(messageLines, [&offsetY](std::string_view v){
-            Renderer::DrawLineTextCentered(offsetY++, v);
+            Renderer::CurrentBuffer->DrawLineTextCentered(offsetY++, v);
         });
         
         offsetY += end_inside ? 1 : 8;
         
-        Renderer::DrawLineTextCentered(offsetY, message_end, CHAR_INVERT1 | CHAR_BLINK_INVERT | CHAR_BLINK3);
+        Renderer::CurrentBuffer->DrawLineTextCentered(offsetY, message_end, CHAR_INVERT1 | CHAR_BLINK_INVERT | CHAR_BLINK3);
         
         return offsetY + (end_inside ? 2 : 0);
     }

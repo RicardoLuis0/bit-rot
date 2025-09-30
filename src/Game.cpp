@@ -233,7 +233,7 @@ void Game::ToGame()
 {
     if(currentScreen != 3) return;
     
-    Renderer::HighRes();
+    Renderer::GameText.HighRes();
     currentScreen = 4;
     GameConsoleOutput.clear();
     if(GameIsSave)
@@ -306,7 +306,11 @@ void Game::ToGame()
 
 void Game::Tick()
 {
-    Renderer::DrawClear();
+    Renderer::DrawMenu = false;
+    Renderer::DrawGame = true;
+    
+    Renderer::CurrentBuffer = &Renderer::GameText;
+    Renderer::GameText.DrawClear();
     uint32_t offsetY = 1;
     
     size_t maxLines = std::min<size_t>(MaxConsoleLines, GameConsoleOutput.size());
@@ -316,11 +320,11 @@ void Game::Tick()
     {
         if(GameConsoleOutput[offset + i].first.size() > 0)
         {
-            Renderer::DrawLineText(1, offsetY, GameConsoleOutput[offset + i].first);
+            Renderer::GameText.DrawLineText(1, offsetY, GameConsoleOutput[offset + i].first);
         }
         if(GameConsoleOutput[offset + i].second.size() > 0)
         {
-            Renderer::DrawLineProp(1, offsetY, GameConsoleOutput[offset + i].second);
+            Renderer::GameText.DrawLineProp(1, offsetY, GameConsoleOutput[offset + i].second);
         }
         offsetY++;
     }
@@ -337,25 +341,25 @@ void Game::Tick()
         tempCommandViewOffset = tempCommandPos;
     }
     
-    Renderer::DrawLineTextFillProp(1, offsetY, ">", 0);
+    Renderer::GameText.DrawLineTextFillProp(1, offsetY, ">", 0);
     
     if(tempCommandViewOffset > 1)
     {
-        Renderer::DrawLineTextFillProp(2, offsetY, "<", CHAR_INVERT1);
-        Renderer::DrawLineTextFillProp(3, offsetY, std::string_view(tempCommand.data() + tempCommandViewOffset, 75), 0);
+        Renderer::GameText.DrawLineTextFillProp(2, offsetY, "<", CHAR_INVERT1);
+        Renderer::GameText.DrawLineTextFillProp(3, offsetY, std::string_view(tempCommand.data() + tempCommandViewOffset, 75), 0);
         if(tempCommandViewOffset != tempCommand.size() - 74)
         {
-            Renderer::DrawLineTextFillProp(78, offsetY, ">", CHAR_INVERT1);
+            Renderer::GameText.DrawLineTextFillProp(78, offsetY, ">", CHAR_INVERT1);
         }
     }
     else if(tempCommand.size() > 77)
     {
-        Renderer::DrawLineTextFillProp(2, offsetY, std::string_view(tempCommand.data(), 76), 0);
-        Renderer::DrawLineTextFillProp(78, offsetY, ">", CHAR_INVERT1);
+        Renderer::GameText.DrawLineTextFillProp(2, offsetY, std::string_view(tempCommand.data(), 76), 0);
+        Renderer::GameText.DrawLineTextFillProp(78, offsetY, ">", CHAR_INVERT1);
     }
     else
     {
-        Renderer::DrawLineTextFillProp(2, offsetY, tempCommand.data(), 0);
+        Renderer::GameText.DrawLineTextFillProp(2, offsetY, tempCommand.data(), 0);
     }
-    Renderer::DrawFillLineProp((tempCommandViewOffset > 0 ? 3 : 2) + (tempCommandPos - tempCommandViewOffset), offsetY, CHAR_UNDERSCORE, 1);
+    Renderer::GameText.DrawFillLineProp((tempCommandViewOffset > 0 ? 3 : 2) + (tempCommandPos - tempCommandViewOffset), offsetY, CHAR_UNDERSCORE, 1);
 }

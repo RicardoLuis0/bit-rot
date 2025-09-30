@@ -62,11 +62,16 @@ void Menu::PauseMenuResponder(SDL_Event *e)
 
 void Menu::DrawPauseMenu()
 {
-    Renderer::DrawClear();
+    Renderer::DrawMenu = true;
+    Renderer::DrawGame = true;
+    
+    Renderer::CurrentBuffer = &Renderer::MenuText;
+    
+    Renderer::MenuText.DrawClear();
     
     DrawBorderSingle();
     
-    Renderer::DrawText(19, 1, Title);
+    Renderer::MenuText.DrawText(19, 1, Title);
     
     int y = 9;
     

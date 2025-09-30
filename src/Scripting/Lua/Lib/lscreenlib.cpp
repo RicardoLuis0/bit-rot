@@ -45,7 +45,7 @@ static int luaS_RandFillPrint(lua_State *L)
 {
     checkargs("screen.RandFillPrint", 0);
     
-    Renderer::SetText(randPrintStr);
+    Renderer::CurrentBuffer->SetText(randPrintStr);
     
     return 0;
 }
@@ -54,7 +54,7 @@ static int luaS_HighRes(lua_State *L)
 {
     checkargs("screen.HighRes", 0);
     
-    Renderer::HighRes();
+    Renderer::CurrentBuffer->HighRes();
     
     return 0;
 }
@@ -63,7 +63,7 @@ static int luaS_LowRes(lua_State *L)
 {
     checkargs("screen.LowRes", 0);
     
-    Renderer::LowRes();
+    Renderer::CurrentBuffer->LowRes();
     
     return 0;
 }
@@ -75,7 +75,7 @@ static int luaS_DrawClear(lua_State *L)
     int c = lua_tointeger(L, 1);
     int prop = lua_tointeger(L, 2);
     
-    Renderer::DrawClear(c, prop);
+    Renderer::CurrentBuffer->DrawClear(c, prop);
     
     lua_pop(L, nargs);
     return 0;
@@ -122,7 +122,7 @@ static int luaS_DrawFillLineProp(lua_State *L)
     int prop = lua_tointeger(L, 3);
     int width = lua_tointeger(L, 4);
     
-    Renderer::DrawFillLineProp(x, y, prop, width);
+    Renderer::CurrentBuffer->DrawFillLineProp(x, y, prop, width);
     
     lua_pop(L, nargs);
     return 0;
@@ -139,7 +139,7 @@ static int luaS_DrawLineText(lua_State *L)
     std::string_view newText = lua_tostring_view(L, 3);
     int width = nargs < 4 ? 0 : lua_tointeger(L, 4);
     
-    Renderer::DrawLineText(x, y, newText, width);
+    Renderer::CurrentBuffer->DrawLineText(x, y, newText, width);
     
     lua_pop(L, nargs);
     return 0;
@@ -155,7 +155,7 @@ static int luaS_DrawLineTextFillProp(lua_State *L)
     int newProp = lua_tointeger(L, 4);
     int width = nargs < 5 ? 0 : lua_tointeger(L, 5);
     
-    Renderer::DrawLineTextFillProp(x, y, newText, newProp, width);
+    Renderer::CurrentBuffer->DrawLineTextFillProp(x, y, newText, newProp, width);
     
     lua_pop(L, nargs);
     return 0;
@@ -168,7 +168,7 @@ static int luaS_DrawLineTextCentered(lua_State *L)
     int y = lua_tointeger(L, 1);
     std::string_view str = lua_tostring_view(L, 2);
     
-    Renderer::DrawLineTextCentered(y, str);
+    Renderer::CurrentBuffer->DrawLineTextCentered(y, str);
     
     lua_pop(L, nargs);
     return 0;

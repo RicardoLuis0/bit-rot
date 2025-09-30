@@ -21,9 +21,9 @@ void Menu::DrawLine(int x, int y, int width, char start, char mid, char end, cha
 {
     if(width > 2)
     {
-        Renderer::DrawChar(x, y, start, prop);
-        Renderer::DrawFillLineTextProp(x + 1, y, mid, prop, width - 2);
-        Renderer::DrawChar(x + (width - 1), y, end, prop);
+        Renderer::CurrentBuffer->DrawChar(x, y, start, prop);
+        Renderer::CurrentBuffer->DrawFillLineTextProp(x + 1, y, mid, prop, width - 2);
+        Renderer::CurrentBuffer->DrawChar(x + (width - 1), y, end, prop);
     }
 }
 
@@ -31,8 +31,8 @@ void Menu::DrawHalfLine(int x, int y, int width, char start, char mid, char prop
 {
     if(width > 2)
     {
-        Renderer::DrawChar(x, y, start, prop);
-        Renderer::DrawFillLineTextProp(x + 1, y, mid, prop, width - 1);
+        Renderer::CurrentBuffer->DrawChar(x, y, start, prop);
+        Renderer::CurrentBuffer->DrawFillLineTextProp(x + 1, y, mid, prop, width - 1);
     }
 }
 
@@ -65,7 +65,7 @@ int Menu::DrawButton(int x_center, int y_center, int min_width, std::string_view
     int x = x_center - (width / 2);
     Menu::DrawBorderDouble(highlight ? CHAR_INVERT2 | CHAR_BLINK_INVERT | CHAR_BLINK3 : 0, x, y_center - 1, width, 3);
     int text_x = x_center - (text.size() / 2);
-    Renderer::DrawLineText(text_x, y_center, text, text.size());
+    Renderer::CurrentBuffer->DrawLineText(text_x, y_center, text, text.size());
     return x;
 }
 
@@ -73,7 +73,7 @@ void Menu::DrawMenuItemButton(bool selected, int &y, std::string_view text)
 {
     if(selected)
     {
-        Renderer::DrawLineText(DrawButton(40, y, 12, text, true) - 2, y, ">");
+        Renderer::CurrentBuffer->DrawLineText(DrawButton(40, y, 12, text, true) - 2, y, ">");
     }
     else
     {

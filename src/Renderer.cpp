@@ -20,6 +20,12 @@ using namespace Renderer::Internal;
 constexpr uint32_t max_screen_width = 80;
 constexpr uint32_t max_screen_height = 40;
 
+
+TextBuffer Renderer::MenuText;
+TextBuffer Renderer::GameText;
+
+TextBuffer *Renderer::CurrentBuffer;
+
 __thread char buf[1024];
 
 SDL_Window * win;
@@ -27,30 +33,25 @@ SDL_GLContext ctx;
 
 uint64_t baseTime;
 
-struct TextInfo
-{
-    uint32_t font_width;
-    uint32_t font_height;
-    uint32_t char_width;
-    uint32_t char_height;
-    uint32_t screen_width;
-    uint32_t screen_height;
-    alignas(16) char chars[3200];
-    alignas(16) uint8_t char_properties[3200];
-};
-static_assert(sizeof(TextInfo::chars) == 80 * 40);
 GLProgram phosphorProgram;
 GLProgram crtProgram;
 GLProgram bloomProgram;
-GLProgram textDrawer;
+GLProgram textDrawerMenu;
+GLProgram textDrawerGame;
+GLProgram blurProgram;
 
 GLQuad mainArea;
-GLQuad textArea;
+GLQuad textAreaMenu;
+GLQuad textAreaGame;
+GLQuad textAreaGameMenu;
 
 GLTexture fontTexture;
-GLUniformBuffer textBuffer;
+GLUniformBuffer textBufferMenu;
+GLUniformBuffer textBufferGame;
 GLFrameBuffer textFrameBuffer;
 GLFrameBuffer textFrameBuffer2;
+GLFrameBuffer textFrameBuffer3;
+GLFrameBuffer textFrameBuffer4;
 GLFrameBuffer frameBuffer;
 
 constexpr size_t numPhosphorBuffers = 10;
@@ -59,7 +60,8 @@ size_t phosphorBufferIndex = 0;
 
 GLTexture phosphorBuffers[numPhosphorBuffers];
 
-TextInfo * textBufferData;
+TextInfo * textBufferDataMenu;
+TextInfo * textBufferDataGame;
 
 bool window_ok = false;
 
@@ -143,7 +145,12 @@ void Renderer::SetVSync(std::string_view VSync)
 
 bool firstCompile = true;
 
-
+constexpr int fontTextureU = 0;
+constexpr int backgroundTextureU = 1;
+constexpr int useBackgroundTextureU = 2;
+constexpr int transparentKeyU = 3;
+constexpr int timeU = 7;
+constexpr int textColorU = 8;
 
 void Renderer::Compile()
 {
@@ -153,10 +160,18 @@ void Renderer::Compile()
     phosphorProgram.CompileAndLink("phosphor", "vertex.glsl", "phosphor.glsl");
     crtProgram.CompileAndLink("crt", "vertex.glsl", "crt.glsl");
     bloomProgram.CompileAndLink("bloom", "vertex.glsl", "bloom.glsl");
-    textDrawer.CompileAndLink("textDrawer", "vertex.glsl", "text.glsl");
+    textDrawerMenu.CompileAndLink("textDrawerMenu", "vertex.glsl", "text.glsl");
+    textDrawerGame.CompileAndLink("textDrawerGame", "vertex.glsl", "text.glsl");
+    blurProgram.CompileAndLink("blur", "vertex.glsl", "blur.glsl");
     
-    textDrawer.setInt(0, 0);
-    textDrawer.setFloat(1, 1.0, 0.0, 1.0, 1.0);
+    textDrawerMenu.setInt(fontTextureU, 0);
+    textDrawerGame.setInt(fontTextureU, 0);
+    textDrawerMenu.setInt(backgroundTextureU, 1);
+    textDrawerGame.setInt(backgroundTextureU, 1);
+    textDrawerMenu.setInt(useBackgroundTextureU, 0);
+    textDrawerGame.setInt(useBackgroundTextureU, 0);
+    textDrawerMenu.setFloat(transparentKeyU, 1.0, 0.0, 1.0, 1.0);
+    textDrawerGame.setFloat(transparentKeyU, 1.0, 0.0, 1.0, 1.0);
     
     phosphorProgram.setInt(0, 0);
     
@@ -185,9 +200,14 @@ void Renderer::Compile()
         
         LogDebug(firstCompile ? "Text Font Loaded" : "Text Font Reloaded");
         
-        textBuffer.Init(&tmp2);
+        textBufferMenu.Init(&tmp2);
+        textBufferGame.Init(&tmp2);
         
-        textBufferData = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBuffer.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
+        textBufferDataMenu = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBufferMenu.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
+        textBufferDataGame = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBufferGame.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
+        
+        MenuText.textBufferData = textBufferDataMenu;
+        GameText.textBufferData = textBufferDataGame;
         
         glCheckErrors();
         SetTextColor(Config::getEnumOr("TextColor", textColorNames, ETextColor::AMBER));
@@ -197,24 +217,39 @@ void Renderer::Compile()
         LogDebug(firstCompile ? "Text Info Loaded" : "Text Info Reloaded");
     }
     
-    textFrameBuffer.Init(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
-    textFrameBuffer2.Init(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
+    textFrameBuffer.Init(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
+    textFrameBuffer2.Init(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
+    textFrameBuffer3.Init(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
+    textFrameBuffer4.Init(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
     frameBuffer.Init(window_width, window_height);
+    
+    blurProgram.setInt(1, textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
     
     mainArea.Gen(std::array { &crtProgram, &bloomProgram } ,-1.0, -1.0, 1.0, 1.0);
     
-    textArea.Gen(std::array { &textDrawer, &phosphorProgram } , -1.0, -1.0, 1.0, 1.0);
+    textAreaMenu.Gen(std::array { &textDrawerMenu, &phosphorProgram } , -1.0, -1.0, 1.0, 1.0);
+    textAreaGame.Gen(std::array { &textDrawerGame, &phosphorProgram } , -1.0, -1.0, 1.0, 1.0);
+    textAreaGameMenu.Gen(std::array { &textDrawerGame, &blurProgram, &textDrawerMenu, &phosphorProgram } , -1.0, -1.0, 1.0, 1.0);
     
     LogDebug(firstCompile ? "Geometry Generated" : "Geometry Regenerated");
     
-    textArea.addUBO(&textBuffer);
-    textArea.addTexture(std::array { &fontTexture, &textFrameBuffer.colorTexture });
-    mainArea.addTexture(std::array { &textFrameBuffer2.colorTexture, &frameBuffer.colorTexture });
+    mainArea.addTexture(std::array { &textFrameBuffer4.colorTexture, &frameBuffer.colorTexture });
+    
+    textAreaMenu.addUBO(&textBufferMenu);
+    textAreaMenu.addTexture(std::array { &fontTexture, &textFrameBuffer3.colorTexture });
+    
+    textAreaGame.addUBO(&textBufferGame);
+    textAreaGame.addTexture(std::array { &fontTexture, &textFrameBuffer3.colorTexture });
+    
+    textAreaGameMenu.addUBO(std::array { &textBufferGame, (GLUniformBuffer*)nullptr, &textBufferMenu});
+    textAreaGameMenu.addTexture(std::array { &fontTexture, &textFrameBuffer.colorTexture, &fontTexture, &textFrameBuffer3.colorTexture });
     
     for(size_t i = 0; i < numPhosphorBuffers; i++)
     {
-        phosphorBuffers[i].InitNew(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
-        textArea.addTexture(std::array { (GLTexture*)nullptr, phosphorBuffers + i });
+        phosphorBuffers[i].InitNew(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
+        textAreaMenu.addTexture(std::array { (GLTexture*)nullptr, phosphorBuffers + i });
+        textAreaGame.addTexture(std::array { (GLTexture*)nullptr, phosphorBuffers + i });
+        textAreaGameMenu.addTexture(std::array { (GLTexture*)nullptr, (GLTexture*)nullptr, i == 0 ? &textFrameBuffer2.colorTexture : (GLTexture*)nullptr, phosphorBuffers + i });
     }
     
     LogDebug(firstCompile ? "Framebuffer Generated" : "Framebuffer Regenerated");
@@ -287,7 +322,7 @@ void Renderer::Init()
     LogDebug("Window Shown");
 }
 
-void Renderer::SetText(std::string_view newText)
+void Renderer::TextBuffer::SetText(std::string_view newText)
 {
     size_t bufSiz = 80 * 40;
     size_t n = std::min(bufSiz, newText.size());
@@ -304,19 +339,19 @@ void Renderer::SetText(std::string_view newText)
 }
 
 
-void Renderer::LowRes()
+void Renderer::TextBuffer::LowRes()
 {
     textBufferData->screen_width = 40;
     textBufferData->screen_height = 25;
 }
 
-void Renderer::HighRes()
+void Renderer::TextBuffer::HighRes()
 {
     textBufferData->screen_width = 80;
     textBufferData->screen_height = 40;
 }
 
-void Renderer::SetText(std::string_view newText, std::span<const uint8_t> properties)
+void Renderer::TextBuffer::SetText(std::string_view newText, std::span<const uint8_t> properties)
 {
     size_t bufSiz = max_screen_width * max_screen_height;
     {
@@ -357,21 +392,28 @@ static void ReloadFont()
 {
     uint32_t w, h;
     
-    uint32_t oldw = textBufferData->char_width;
-    uint32_t oldh = textBufferData->char_height;
+    uint32_t oldw = textBufferDataMenu->char_width;
+    uint32_t oldh = textBufferDataMenu->char_height;
     
-    auto &fnt = Font::getSelectedFont(w, h, textBufferData->char_width, textBufferData->char_height, textBufferData->font_width, textBufferData->font_height);
+    auto &fnt = Font::getSelectedFont(w, h, textBufferDataMenu->char_width, textBufferDataMenu->char_height, textBufferDataMenu->font_width, textBufferDataMenu->font_height);
     
-    if(oldw != textBufferData->char_width || oldh != textBufferData->char_height)
+    if(oldw != textBufferDataMenu->char_width || oldh != textBufferDataMenu->char_height)
     {
-        textFrameBuffer.Resize(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
-        textFrameBuffer2.Resize(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
+        textBufferDataGame->char_width = textBufferDataMenu->char_width;
+        textBufferDataGame->char_height = textBufferDataMenu->char_height;
+        textBufferDataGame->font_width = textBufferDataMenu->font_width;
+        textBufferDataGame->font_height = textBufferDataMenu->font_height;
         
-        //crtProgram.setInt(3, textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height); // fake out 8-width chars for CRT shader, looks bad otherwise for high-res fonts
+        textFrameBuffer.Resize(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
+        textFrameBuffer2.Resize(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
+        textFrameBuffer3.Resize(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
+        textFrameBuffer4.Resize(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
+        
+        //crtProgram.setInt(3, textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height); // fake out 8-width chars for CRT shader, looks bad otherwise for high-res fonts
         
         for(size_t i = 0; i < numPhosphorBuffers; i++)
         {
-            phosphorBuffers[i].InitNew(textBufferData->char_width * max_screen_width, textBufferData->char_height * max_screen_height);
+            phosphorBuffers[i].InitNew(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
         }
     }
     
@@ -428,14 +470,20 @@ void Renderer::ResetTimer()
     baseTime = Util::MsTime();
 }
 
+bool Renderer::DrawMenu = true;
+bool Renderer::DrawGame = false;
+
 void Renderer::Render()
 {
-    uint32_t w = textBufferData->char_width * max_screen_width;
-    uint32_t h = textBufferData->char_height * max_screen_height;
+    uint32_t w = textBufferDataMenu->char_width * max_screen_width;
+    uint32_t h = textBufferDataMenu->char_height * max_screen_height;
     
-    textBufferData = nullptr;
+    
+    textBufferDataMenu = nullptr;
+    textBufferDataGame = nullptr;
     //flush text
-    glUnmapNamedBuffer(textBuffer.index);
+    glUnmapNamedBuffer(textBufferMenu.index);
+    glUnmapNamedBuffer(textBufferGame.index);
     
     if(skipNextFrame)
     {
@@ -445,10 +493,17 @@ void Renderer::Render()
     {
         glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT | GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT | GL_TEXTURE_UPDATE_BARRIER_BIT);
         
-        textDrawer.setUInt(5, Util::MsTime() - baseTime);
+        if(DrawMenu)
+        {
+            textDrawerMenu.setUInt(timeU, Util::MsTime() - baseTime);
+        }
+        else
+        {
+            textDrawerGame.setUInt(timeU, Util::MsTime() - baseTime);
+        }
         
         phosphorBufferIndex = (phosphorBufferIndex + 1) % numPhosphorBuffers;
-        glCopyImageSubData(textFrameBuffer.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffers[phosphorBufferIndex].index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
+        glCopyImageSubData(textFrameBuffer3.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffers[phosphorBufferIndex].index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
         
         for(unsigned i = 0; i < numPhosphorBuffers; i++)
         {
@@ -457,15 +512,34 @@ void Renderer::Render()
         
         glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT); // probably not necessary, but...
         
-        textArea.Render(std::array {&textFrameBuffer, &textFrameBuffer2});
-        mainArea.Render(std::array {&frameBuffer, (GLFrameBuffer*)nullptr});
+        if(DrawMenu && DrawGame)
+        {
+            textDrawerMenu.setInt(useBackgroundTextureU, 1);
+            textAreaGameMenu.Render(std::array {&textFrameBuffer, &textFrameBuffer2, &textFrameBuffer3, &textFrameBuffer4});
+            mainArea.Render(std::array {&frameBuffer, (GLFrameBuffer*)nullptr});
+        }
+        else if(DrawGame)
+        {
+            textAreaGame.Render(std::array {&textFrameBuffer3, &textFrameBuffer4});
+            mainArea.Render(std::array {&frameBuffer, (GLFrameBuffer*)nullptr});
+        }
+        else // if(drawMenu)
+        {
+            textDrawerMenu.setInt(useBackgroundTextureU, 0);
+            textAreaMenu.Render(std::array {&textFrameBuffer3, &textFrameBuffer4});
+            mainArea.Render(std::array {&frameBuffer, (GLFrameBuffer*)nullptr});
+        }
         
         glCheckErrors();
     }
     
     SDL_GL_SwapWindow(win);
     
-    textBufferData = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBuffer.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
+    textBufferDataMenu = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBufferMenu.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
+    textBufferDataGame = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBufferGame.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
+    
+    MenuText.textBufferData = textBufferDataMenu;
+    GameText.textBufferData = textBufferDataGame;
 }
 
 void Renderer::Quit()
@@ -539,7 +613,8 @@ void Renderer::SetTextColor(ETextColor color)
     
     currentTextColor = color;
     float *c = textColors[uint8_t(color)];
-    if(textDrawer.program) textDrawer.setFloat(6, c[0], c[1], c[2], c[3]);
+    if(textDrawerMenu.program) textDrawerMenu.setFloat(textColorU, c[0], c[1], c[2], c[3]);
+    if(textDrawerGame.program) textDrawerGame.setFloat(textColorU, c[0], c[1], c[2], c[3]);
     Config::setEnum("TextColor", textColorNames, color);
 }
 
@@ -549,7 +624,7 @@ void Util::ShowFatalError(const std::string &title,const std::string &msg)
 }
 
 
-void Renderer::DrawLineText(uint32_t x, uint32_t y, std::string_view newText, uint32_t width)
+void Renderer::TextBuffer::DrawLineText(uint32_t x, uint32_t y, std::string_view newText, uint32_t width)
 {
     if(x >= textBufferData->screen_width || y >= textBufferData->screen_height)
     {
@@ -573,7 +648,7 @@ void Renderer::DrawLineText(uint32_t x, uint32_t y, std::string_view newText, ui
     }
 }
 
-void Renderer::DrawLineTextFillProp(uint32_t x, uint32_t y, std::string_view newText, uint8_t newProperty, uint32_t width)
+void Renderer::TextBuffer::DrawLineTextFillProp(uint32_t x, uint32_t y, std::string_view newText, uint8_t newProperty, uint32_t width)
 {
     if(x >= textBufferData->screen_width || y >= textBufferData->screen_height)
     {
@@ -599,7 +674,7 @@ void Renderer::DrawLineTextFillProp(uint32_t x, uint32_t y, std::string_view new
     memset(textBufferData->char_properties + offset, newProperty, n);
 }
 
-void Renderer::DrawLineProp(uint32_t x, uint32_t y, std::span<const uint8_t> newProperties, uint32_t width)
+void Renderer::TextBuffer::DrawLineProp(uint32_t x, uint32_t y, std::span<const uint8_t> newProperties, uint32_t width)
 {
     if(x >= textBufferData->screen_width || y >= textBufferData->screen_height)
     {
@@ -623,7 +698,7 @@ void Renderer::DrawLineProp(uint32_t x, uint32_t y, std::span<const uint8_t> new
     }
 }
 
-void Renderer::DrawFillLineProp(uint32_t x, uint32_t y, uint8_t newProperty, uint32_t width)
+void Renderer::TextBuffer::DrawFillLineProp(uint32_t x, uint32_t y, uint8_t newProperty, uint32_t width)
 {
     if(x >= textBufferData->screen_width || y >= textBufferData->screen_height)
     {
@@ -638,7 +713,7 @@ void Renderer::DrawFillLineProp(uint32_t x, uint32_t y, uint8_t newProperty, uin
     memset(textBufferData->char_properties + offset, newProperty, n);
 }
 
-void Renderer::DrawFillLineText(uint32_t x, uint32_t y, char newText, uint32_t width)
+void Renderer::TextBuffer::DrawFillLineText(uint32_t x, uint32_t y, char newText, uint32_t width)
 {
     if(x >= textBufferData->screen_width || y >= textBufferData->screen_height)
     {
@@ -653,7 +728,7 @@ void Renderer::DrawFillLineText(uint32_t x, uint32_t y, char newText, uint32_t w
     memset(textBufferData->chars + offset, newText, n);
 }
 
-void Renderer::DrawFillLineTextProp(uint32_t x, uint32_t y, char newText, uint8_t newProperty, uint32_t width)
+void Renderer::TextBuffer::DrawFillLineTextProp(uint32_t x, uint32_t y, char newText, uint8_t newProperty, uint32_t width)
 {
     if(x >= textBufferData->screen_width || y >= textBufferData->screen_height)
     {
@@ -669,7 +744,7 @@ void Renderer::DrawFillLineTextProp(uint32_t x, uint32_t y, char newText, uint8_
     memset(textBufferData->char_properties + offset, newProperty, n);
 }
 
-void Renderer::DrawChar(uint32_t x, uint32_t y, char newChar, uint8_t newProperty)
+void Renderer::TextBuffer::DrawChar(uint32_t x, uint32_t y, char newChar, uint8_t newProperty)
 {
     if(x >= textBufferData->screen_width || y >= textBufferData->screen_height)
     {
@@ -683,7 +758,7 @@ void Renderer::DrawChar(uint32_t x, uint32_t y, char newChar, uint8_t newPropert
 }
 
 template<bool text = true, bool props = true>
-static void DrawClear(uint32_t x, uint32_t y, uint32_t width)
+static void DrawClear(TextInfo * textBufferData, uint32_t x, uint32_t y, uint32_t width)
 {
     if(x >= textBufferData->screen_width || y >= textBufferData->screen_height)
     {
@@ -699,38 +774,38 @@ static void DrawClear(uint32_t x, uint32_t y, uint32_t width)
     if constexpr(props) memset(textBufferData->char_properties + offset, 0, n);
 }
 
-void Renderer::DrawClear(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+void Renderer::TextBuffer::DrawClear(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
     for(uint32_t i = 0; i < height; i++)
     {
-        ::DrawClear(x, y + i, width);
+        ::DrawClear(textBufferData, x, y + i, width);
     }
 }
 
-void Renderer::DrawClearText(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+void Renderer::TextBuffer::DrawClearText(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
     for(uint32_t i = 0; i < height; i++)
     {
-        ::DrawClear<true, false>(x, y + i, width);
+        ::DrawClear<true, false>(textBufferData, x, y + i, width);
     }
 }
 
-void Renderer::DrawClearProps(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+void Renderer::TextBuffer::DrawClearProps(uint32_t x, uint32_t y, uint32_t width, uint32_t height)
 {
     for(uint32_t i = 0; i < height; i++)
     {
-        ::DrawClear<false, true>(x, y + i, width);
+        ::DrawClear<false, true>(textBufferData, x, y + i, width);
     }
 }
 
-void Renderer::DrawClear()
+void Renderer::TextBuffer::DrawClear()
 {
     size_t bufSiz = max_screen_width * max_screen_height;
     
     memset(textBufferData->chars, 0, bufSiz * 2);
 }
 
-void Renderer::DrawClear(uint8_t text_char, uint8_t prop)
+void Renderer::TextBuffer::DrawClear(uint8_t text_char, uint8_t prop)
 {
     size_t bufSiz = max_screen_width * max_screen_height;
     
@@ -738,7 +813,7 @@ void Renderer::DrawClear(uint8_t text_char, uint8_t prop)
     memset(textBufferData->char_properties, prop, bufSiz);
 }
 
-void Renderer::DrawLineTextCentered(uint32_t y, std::string_view newText, char prop)
+void Renderer::TextBuffer::DrawLineTextCentered(uint32_t y, std::string_view newText, char prop)
 {
     assert(std::size(newText) <= textBufferData->screen_width);
     uint32_t x = (textBufferData->screen_width - std::size(newText)) / 2;
