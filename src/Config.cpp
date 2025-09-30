@@ -36,6 +36,7 @@ void Config::Init()
     else
     {
         configData = JSON::Object({});
+        configData.set("ScriptValues", JSON::Object({}));
     }
     
     config_ok = true;
