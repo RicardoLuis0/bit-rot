@@ -6,7 +6,7 @@ in vec2 texCoord;
 #define NUM_BUFFERS 10
 
 layout (location = 0) uniform sampler2D frameBuffer;
-layout (location = 1) uniform float phosphorStrength = 0.5;
+layout (location = 1) uniform float phosphorStrength;
 layout (location = 2) uniform sampler2D phopsphorBuffers[NUM_BUFFERS];
 
 vec4 toSRGB(vec4 linearRGB)
@@ -30,14 +30,21 @@ vec4 toLinear(vec4 sRGB)
 
 void main()
 {
-    vec3 color = toLinear(texture(frameBuffer, texCoord)).rgb;// * (2.0 - phosphorStrength);
-    float mult = phosphorStrength * 0.7;
-    for(int i = 0; i < NUM_BUFFERS; i++)
+    if(phosphorStrength > 0.0)
     {
-        color += toLinear(texture(phopsphorBuffers[i], texCoord)).rgb * mult;
-        mult /= 2.0;
+        vec3 color = toLinear(texture(frameBuffer, texCoord)).rgb;// * (2.0 - phosphorStrength);
+        float mult = phosphorStrength * 0.7;
+        for(int i = 0; i < NUM_BUFFERS; i++)
+        {
+            color += toLinear(texture(phopsphorBuffers[i], texCoord)).rgb * mult;
+            mult /= 2.0;
+        }
+        fragColor = toSRGB(vec4(color / 2, 1.0));
     }
-    fragColor = toSRGB(vec4(color / 2, 1.0));
+    else
+    {
+        fragColor = toSRGB(vec4(toLinear(texture(frameBuffer, texCoord)).rgb, 1.0));
+    }
     
     /*
     fragColor = texture(frameBuffer, texCoord) * 0.5

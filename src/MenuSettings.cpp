@@ -16,6 +16,8 @@ extern bool InGame;
 int currentSettingsMenuItem = 0;
 
 constexpr int DefaultGlobalVolume = 50;
+constexpr int DefaultBloomStrength = 100;
+constexpr int DefaultCrtCurve = 100;
 constexpr int DefaultSoundVolume = 100;
 constexpr int DefaultMusicVolume = 100;
 
@@ -251,10 +253,133 @@ struct : SettingItem
     }
 } MusicMuteSetting;
 
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "Bloom Strength"; }
+    virtual std::string getValue() const override { return std::to_string(Config::getIntOr("BloomStrength", DefaultBloomStrength)); }
+    
+    virtual void ToggleUp() override
+    {
+        Config::setInt("BloomStrength", std::clamp<int>(Config::getIntOr("BloomStrength", DefaultBloomStrength) + 10, 0, 100));
+        Renderer::UpdateBloomStrength();
+    }
+    
+    virtual void ToggleDown() override
+    {
+        Config::setInt("BloomStrength", std::clamp<int>(Config::getIntOr("BloomStrength", DefaultBloomStrength) - 10, 0, 100));
+        Renderer::UpdateBloomStrength();
+    }
+} BloomStrengthSetting;
+
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "CRT Curve"; }
+    virtual std::string getValue() const override { return std::to_string(Config::getIntOr("CrtCurve", DefaultCrtCurve)); }
+    
+    virtual void ToggleUp() override
+    {
+        Config::setInt("CrtCurve", std::clamp<int>(Config::getIntOr("CrtCurve", DefaultCrtCurve) + 25, 0, 300));
+        Renderer::UpdateCrt();
+    }
+    
+    virtual void ToggleDown() override
+    {
+        Config::setInt("CrtCurve", std::clamp<int>(Config::getIntOr("CrtCurve", DefaultCrtCurve) - 25, 0, 300));
+        Renderer::UpdateCrt();
+    }
+} CrtCurveSetting;
+
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "Phosphor Effect"; }
+    virtual std::string getValue() const override { return Config::getIntOr("PhosphorEnabled", 1) ? "Yes" : "No"; }
+    
+    virtual void ToggleUp() override
+    {
+        bool yes = !Config::getIntOr("PhosphorEnabled", 1);
+        Config::setInt("PhosphorEnabled", yes);
+        Renderer::PhosphorEnabled(yes);
+    }
+    
+    virtual void ToggleDown() override
+    {
+        bool yes = !Config::getIntOr("PhosphorEnabled", 1);
+        Config::setInt("PhosphorEnabled", yes);
+        Renderer::PhosphorEnabled(yes);
+    }
+} PhosphorEnabledSetting;
+
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "Scanlines Effect"; }
+    virtual std::string getValue() const override { return Config::getIntOr("CrtScanlinesEnabled", 1) ? "Yes" : "No"; }
+    
+    virtual void ToggleUp() override
+    {
+        bool yes = !Config::getIntOr("CrtScanlinesEnabled", 1);
+        Config::setInt("CrtScanlinesEnabled", yes);
+        Renderer::UpdateCrt();
+    }
+    
+    virtual void ToggleDown() override
+    {
+        bool yes = !Config::getIntOr("CrtScanlinesEnabled", 1);
+        Config::setInt("CrtScanlinesEnabled", yes);
+        Renderer::UpdateCrt();
+    }
+} CrtScanlinesEnabledSetting;
+
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "Chromatic Aberration"; }
+    virtual std::string getValue() const override { return Config::getIntOr("CrtCAEnabled", 1) ? "Yes" : "No"; }
+    
+    virtual void ToggleUp() override
+    {
+        bool yes = !Config::getIntOr("CrtCAEnabled", 1);
+        Config::setInt("CrtCAEnabled", yes);
+        Renderer::UpdateCrt();
+    }
+    
+    virtual void ToggleDown() override
+    {
+        bool yes = !Config::getIntOr("CrtCAEnabled", 1);
+        Config::setInt("CrtCAEnabled", yes);
+        Renderer::UpdateCrt();
+    }
+} CrtCAEnabledSetting;
+
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "Vignette Effect"; }
+    virtual std::string getValue() const override { return Config::getIntOr("CrtVignetteEnabled", 1) ? "Yes" : "No"; }
+    
+    virtual void ToggleUp() override
+    {
+        bool yes = !Config::getIntOr("CrtVignetteEnabled", 1);
+        Config::setInt("CrtVignetteEnabled", yes);
+        Renderer::UpdateCrt();
+    }
+    
+    virtual void ToggleDown() override
+    {
+        bool yes = !Config::getIntOr("CrtVignetteEnabled", 1);
+        Config::setInt("CrtVignetteEnabled", yes);
+        Renderer::UpdateCrt();
+    }
+} CrtVignetteEnabledSetting;
+
+
 std::vector<SettingItem*> settings
 {
     &FontSetting,
     &ColorSetting,
+    &BloomStrengthSetting,
+    &PhosphorEnabledSetting,
+    &CrtCurveSetting,
+    &CrtScanlinesEnabledSetting,
+    &CrtCAEnabledSetting,
+    &CrtVignetteEnabledSetting,
     &VSyncSetting,
     &MusicMuteSetting,
     &VolumeSetting,

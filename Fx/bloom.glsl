@@ -5,15 +5,10 @@ out vec4 fragColor;
 in vec2 texCoord;
 
 layout (location = 0) uniform sampler2D frameBuffer;
-layout (location = 1) uniform ivec2 windowResolution;
+layout (location = 1) uniform ivec2 windowResolution; // 1,2
+layout (location = 3) uniform float bloomStrength;
 
-/*
-float bloomPower;
-float bloomStrenght;
-float bloomContrast;
-*/
 #define bloomPower 0.0025
-#define bloomStrenght 0.5
 #define bloomContrast 0.5
 
 float lum(vec4 color)
@@ -50,13 +45,12 @@ void main()
     }
     acc /= 9.0;
     
-    
-	if(lum(acc) > lum(orig))
-	{
-		fragColor = vec4((orig.rgb * (1.0f - bloomStrenght) + acc.rgb * bloomStrenght) * (1.0 + bloomContrast), 1.0);
-	}
-	else
-	{
+    if(lum(acc) > lum(orig))
+    {
+        fragColor = vec4((orig.rgb * (1.0f - bloomStrength) + acc.rgb * bloomStrength) * (1.0 + bloomContrast), 1.0);
+    }
+    else
+    {
         fragColor = vec4(orig.rgb *(1.0 + bloomContrast), 1.0);
-	}
+    }
 }

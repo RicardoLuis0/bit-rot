@@ -151,9 +151,47 @@ constexpr int useBackgroundTextureU = 2;
 constexpr int transparentKeyU = 3;
 constexpr int timeU = 7;
 constexpr int textColorU = 8;
+constexpr int bloomStrengthU = 3;
+constexpr int crtCurveU = 5;
+constexpr int crtScanlinesU = 6;
+constexpr int crtCAU = 7;
+constexpr int crtVignetteU = 8;
+
+void Renderer::UpdateBloomStrength()
+{
+    bloomProgram.setFloat(bloomStrengthU, sqrt(Config::getIntOr("BloomStrength", 100) / 100.0) * 0.85);
+}
+
+void Renderer::UpdateCrt()
+{
+    crtProgram.setFloat(crtCurveU, sqrt(Config::getIntOr("CrtCurve", 100) / 100.0));
+    crtProgram.setInt(crtScanlinesU, Config::getIntOr("CrtScanlinesEnabled", 1));
+    crtProgram.setInt(crtCAU, Config::getIntOr("CrtCAEnabled", 1));
+    crtProgram.setInt(crtVignetteU, Config::getIntOr("CrtVignetteEnabled", 1));
+}
+
+
+bool firstRender = true;
+
+constexpr float DefaultPhosphorStrength = 0.5f;
+
+void Renderer::PhosphorEnabled(bool yes)
+{
+    if(yes)
+    {
+        phosphorProgram.setFloat(1, DefaultPhosphorStrength);
+        firstRender = true;
+    }
+    else
+    {
+        phosphorProgram.setFloat(1, 0.0);
+    }
+}
 
 void Renderer::Compile()
 {
+    firstRender = true;
+    
     vertexShaderCache.clear();
     fragShaderCache.clear();
     
@@ -174,14 +212,18 @@ void Renderer::Compile()
     textDrawerGame.setFloat(transparentKeyU, 1.0, 0.0, 1.0, 1.0);
     
     phosphorProgram.setInt(0, 0);
+    phosphorProgram.setFloat(1, Config::getIntOr("PhosphorEnabled", 1) ? DefaultPhosphorStrength : 0.0);
     
     crtProgram.setInt(1, window_width, window_height);
     crtProgram.setInt(0, 0);
     crtProgram.setInt(3, 8 * max_screen_width, 8 *max_screen_height); // fake out 8-width chars for CRT shader, looks bad otherwise for high-res fonts
+    UpdateCrt();
+    
     SetTextColor(Config::getEnumOr("TextColor", textColorNames, ETextColor::AMBER));
     
-    bloomProgram.setInt(1, window_width, window_height);
     bloomProgram.setInt(0, 0);
+    bloomProgram.setInt(1, window_width, window_height);
+    UpdateBloomStrength();
     
     LogDebug(firstCompile ? "Shaders Compiled" : "Shaders Recompiled");
     
@@ -397,6 +439,8 @@ static void ReloadFont()
     
     auto &fnt = Font::getSelectedFont(w, h, textBufferDataMenu->char_width, textBufferDataMenu->char_height, textBufferDataMenu->font_width, textBufferDataMenu->font_height);
     
+    firstRender = true;
+    
     if(oldw != textBufferDataMenu->char_width || oldh != textBufferDataMenu->char_height)
     {
         textBufferDataGame->char_width = textBufferDataMenu->char_width;
@@ -502,15 +546,34 @@ void Renderer::Render()
             textDrawerGame.setUInt(timeU, Util::MsTime() - baseTime);
         }
         
-        phosphorBufferIndex = (phosphorBufferIndex + 1) % numPhosphorBuffers;
-        glCopyImageSubData(textFrameBuffer3.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffers[phosphorBufferIndex].index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
-        
-        for(unsigned i = 0; i < numPhosphorBuffers; i++)
+        if(!firstRender)
         {
-            phosphorProgram.setInt(2 + i,1 + ((phosphorBufferIndex + i) % numPhosphorBuffers));
+            phosphorBufferIndex = (phosphorBufferIndex + 1) % numPhosphorBuffers;
+            glCopyImageSubData(textFrameBuffer3.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffers[phosphorBufferIndex].index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
+            
+            for(unsigned i = 0; i < numPhosphorBuffers; i++)
+            {
+                phosphorProgram.setInt(2 + i,1 + ((phosphorBufferIndex + i) % numPhosphorBuffers));
+            }
+            
+            glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT); // probably not necessary, but...
         }
         
-        glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT); // probably not necessary, but...
+        if(firstRender)
+        { // fill phosphor buffer
+            phosphorBufferIndex = 0;
+            int n = (numPhosphorBuffers * 2);
+            for(int i = 0; i < n; i++)
+            {
+                //only supported in menus
+                textDrawerMenu.setInt(useBackgroundTextureU, 0);
+                textAreaMenu.Render(std::array {&textFrameBuffer3, &textFrameBuffer4});
+                phosphorBufferIndex = (i % numPhosphorBuffers);
+                glCopyImageSubData(textFrameBuffer3.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffers[phosphorBufferIndex].index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
+            }
+            
+            firstRender = false;
+        }
         
         if(DrawMenu && DrawGame)
         {

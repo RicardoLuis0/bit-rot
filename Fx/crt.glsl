@@ -7,8 +7,14 @@ in vec2 texCoord;
 layout (location = 0) uniform sampler2D frameBuffer;
 layout (location = 1) uniform ivec2 windowResolution;
 layout (location = 3) uniform ivec2 frameBufferResolution;
+layout (location = 5) uniform float crtCurve = 1.0;
+layout (location = 6) uniform bool crtScanlines = false;
+layout (location = 7) uniform bool crtCA = false;
+layout (location = 8) uniform bool crtVignette = false;
 
+//#define CURVATURE 3.5
 #define CURVATURE 3.5
+//#define CURVATURE 1.0
 #define SHRINK 0.01
 
 #define BLUR .021
@@ -35,23 +41,42 @@ void main()
     //un-center coords
     crtUV = crtUV * .5 + .5;
     
+    crtUV = mix(crtUV, uv, 1.0 - crtCurve);
+    
+    float shrink = crtCurve * SHRINK;
+    
     // shrink
-    vec2 crtUV2 = crtUV * (1.0 + SHRINK + SHRINK) - SHRINK;
+    vec2 crtUV2 = crtUV * (1.0 + shrink + shrink) - shrink;
     
-    vec2 edge=smoothstep(0., BLUR, crtUV)*(1.-smoothstep(1.-BLUR, 1., crtUV));
+    vec2 edge = smoothstep(0., BLUR, crtUV2)*(1.-smoothstep(1.-BLUR, 1., crtUV2));
     
-    float r = texture(frameBuffer, (crtUV2-.5)*CA_AMT+.5).r;
-    float g = texture(frameBuffer, crtUV2).g;
-    float b = texture(frameBuffer, (crtUV2-.5)/CA_AMT+.5).b;
+    if(crtCA)
+    {
+        float r = texture(frameBuffer, (crtUV2-.5)*CA_AMT+.5).r;
+        float g = texture(frameBuffer, crtUV2).g;
+        float b = texture(frameBuffer, (crtUV2-.5)/CA_AMT+.5).b;
+        
+        //chromatic abberation
+        fragColor.rgb=vec3(
+            r,
+            g,
+            b
+        );
+    }
+    else
+    {
+        fragColor.rgb = texture(frameBuffer, crtUV2).rgb;
+    }
+	
+	if(crtVignette)
+	{
+		fragColor.rgb *= edge.x*edge.y;
+	}
     
-    //chromatic abberation
-    fragColor.rgb=vec3(
-        r,
-        g,
-        b
-    )*edge.x*edge.y;
-    
-    float yfrac = mod(crtUV2.y * frameBufferResolution.y, 1.);
-    
-    fragColor.rgb*=0.4 + float(yfrac > 0.25 && yfrac < 0.75) * 0.8;
+    if(crtScanlines)
+    {
+        float yfrac = mod(crtUV2.y * frameBufferResolution.y, 1.);
+        
+        fragColor.rgb*=0.4 + float(yfrac > 0.25 && yfrac < 0.75) * 0.8;
+    }
 }

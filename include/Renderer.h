@@ -42,6 +42,10 @@ namespace Renderer
     void SetFont(uint32_t index);
     void SetFont(std::string_view name);
     
+    void UpdateBloomStrength();
+    void UpdateCrt();
+    void PhosphorEnabled(bool yes);
+    
     void CycleFont();
     void CycleFontDown();
     
