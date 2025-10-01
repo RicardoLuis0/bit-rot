@@ -167,7 +167,7 @@ void Renderer::UpdateCrt()
     crtProgram.setFloat(crtCurveU, sqrt(Config::getIntOr("CrtCurve", 100) / 100.0));
     crtProgram.setInt(crtScanlinesU, Config::getIntOr("CrtScanlinesEnabled", 1));
     crtProgram.setInt(crtCAU, Config::getIntOr("CrtCAEnabled", 1));
-    crtProgram.setInt(crtVignetteU, Config::getIntOr("CrtVignetteEnabled", 1));
+    crtProgram.setInt(crtVignetteU, Config::getIntOr("CrtVignetteEnabled", 0));
 }
 
 

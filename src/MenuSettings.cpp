@@ -352,18 +352,18 @@ struct : SettingItem
 struct : SettingItem
 {
     virtual std::string_view getName() const override { return "Vignette Effect"; }
-    virtual std::string getValue() const override { return Config::getIntOr("CrtVignetteEnabled", 1) ? "Yes" : "No"; }
+    virtual std::string getValue() const override { return Config::getIntOr("CrtVignetteEnabled", 0) ? "Yes" : "No"; }
     
     virtual void ToggleUp() override
     {
-        bool yes = !Config::getIntOr("CrtVignetteEnabled", 1);
+        bool yes = !Config::getIntOr("CrtVignetteEnabled", 0);
         Config::setInt("CrtVignetteEnabled", yes);
         Renderer::UpdateCrt();
     }
     
     virtual void ToggleDown() override
     {
-        bool yes = !Config::getIntOr("CrtVignetteEnabled", 1);
+        bool yes = !Config::getIntOr("CrtVignetteEnabled", 0);
         Config::setInt("CrtVignetteEnabled", yes);
         Renderer::UpdateCrt();
     }
