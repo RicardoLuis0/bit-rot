@@ -44,7 +44,7 @@ void Game::Init()
     LoadIntro();
 }
 
-std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string path)
+std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string path, bool allow_hidden)
 {
     auto entries = directories[drive].find(path);
     
@@ -53,7 +53,7 @@ std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string pat
     {
         for(auto &entry : entries->second)
         {
-            if((entry.second.type == PROGRAM || entry.second.type == PROGRAM_ALIAS) && entry.second.hidden == VISIBLE)
+            if((entry.second.type == PROGRAM || entry.second.type == PROGRAM_ALIAS) && (entry.second.hidden == VISIBLE || (allow_hidden && entry.second.hidden == HIDDEN)))
             {
                 programs.push_back(entry.second.name);
             }
@@ -62,9 +62,9 @@ std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string pat
     return programs;
 }
 
-std::vector<std::string> Game::ListPrograms()
+std::vector<std::string> Game::ListExecutablePrograms()
 {
-    return ListProgramsAt("C", "\\BIN\\");//Util::ConcatInplace(ListProgramsAt(currentDrive, currentFolder), ListProgramsAt("C", "\\BIN\\"));
+    return ListProgramsAt("C", "\\BIN\\", true);//Util::ConcatInplace(ListProgramsAt(currentDrive, currentFolder), ListProgramsAt("C", "\\BIN\\", true));
 }
 
 std::string prevPath(std::string path)
@@ -105,7 +105,7 @@ static inline void DoErr(std::string_view msg, std::string_view err)
     Game::AddConsoleLine(std::string(msg) + std::string(err), Util::Concat(std::vector<uint8_t>(msg.size(), 0), std::vector<uint8_t>(err.size(), CHAR_INVERT1)));
 }
 
-bool Game::HasAccess(const std::string &path_str, const std::string &command_name, std::string *finalPath, dir_entry **final_entry, dir_entry_type last_allowed, hide_type last_allowed_hide, bool allow_last_missing, bool silent)
+bool Game::HasAccess(const std::string &path_str, const std::string &command_name, std::string *finalPath, dir_entry **final_entry, dir_entry_type last_allowed, hide_type last_allowed_hide, bool allow_last_missing, bool silent, bool allow_gone)
 {
     if(final_entry) *final_entry = nullptr;
     std::vector<std::string> path_vec = Util::MapInplace(Util::SplitString(path_str, "\\/", false, false), Util::StrToUpper);
@@ -152,7 +152,7 @@ bool Game::HasAccess(const std::string &path_str, const std::string &command_nam
                        && (!(uint8_t(last_allowed) & uint8_t(entry->second.type))
                        || !(uint8_t(last_allowed_hide) & uint8_t(entry->second.hidden)))))
                 {
-                    if(entry == entries->second.end() || (entry->second.hidden == HIDDEN || entry->second.hidden == DELETED))
+                    if(entry == entries->second.end() || (entry->second.hidden == HIDDEN || entry->second.hidden == DELETED || (entry->second.hidden == GONE && !allow_gone)))
                     {
                         if(!silent) DoErr("Invalid Path "+Util::QuoteString(tmppath, '\'', false)+" Passed to "+command_name+": ",Util::QuoteString(path_vec[i], '\'', false)+" does not Exist");
                         return false;
@@ -250,7 +250,15 @@ void Game::ToGame()
                 {
                     continue;
                 }
-                directories["C"]["\\BIN\\"].insert({action.info, {action.info, PROGRAM}});
+                
+                if(action.info == "666")
+                {
+                    directories["C"]["\\BIN\\"].insert({action.info, {action.info, PROGRAM, HIDDEN}});
+                }
+                else
+                {
+                    directories["C"]["\\BIN\\"].insert({action.info, {action.info, PROGRAM}});
+                }
             }
             else
             {
@@ -288,6 +296,10 @@ void Game::ToGame()
                     {
                         e.hidden = VISIBLE;
                     }
+                }
+                else if(action.type == SaveData::DELETE)
+                {
+                    e.hidden = GONE;
                 }
             }
         }

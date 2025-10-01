@@ -10,6 +10,7 @@ namespace SaveData
         UNLOCK,
         INSTALL,
         RECOVERY,
+        DELETE,
         SAVE_ACTION_TYPE_COUNT,
     };
     

@@ -27,10 +27,11 @@ enum class dir_entry_type : uint8_t
 
 enum class hide_type : uint8_t
 {
+    GONE      = 0x00, // deleted, for good
     VISIBLE   = 0x01,
     CORRUPTED = 0x02,
     ENCRYPTED = 0x04,
-    DELETED   = 0x08,
+    DELETED   = 0x08, // deleted, recoverable
     HIDDEN    = 0x10,
     FORBIDDEN = 0x20,
     //for HasAccess only
@@ -211,11 +212,11 @@ namespace Game
     void ToIntro();
     void ToGame();
     
-    std::vector<std::string> ListProgramsAt(std::string drive, std::string path);
-    std::vector<std::string> ListPrograms();
+    std::vector<std::string> ListProgramsAt(std::string drive, std::string path, bool allow_hidden = false);
+    std::vector<std::string> ListExecutablePrograms();
     bool HasAccess(const std::string &path_str, const std::string &command_name, std::string *finalPath = nullptr,
                    dir_entry **final_entry = nullptr, dir_entry_type last_allowed = dir_entry_type::ENTRY_ANY, hide_type last_allowed_hide = hide_type::HIDE_ANY,
-                   bool allow_last_missing = false, bool silent = false);
+                   bool allow_last_missing = false, bool silent = false, bool allow_gone = false);
     
     std::vector<dir_entry> ListDir(const std::string &folder, size_t * max_len = nullptr);
     

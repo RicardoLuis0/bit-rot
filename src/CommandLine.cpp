@@ -161,7 +161,7 @@ void Game::Responder(SDL_Event *e)
                     std::string alts = "";
                     if(currentArg == nullptr || currentArg == args.data() || (currentArg == newArg && args.size() == 1 && Util::StrToUpper(args[0].to_view()) == "HELP"))
                     {
-                        alts = Util::Join(ListPrograms(), " ");
+                        alts = Util::Join(ListExecutablePrograms(), " ");
                     }
                     else
                     {
@@ -181,7 +181,7 @@ void Game::Responder(SDL_Event *e)
             { // program name, TODO dehardcode it from help (leave type handling per command) if any new commands take non-paths
                 std::string arg = Util::StrToUpper(currentArg->to_view());
                 std::vector<std::string> completionAlternatives =
-                                                Util::Filter(ListPrograms(),
+                                                Util::Filter(ListExecutablePrograms(),
                                                         std::bind((bool(std::string::*)(std::string_view)const noexcept)&std::string::starts_with, std::placeholders::_1, std::string_view(arg)));
                 if(completionAlternatives.size() > 1)
                 {
@@ -304,7 +304,7 @@ void Game::RunCommand(const std::string &command, bool isQueue)
     }
     else
     {
-        std::vector<std::string> programsList = Game::ListPrograms();
+        std::vector<std::string> programsList = Game::ListExecutablePrograms();
         
         std::vector<std::string> args = Util::SplitString(command, ' ', true, true);
         if(args.size() > 0)

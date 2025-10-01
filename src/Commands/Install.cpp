@@ -39,7 +39,18 @@ void Command::Install(const std::vector<std::string> &args)
             else
             {
                 SaveData::PushAction(SaveData::INSTALL, entry->name);
-                bin.insert({entry->name, {entry->name, PROGRAM}});
+                
+                if(entry->name == "666")
+                {
+                    bin.insert({entry->name, {entry->name, PROGRAM, HIDDEN}});
+                    SaveData::PushAction(SaveData::DELETE, entry->name);
+                    entry->hidden = GONE;
+                }
+                else
+                {
+                    bin.insert({entry->name, {entry->name, PROGRAM}});
+                }
+                
                 AddConsoleLine(Util::QuoteString(entry->name, '\'', false)+" Successfully Installed");
             }
         }

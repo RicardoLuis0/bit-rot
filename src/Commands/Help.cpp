@@ -12,12 +12,12 @@ void Command::Help(const std::vector<std::string> &args)
     AddConsoleLine("");
     if(args.size() == 1)
     {
-        std::vector<std::string> programs = Game::ListPrograms();
+        std::vector<std::string> programs = Game::ListExecutablePrograms();
         AddConsoleLine("Installed Programs: (use HELP <PROGRAM> for usage info)");
         AddConsoleLine("");
         for(const std::pair<const std::vector<std::string>, program_help> &cmd : programHelp)
         {
-            if(cmd.second.hidden) continue;
+            //if(cmd.second.hidden) continue;
             
             std::vector<std::string> found;
             
@@ -30,22 +30,26 @@ void Command::Help(const std::vector<std::string> &args)
             }
             if(found.size() == 0) continue;
             
-            std::string start = " \07 "+Util::Join(found, " / ")+" - ";
+            std::string start = " \07 "+Util::Join(found, " / ");
             
-            if(cmd.second.help[0].second.size() > 0)
+            if(cmd.second.hidden)
             {
-                AddConsoleLine(start+cmd.second.help[0].first, Util::Concat(std::vector<uint8_t>(start.size(), 0),cmd.second.help[0].second));
+                AddConsoleLine(start);
+            }
+            else if(cmd.second.help[0].second.size() > 0)
+            {
+                AddConsoleLine(start+" - "+cmd.second.help[0].first, Util::Concat(std::vector<uint8_t>(start.size(), 0),cmd.second.help[0].second));
             }
             else
             {
-                AddConsoleLine(start+cmd.second.help[0].first);
+                AddConsoleLine(start+" - "+cmd.second.help[0].first);
             }
         }
         AddConsoleLine("");
     }
     else if(args.size() == 2)
     {
-        std::vector<std::string> programs = Game::ListPrograms();
+        std::vector<std::string> programs = Game::ListExecutablePrograms();
         std::string command = Util::StrToUpper(args[1]);
         
         if(std::find(programs.begin(), programs.end(), command) != programs.end())
