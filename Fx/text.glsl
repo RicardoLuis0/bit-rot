@@ -23,6 +23,19 @@ layout (location = 8) uniform vec4 textColor; // 8,9,10,11
 #define CHAR_BLINK2 0x20
 #define CHAR_BLINK3 0x30
 
+uint const_rand(uint seed)
+{
+    seed = seed * 1103515245 + 12345;
+    return seed/65536;
+}
+
+#define RANDCHAR_CYLCE 200 // cycle every 200 ms
+
+uint pos_rand(uint x, uint y)
+{
+    return const_rand((x * 80) + y + ((time / RANDCHAR_CYLCE) * 10000));
+}
+
 layout (std140, binding = 0) uniform TextInfo
 {
     int font_width;
@@ -46,6 +59,11 @@ void main()
     
     int c = (chars[i / 16][j] >> s) & 0xFF;
     int p = (char_properties[i / 16][j] >> s) & 0xFF;
+    
+    if(c == 255)
+    {
+        c = int(pos_rand(int(baseCoord.x), int(baseCoord.y)) % 255);
+    }
     
     vec2 charCoord = mod(baseCoord, 1) + ivec2(c % font_width, c / font_width);
     

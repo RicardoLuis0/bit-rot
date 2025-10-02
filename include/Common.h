@@ -207,6 +207,26 @@ inline std::string stringRand(std::string_view str, char rand_char, uint32_t see
     return tmp;
 }
 
+inline std::string stringRandDyn(std::string_view str, char rand_char)
+{
+    std::string tmp;
+    tmp.resize(str.size());
+    
+    for(size_t i = 0; i < str.size(); i++)
+    {
+        if(str[i] == rand_char)
+        {
+            tmp[i] = 255;
+        }
+        else
+        {
+            tmp[i] = fixChar(str[i]);
+        }
+    }
+    
+    return tmp;
+}
+
 //chance = 0 - 255, 255 = always
 inline std::string stringRandReplace(std::string_view str, char replace, uint32_t chance, uint32_t seed)
 {
