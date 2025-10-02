@@ -17,7 +17,7 @@ void Command::Unlock(const std::vector<std::string> &args)
         AddConsoleLine("");
         return;
     }
-    else if(args.size() < 2)
+    else if(args.size() <= 2)
     {
         AddConsoleLine("Too few Arguments passed to UNLOCK");
         AddConsoleLine("");
