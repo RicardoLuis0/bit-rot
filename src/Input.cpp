@@ -62,6 +62,7 @@ bool Input::Poll(Responder fn)
                 }
             }
             [[fallthrough]];
+        case SDL_TEXTINPUT: 
         default:
             if(fn) fn(&e);
         }

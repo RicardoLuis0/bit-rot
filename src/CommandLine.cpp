@@ -271,6 +271,7 @@ void Game::Responder(SDL_Event *e)
                 }
             }
         }
+        /*
         else if(e->key.keysym.sym >= ' ' && e->key.keysym.sym <= '~')
         {
             char c = e->key.keysym.sym;
@@ -278,6 +279,18 @@ void Game::Responder(SDL_Event *e)
             {
                 c = Util::CharToUpper(c);
             }
+            tempCommand.insert(tempCommandPos, std::string(1, c));
+            tempCommandPos++;
+            historyPos = -1;
+            tempCommandPreHistory = "";
+        }
+        */
+        break;
+    case SDL_TEXTINPUT:
+        //TODO skip all unicode
+        for(char * cc = e->text.text; *cc; cc++)
+        {
+            char c = *cc;
             tempCommand.insert(tempCommandPos, std::string(1, c));
             tempCommandPos++;
             historyPos = -1;
