@@ -221,25 +221,35 @@ void Game::Responder(SDL_Event *e)
                 std::vector<std::string> path_vec = Util::MapInplace(Util::SplitString(currentArg->to_view(), "\\/", false, false), Util::StrToUpper);
                 std::string path = "";
                 std::string partial = "";
-                if(path_vec.size() == 0 || (path_vec.size() == 1 && path_vec[0].empty()))
+                if(path_vec.size() == 0 || ((path_vec.size() == 1 && path_vec[0].empty()) && !(currentArg->to_view().length() == 1 && (currentArg->to_view()[0] == '\\' || currentArg->to_view()[0] == '/'))))
                 {
                     break;
                 }
+                
                 if(currentArg->to_view().back() == '\\' || currentArg->to_view().back() == '/')
                 {
-                    path = Util::Join(path_vec, "/");
-                    partial = "";
+                    path += Util::Join(path_vec, "\\");
                 }
                 else if(path_vec.size() > 0)
                 {
                     if(path_vec.size() > 1)
                     {
-                        path = Util::Join(std::span(path_vec.begin(), path_vec.end() -1), "/");
+                        path += Util::Join(std::span(path_vec.begin(), path_vec.end() -1), "\\");
                     }
                     partial = path_vec.back();
                 }
                 
-                std::vector<dir_entry> completionAlternatives = Util::Filter(ListFolders(path), [p = std::string_view(partial)](dir_entry &e){return e.name.starts_with(p);});
+                if((currentArg->to_view().front() == '\\' || currentArg->to_view().front() == '/') && (path.size() == 0 || path[0] != '\\'))
+                {
+                    path = "\\" + path;
+                }
+                
+                std::vector<dir_entry> completionAlternatives =
+                (
+                    (partial == "") ?
+                        ListFolders(path) :
+                        Util::Filter(ListFolders(path), [p = std::string_view(partial)](dir_entry &e){return e.name.starts_with(p);})
+                );
                 
                 if(completionAlternatives.size() > 1)
                 {
@@ -257,7 +267,8 @@ void Game::Responder(SDL_Event *e)
                 }
                 else if(completionAlternatives.size() == 1)
                 {
-                    std::string alt = (path.empty() ? path : path + "/") + completionAlternatives[0].name;
+                    std::string alt = ((path.empty() || path.back() == '\\') ? path : path + "\\") + completionAlternatives[0].name;
+                    
                     if(completionAlternatives[0].name != partial)
                     {
                         tempCommand.replace(currentArg->offset, currentArg->orig_len, (Input::ShiftPressed() || (e->key.keysym.mod & KMOD_CAPS)) ? alt : Util::StrToLower(alt));
@@ -265,7 +276,7 @@ void Game::Responder(SDL_Event *e)
                     }
                     else if(tempCommandPos == currentArg->offset + currentArg->orig_len && currentArg == args.data() + (args.size() - 1) && completionAlternatives[0].type == FOLDER)
                     {
-                        tempCommand += "/";
+                        tempCommand += "\\";
                         tempCommandPos++;
                     }
                 }
