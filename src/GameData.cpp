@@ -39,7 +39,7 @@ std::map<std::vector<std::string>, program_help> programHelp
     {{"CAT", "READ"}, {"Read text documents", {"CAT <PATH>"_sv, "READ <PATH>"_sv}}},
     {{"INSTALL"}, {"Install a program to your \\BIN\\ directory, allowing you to use it anywhere", "INSTALL <PATH>"}},
     {{"UNLOCK"}, {"Pass it a path and a password to unlock encrypted folders/files", "UNLOCK <PATH> <PASSWORD>"}},
-    {{"RECOVERY"}, {"This can recover deleted files in the current folder", "RECOVERY"}},
+    {{"RECOVERY"}, {"This can recover deleted files in the current/the specified folder", {"RECOVERY", "RECOVERY <DIR>"}}},
     {{"EXIT"}, {"Save and Exit", "EXIT"}},
     {{"666"}, program_help::hide({stringRandDyn("________________________________________________________________________________________________________________________________________", '_'), stringRandDyn("_________________", '_')})},
 };

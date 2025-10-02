@@ -11,14 +11,25 @@ using enum hide_type;
 void Command::Recovery(const std::vector<std::string> &args)
 {
     AddConsoleLine("");
-    if(args.size() > 1)
+    if(args.size() > 2)
     {
         AddConsoleLine("Too many Arguments passed to RECOVERY");
         AddConsoleLine("");
         return;
     }
     
-    auto &entries = directories[currentDrive][currentFolder];
+    std::string folder = currentFolder;
+    
+    if(args.size() > 1)
+    {
+        if(!HasAccess(args[1], "RECOVERY", &folder, nullptr, FOLDER, VISIBLE, false))
+        {
+            AddConsoleLine("");
+            return;
+        }
+    }
+    
+    auto &entries = directories[currentDrive][folder];
     
     std::vector<std::string> recovered;
     for(auto & entry : entries)
