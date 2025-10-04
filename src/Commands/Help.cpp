@@ -36,13 +36,9 @@ void Command::Help(const std::vector<std::string> &args)
             {
                 AddConsoleLine(start);
             }
-            else if(cmd.second.help[0].second.size() > 0)
-            {
-                AddConsoleLine(start+" - "+cmd.second.help[0].first, Util::Concat(std::vector<uint8_t>(start.size(), 0),cmd.second.help[0].second));
-            }
             else
             {
-                AddConsoleLine(start+" - "+cmd.second.help[0].first);
+                AddConsoleLine(start+" - "+cmd.second.help);
             }
         }
         AddConsoleLine("");
@@ -71,19 +67,7 @@ void Command::Help(const std::vector<std::string> &args)
                     AddConsoleLine("Help for "+Util::Join(found, " / ")+":");
                     AddConsoleLine("");
                     
-                    for(auto &line : cmd.second.help)
-                    {
-                        std::string start = "  ";
-                        
-                        if(line.second.size() > 0)
-                        {
-                            AddConsoleLine(start+line.first, Util::Concat(std::vector<uint8_t>(start.size(), 0),line.second));
-                        }
-                        else
-                        {
-                            AddConsoleLine(start+line.first);
-                        }
-                    }
+                    AddConsoleLine("  "+cmd.second.help);
                     
                     AddConsoleLine("");
                     AddConsoleLine("Usage:");
@@ -93,14 +77,7 @@ void Command::Help(const std::vector<std::string> &args)
                     {
                         std::string start = " \07 ";
                         
-                        if(line.second.size() > 0)
-                        {
-                            AddConsoleLine(start+line.first, Util::Concat(std::vector<uint8_t>(start.size(), 0),line.second));
-                        }
-                        else
-                        {
-                            AddConsoleLine(start+line.first);
-                        }
+                        AddConsoleLine(start+line);
                     }
                     AddConsoleLine("");
                     

@@ -295,6 +295,10 @@ struct RecoverableError : TracedError
 namespace Util
 {
     
+    
+    template<typename T, typename V>
+    concept ConvertibleTo = std::convertible_to<std::remove_cvref_t<T>, V>;
+    
     template<typename T, typename V>
     concept ContainerOf = std::same_as<std::remove_cvref_t<decltype(*std::begin(std::declval<T>()))>, V>;
     

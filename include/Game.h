@@ -52,110 +52,39 @@ struct program_help
 {
     program_help() = default;
     
-    #define __BOTH_CTR(help_type, help_args, util_type, util_args) program_help( PP_DEPAREN(help_type) , PP_DEPAREN(util_type) ) : PP_DEPAREN(help_args) , PP_DEPAREN(util_args) {}
-    
-    #define BOTH_CTR(help, util) PP_INDIRECT(__BOTH_CTR , PP_DEPAREN(help) , PP_DEPAREN(util))
-    
-    PP_FOREACH_PAIRS(BOTH_CTR,
-               ((std::string_view help_str), (help({{std::string(help_str), {}}}))),
-               ((std::string_view usage_str), (usage({{std::string(usage_str), {}}}))),
-               ((std::string_view help_str, const std::vector<uint8_t> &help_props), (help({{std::string(help_str), help_props}}))),
-               ((std::string_view usage_str, const std::vector<uint8_t> &usage_props), (usage({{std::string(usage_str), usage_props}}))),
-               ((std::string_view help_str, std::vector<uint8_t> &&help_props), (help({{std::string(help_str), std::move(help_props)}}))),
-               ((std::string_view usage_str, std::vector<uint8_t> &&usage_props), (usage({{std::string(usage_str), std::move(usage_props)}})))
-    );
-    
-    #undef BOTH_CTR
-    #undef __BOTH_CTR
-    
-    #define __USAGE_CTR(args, help_args) template<size_t N> program_help PP_DEPAREN(args)\
-    {\
-        for(auto &usage_str : usage_strs)\
-        {\
-            usage.push_back help_args;\
-        }\
+    template<Util::ConvertibleTo<std::string_view> T, Util::ConvertibleTo<std::string_view> V>
+    program_help(T && help_s, V && usage_str)
+    {
+        help = std::string(help_s);
+        
+        usage.push_back(std::string(usage_str));
     }
     
-    #define USAGE_CTR(help) PP_INDIRECT(__USAGE_CTR , PP_DEPAREN(help) )
-    
-    #define __USAGE_FOREACH( type, args ) PP_FOREACH(USAGE_CTR, \
-               (((std::string_view help_str, PP_DEPAREN(type) ) : help({{std::string(help_str), {}}})), args), \
-               (((std::string_view help_str, const std::vector<uint8_t> &help_props, PP_DEPAREN(type) ) : help({{std::string(help_str), help_props}})), args), \
-               (((std::string_view help_str, std::vector<uint8_t> &&help_props, PP_DEPAREN(type) ) : help({{std::string(help_str), std::move(help_props)}})), args) \
-    )
-    
-    #define USAGE_FOREACH(args) PP_INDIRECT2(__USAGE_FOREACH , PP_DEPAREN(args) )
-    
-    PP_FOREACH2(USAGE_FOREACH,
-               ((const std::string_view (&usage_strs)[N]), ({std::string(usage_str), {}})),
-               ((const std::pair<std::string_view, std::vector<uint8_t>> (&usage_strs)[N]), ({std::string(usage_str.first), usage_str.second})),
-               ((std::pair<std::string_view, std::vector<uint8_t>> (&&usage_strs)[N]), ({std::string(usage_str.first), std::move(usage_str.second)}))
-    )
-    
-    #undef __USAGE_CTR
-    #undef USAGE_CTR
-    #undef __USAGE_FOREACH
-    #undef USAGE_FOREACH
-    
-    
-    
-    #define __HELP_CTR(args, help_args) template<size_t N> program_help args\
-    {\
-        for(auto &help_str : help_strs)\
-        {\
-            help.push_back help_args;\
-        }\
+    template<Util::ConvertibleTo<std::string_view> T, Util::ContainerConvertibleTo<std::string_view> V>
+    program_help(T && help_s, V && usage_arr)
+    {
+        help = std::string(help_s);
+        
+        for(auto &usage_str : usage_arr)
+        {
+            usage.push_back(std::string(usage_str));
+        }
     }
     
-    #define HELP_CTR(help) PP_INDIRECT(__HELP_CTR , PP_DEPAREN(help) )
-    
-    #define __HELP_FOREACH( type, args ) PP_FOREACH(HELP_CTR, \
-               ((PP_DEPAREN(type) , std::string_view usage_str) : usage({{std::string(usage_str), {}}}), args), \
-               ((PP_DEPAREN(type) , std::string_view usage_str, const std::vector<uint8_t> &usage_props) : usage({{std::string(usage_str), usage_props}}), args), \
-               ((PP_DEPAREN(type) , std::string_view usage_str, std::vector<uint8_t> &&usage_props) : usage({{std::string(usage_str), std::move(usage_props)}}), args) \
-    )\
-    
-    #define HELP_FOREACH(args) PP_INDIRECT2(__HELP_FOREACH , PP_DEPAREN(args) )
-    
-    PP_FOREACH2(HELP_FOREACH,
-        ((const std::string_view (&help_strs)[N]), ({std::string(help_str), {}})),
-        ((const std::pair<std::string_view, std::vector<uint8_t>> (&help_strs)[N]), ({std::string(help_str.first), help_str.second})),
-        ((std::pair<std::string_view, std::vector<uint8_t>> (&&help_strs)[N]), ({std::string(help_str.first), std::move(help_str.second)}))
-    )
-    
-    #undef __HELP_CTR
-    #undef HELP_CTR
-    #undef __HELP_FOREACH
-    #undef HELP_FOREACH
-    
-    #define __BOTH_CTR(help_type, help_args, util_type, util_args) template<size_t N1, size_t N2> program_help( PP_DEPAREN(help_type) , PP_DEPAREN(util_type) ) \
-    {\
-        for(auto &help_str : help_strs)\
-        {\
-            help.push_back help_args ;\
-        }\
-        for(auto &usage_str : usage_strs)\
-        {\
-            usage.push_back util_args;\
-        }\
+    template<Util::ConvertibleTo<std::string_view> T, Util::ConvertibleTo<std::string_view> V, size_t N>
+    program_help(T && help_s, const V (&usage_arr)[N])
+    {
+        help = std::string(help_s);
+        
+        for(auto &usage_str : usage_arr)
+        {
+            usage.push_back(std::string(usage_str));
+        }
     }
     
-    #define BOTH_CTR(help, util) PP_INDIRECT(__BOTH_CTR , PP_DEPAREN(help) , PP_DEPAREN(util))
     
-    PP_FOREACH_PAIRS(BOTH_CTR,
-               ((const std::string_view (&help_strs)[N1]), ({std::string(help_str), {}})),
-               ((const std::string_view (&usage_strs)[N2]), ({std::string(usage_str), {}})),
-               ((const std::pair<std::string_view, std::vector<uint8_t>> (&help_strs)[N1]), ({std::string(help_str.first), help_str.second})),
-               ((const std::pair<std::string_view, std::vector<uint8_t>> (&usage_strs)[N2]), ({std::string(usage_str.first), usage_str.second})),
-               ((std::pair<std::string_view, std::vector<uint8_t>> (&&help_strs)[N1]), ({std::string(help_str.first), std::move(help_str.second)})),
-               ((std::pair<std::string_view, std::vector<uint8_t>> (&&usage_strs)[N2]), ({std::string(usage_str.first), std::move(usage_str.second)}))
-    );
-    
-    #undef BOTH_CTR
-    #undef __BOTH_CTR
-    
-    std::vector<std::pair<std::string, std::vector<uint8_t>>> help;
-    std::vector<std::pair<std::string, std::vector<uint8_t>>> usage;
+    std::string help;
+    std::vector<std::string> usage;
     
     bool hidden = false;
     
