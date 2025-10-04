@@ -32,11 +32,11 @@ std::map<std::string, CommandProc> programs
 
 std::map<std::vector<std::string>, program_help> programHelp
 {
-    {{"HELP"}, {"Show Help for Commands", {"HELP"_sv, "HELP <COMMAND>"_sv}}},
+    {{"HELP"}, {"Show Help for Commands", {"HELP", "HELP <COMMAND>"}}},
     {{"CD"}, {"Change directories or show the path of the current directory (use '..' to go back to the previous directory)", "CD <DIR>"}},
     {{"DIR", "LS"}, {"List entries of the current directory", {"LS", "LS <PATH>", "DIR", "DIR <PATH>"}}},
-    {{"CLS", "CLEAR"}, {"Clear screen", {"CLS"_sv, "CLEAR"_sv}}},
-    {{"CAT", "READ"}, {"Read text documents", {"CAT <PATH>"_sv, "READ <PATH>"_sv}}},
+    {{"CLS", "CLEAR"}, {"Clear screen", {"CLS", "CLEAR"}}},
+    {{"CAT", "READ"}, {"Read text documents", {"CAT <PATH>", "READ <PATH>"}}},
     {{"INSTALL"}, {"Install a program to your \\BIN\\ directory, allowing you to use it anywhere", "INSTALL <PATH>"}},
     {{"UNLOCK"}, {"Pass it a path and a password to unlock encrypted folders/files", "UNLOCK <PATH> <PASSWORD>"}},
     {{"RECOVERY"}, {"This can recover deleted files in the current/the specified folder", {"RECOVERY", "RECOVERY <DIR>"}}},
