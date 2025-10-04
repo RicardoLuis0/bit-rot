@@ -164,7 +164,7 @@ struct : SettingItem
 struct : SettingItem
 {
     virtual std::string_view getName() const override { return "Compress Saves"; }
-    virtual std::string getValue() const override { return std::string(Config::getStringOr("CompressSaves", "yes")); }
+    virtual std::string getValue() const override { return (Config::getStringOr("CompressSaves", "yes") == "yes") ? "Yes" : "No"; }
     virtual void ToggleUp() override
     {
         if(Config::getStringOr("CompressSaves", "yes") == "yes")
@@ -369,23 +369,44 @@ struct : SettingItem
     }
 } CrtVignetteEnabledSetting;
 
+struct : SettingItem
+{
+    virtual std::string_view getName() const override { return "Show Path in Prompt"; }
+    virtual std::string getValue() const override { return Config::getIntOr("CommandLineDrawPath", 1) ? "Yes" : "No"; }
+    
+    virtual void ToggleUp() override
+    {
+        bool yes = !Config::getIntOr("CommandLineDrawPath", 1);
+        Config::setInt("CommandLineDrawPath", yes);
+        Game::CommandLineDrawPath = yes;
+    }
+    
+    virtual void ToggleDown() override
+    {
+        bool yes = !Config::getIntOr("CommandLineDrawPath", 1);
+        Config::setInt("CommandLineDrawPath", yes);
+        Game::CommandLineDrawPath = yes;
+    }
+} CommandLineDrawPathSetting;
+
 
 std::vector<SettingItem*> settings
 {
     &FontSetting,
     &ColorSetting,
+    &CommandLineDrawPathSetting,
+    &MusicMuteSetting,
+    &VolumeSetting,
+    &VolumeSoundSetting,
+    &VolumeMusicSetting,
+    &VSyncSetting,
+    &CompressSavesSetting,
     &BloomStrengthSetting,
     &PhosphorEnabledSetting,
     &CrtCurveSetting,
     &CrtScanlinesEnabledSetting,
     &CrtCAEnabledSetting,
     &CrtVignetteEnabledSetting,
-    &VSyncSetting,
-    &MusicMuteSetting,
-    &VolumeSetting,
-    &VolumeSoundSetting,
-    &VolumeMusicSetting,
-    &CompressSavesSetting,
 };
 
 void Menu::DrawSettingsMenu()

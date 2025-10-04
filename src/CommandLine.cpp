@@ -337,7 +337,15 @@ void Game::RunCommand(const std::string &command, bool isQueue)
             
             if(args.size() > 1 || (cmd != "EXIT" && cmd != "666")) // TODO: stop muting 666 after expanding the story
             {
-                Game::AddConsoleLine(">"+command);
+                if(CommandLineDrawPath)
+                {
+                    Game::AddConsoleLine(currentDrive + ":" + ((currentFolder.size() > 1) ? currentFolder.substr(0, currentFolder.size() - 1) : currentFolder) + ">" + command);
+                }
+                else
+                {
+                    Game::AddConsoleLine(">" + command);
+                }
+                
                 if(!isQueue)
                 {
                     commandHistory.insert(commandHistory.begin(), command);

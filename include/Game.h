@@ -133,6 +133,8 @@ namespace Game
     
     extern bool GameIsSave;
     
+    extern bool CommandLineDrawPath;
+    
     const constexpr size_t MaxConsoleLines = 37;
     
     void DoLoad();

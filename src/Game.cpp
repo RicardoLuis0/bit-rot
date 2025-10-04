@@ -4,6 +4,7 @@
 #include "Renderer.h"
 #include "Command.h"
 #include "SaveData.h"
+#include "Config.h"
 
 #include <stdexcept>
 
@@ -11,17 +12,6 @@ using enum dir_entry_type;
 using enum hide_type;
 
 extern int currentScreen;
-
-/*
-extern int introStage;
-extern uint32_t introStartMs;
-extern uint32_t nextLineMs;
-
-extern uint32_t memIncrement;
-
-extern uint32_t lastIncrementMs;
-extern uint32_t memAmount;
-*/
 
 namespace Game
 {
@@ -42,6 +32,8 @@ void Game::Init()
 {
     LoadData();
     LoadIntro();
+    
+    CommandLineDrawPath = Config::getIntOr("CommandLineDrawPath", 1);
 }
 
 std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string path, bool allow_hidden)
@@ -316,8 +308,13 @@ void Game::ToGame()
     }
 }
 
+bool Game::CommandLineDrawPath = true;
+
 void Game::Tick()
 {
+    int commandStart = 1;
+    int freeCommandChars = 77;
+    
     Renderer::DrawMenu = false;
     Renderer::DrawGame = true;
     
@@ -341,11 +338,20 @@ void Game::Tick()
         offsetY++;
     }
     
+    if(CommandLineDrawPath)
+    {
+        std::string path = currentDrive + ":" + ((currentFolder.size() > 1) ? currentFolder.substr(0, currentFolder.size() - 1) : currentFolder); // strip last '/'
+        
+        Renderer::GameText.DrawLineTextFillProp(1, offsetY, path, 0);
+        commandStart += path.size();
+        freeCommandChars -= path.size();
+    }
+    
     int diff = (ssize_t(tempCommandPos) - ssize_t(tempCommandViewOffset));
     
-    if(diff > 74 && tempCommand.size() > 77)
+    if(diff > (freeCommandChars - 3) && int(tempCommand.size()) > freeCommandChars)
     {
-        tempCommandViewOffset = tempCommandPos - 74;
+        tempCommandViewOffset = tempCommandPos - (freeCommandChars - 3);
     }
     
     if(diff < 0)
@@ -353,25 +359,25 @@ void Game::Tick()
         tempCommandViewOffset = tempCommandPos;
     }
     
-    Renderer::GameText.DrawLineTextFillProp(1, offsetY, ">", 0);
+    Renderer::GameText.DrawLineTextFillProp(commandStart, offsetY, ">", 0);
     
     if(tempCommandViewOffset > 1)
     {
-        Renderer::GameText.DrawLineTextFillProp(2, offsetY, "<", CHAR_INVERT1);
-        Renderer::GameText.DrawLineTextFillProp(3, offsetY, std::string_view(tempCommand.data() + tempCommandViewOffset, 75), 0);
-        if(tempCommandViewOffset != tempCommand.size() - 74)
+        Renderer::GameText.DrawLineTextFillProp(commandStart + 1, offsetY, "<", CHAR_INVERT1);
+        Renderer::GameText.DrawLineTextFillProp(commandStart + 2, offsetY, std::string_view(tempCommand.data() + tempCommandViewOffset, freeCommandChars - 2), 0);
+        if(tempCommandViewOffset != tempCommand.size() - (freeCommandChars - 3)) // if last char isn't visible, overwrite it with a '>' arrow
         {
             Renderer::GameText.DrawLineTextFillProp(78, offsetY, ">", CHAR_INVERT1);
         }
     }
-    else if(tempCommand.size() > 77)
+    else if(int(tempCommand.size()) > freeCommandChars)
     {
-        Renderer::GameText.DrawLineTextFillProp(2, offsetY, std::string_view(tempCommand.data(), 76), 0);
-        Renderer::GameText.DrawLineTextFillProp(78, offsetY, ">", CHAR_INVERT1);
+        Renderer::GameText.DrawLineTextFillProp(commandStart + 1, offsetY, std::string_view(tempCommand.data(), freeCommandChars - 1), 0);
+        Renderer::GameText.DrawLineTextFillProp(78, offsetY, ">", CHAR_INVERT1); // last char before 'border'
     }
     else
     {
-        Renderer::GameText.DrawLineTextFillProp(2, offsetY, tempCommand.data(), 0);
+        Renderer::GameText.DrawLineTextFillProp(commandStart + 1, offsetY, tempCommand.data(), 0);
     }
-    Renderer::GameText.DrawFillLineProp((tempCommandViewOffset > 0 ? 3 : 2) + (tempCommandPos - tempCommandViewOffset), offsetY, CHAR_UNDERSCORE, 1);
+    Renderer::GameText.DrawFillLineProp((tempCommandViewOffset > 0 ? commandStart + 2 : commandStart + 1) + (tempCommandPos - tempCommandViewOffset), offsetY, CHAR_UNDERSCORE, 1);
 }

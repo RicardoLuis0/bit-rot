@@ -294,8 +294,6 @@ struct RecoverableError : TracedError
 
 namespace Util
 {
-    
-    
     template<typename T, typename V>
     concept ConvertibleTo = std::convertible_to<std::remove_cvref_t<T>, V>;
     
