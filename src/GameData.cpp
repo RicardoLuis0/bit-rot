@@ -41,7 +41,20 @@ std::map<std::vector<std::string>, program_help> programHelp
     {{"UNLOCK"}, {"Pass it a path and a password to unlock encrypted folders/files", "UNLOCK <PATH> <PASSWORD>"}},
     {{"RECOVERY"}, {"This can recover deleted files in the current/the specified folder", {"RECOVERY", "RECOVERY <DIR>"}}},
     {{"EXIT"}, {"Save and Exit", "EXIT"}},
-    {{"666"}, program_help::hide({stringRandDyn("________________________________________________________________________________________________________________________________________", '_'), stringRandDyn("_________________", '_')})},
+    {{"666"},
+        program_help::hide(
+            {
+                stringRandDyn("________________________________________________________________________________________________________________________________________", '_'),
+                {
+                    //             666
+                    stringRandDyn("___", '_'),
+                    //             666 <????>
+                    stringRandDyn("___ <____>", '_'),
+                    //             666 <????> <???????>
+                    stringRandDyn("___ <____> <_______>", '_'),
+                }
+            }
+        )},
 };
 
 std::map<std::string, std::map<std::string, std::map<std::string, dir_entry>>> directories;
