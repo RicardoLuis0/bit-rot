@@ -49,7 +49,7 @@ std::vector<dir_entry> Game::ListDir(const std::string &folder, size_t * max_len
     );
 }
 
-void Command::Dir(const std::vector<std::string> &args)
+int Command::Dir(const std::vector<std::string> &args)
 {
     std::string folder;
     
@@ -58,14 +58,14 @@ void Command::Dir(const std::vector<std::string> &args)
     {
         AddConsoleLine("Too many Arguments passed to DIR");
         AddConsoleLine("");
-        return;
+        return 0;
     }
     else if(args.size() > 1)
     {
         if(!HasAccess(args[1], "DIR", &folder, nullptr, FOLDER, VISIBLE, false))
         {
             AddConsoleLine("");
-            return;
+            return 0;
         }
     }
     else
@@ -94,4 +94,5 @@ void Command::Dir(const std::vector<std::string> &args)
         }
     }
     AddConsoleLine("");
+    return 1;
 }

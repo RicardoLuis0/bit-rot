@@ -8,14 +8,14 @@ using namespace Game;
 using enum dir_entry_type;
 using enum hide_type;
 
-void Command::Recovery(const std::vector<std::string> &args)
+int Command::Recovery(const std::vector<std::string> &args)
 {
     AddConsoleLine("");
     if(args.size() > 2)
     {
         AddConsoleLine("Too many Arguments passed to RECOVERY");
         AddConsoleLine("");
-        return;
+        return 0;
     }
     
     std::string folder = currentFolder;
@@ -25,7 +25,7 @@ void Command::Recovery(const std::vector<std::string> &args)
         if(!HasAccess(args[1], "RECOVERY", &folder, nullptr, FOLDER, VISIBLE, false))
         {
             AddConsoleLine("");
-            return;
+            return 0;
         }
     }
     
@@ -56,10 +56,13 @@ void Command::Recovery(const std::vector<std::string> &args)
         {
             AddConsoleLine("Recovered 1 file: "+recovered[0]);
         }
+        AddConsoleLine("");
+        return 1;
     }
     else
     {
         AddConsoleLine("Could not recover any files");
+        AddConsoleLine("");
+        return 0;
     }
-    AddConsoleLine("");
 }

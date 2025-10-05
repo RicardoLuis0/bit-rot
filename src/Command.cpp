@@ -7,7 +7,7 @@ using namespace Game;
 using enum dir_entry_type;
 using enum hide_type;
 
-void Unimplemented(const std::string &command_name, const std::vector<std::string> &args)
+int Unimplemented(const std::string &command_name, const std::vector<std::string> &args)
 {
     AddConsoleLine("");
     AddConsoleLine(command_name+" Command Unimplemented, args:");
@@ -18,17 +18,19 @@ void Unimplemented(const std::string &command_name, const std::vector<std::strin
         count++;
     }
     AddConsoleLine("");
+    return 0;
 }
 
-void Command::Decrypt(const std::vector<std::string> &args)
+int Command::Decrypt(const std::vector<std::string> &args)
 {
     Unimplemented("DECRYPT", args);
+    return 0;
     //TODO
 }
 
 extern int currentScreen;
 
-void Command::EndJamBuild(const std::vector<std::string> &args)
+int Command::EndJamBuild(const std::vector<std::string> &args)
 {
     currentScreen = 5;
 }

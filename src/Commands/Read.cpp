@@ -7,20 +7,20 @@ using namespace Game;
 using enum dir_entry_type;
 using enum hide_type;
 
-void Command::Read(const std::vector<std::string> &args)
+int Command::Read(const std::vector<std::string> &args)
 {
     AddConsoleLine("");
     if(args.size() > 2)
     {
         AddConsoleLine("Too many Arguments passed to READ");
         AddConsoleLine("");
-        return;
+        return 0;
     }
     else if(args.size() < 2)
     {
         AddConsoleLine("Too few Arguments passed to READ");
         AddConsoleLine("");
-        return;
+        return 0;
     }
     
     std::string filepath;
@@ -36,6 +36,9 @@ void Command::Read(const std::vector<std::string> &args)
                 AddConsoleLine(s);
             }
         );
+        AddConsoleLine("");
+        return 1;
     }
     AddConsoleLine("");
+    return 0;
 }

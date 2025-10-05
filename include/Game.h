@@ -10,7 +10,7 @@
 
 union SDL_Event;
 
-using CommandProc = void(*)(const std::vector<std::string>&);
+using CommandProc = int(*)(const std::vector<std::string>&);
 
 
 enum class dir_entry_type : uint8_t

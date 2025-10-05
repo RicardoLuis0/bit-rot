@@ -8,20 +8,20 @@ using namespace Game;
 using enum dir_entry_type;
 using enum hide_type;
 
-void Command::Install(const std::vector<std::string> &args)
+int Command::Install(const std::vector<std::string> &args)
 {
     AddConsoleLine("");
     if(args.size() > 2)
     {
         AddConsoleLine("Too many Arguments passed to INSTALL");
         AddConsoleLine("");
-        return;
+        return 0;
     }
     else if(args.size() < 2)
     {
         AddConsoleLine("Too few Arguments passed to INSTALL");
         AddConsoleLine("");
-        return;
+        return 0;
     }
     
     std::string filepath;
@@ -35,6 +35,8 @@ void Command::Install(const std::vector<std::string> &args)
             if(bentry != bin.end())
             {
                 AddConsoleLine(Util::QuoteString(entry->name, '\'', false)+" is already Installed");
+                AddConsoleLine("");
+                return 0;
             }
             else
             {
@@ -52,12 +54,17 @@ void Command::Install(const std::vector<std::string> &args)
                 }
                 
                 AddConsoleLine(Util::QuoteString(entry->name, '\'', false)+" Successfully Installed");
+                AddConsoleLine("");
+                return 1;
             }
         }
         else
         {
             AddConsoleLine(Util::QuoteString(entry->name, '\'', false)+" is not a Program");
+            AddConsoleLine("");
+            return 0;
         }
     }
     AddConsoleLine("");
+    return 0;
 }

@@ -409,6 +409,8 @@ std::vector<SettingItem*> settings
     &CrtVignetteEnabledSetting,
 };
 
+int maxSettings = 15;
+
 void Menu::DrawSettingsMenu()
 {
     Renderer::CurrentBuffer = &Renderer::MenuText;

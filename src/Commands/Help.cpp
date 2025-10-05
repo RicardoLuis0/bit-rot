@@ -7,7 +7,7 @@ using namespace Game;
 using enum dir_entry_type;
 using enum hide_type;
 
-void Command::Help(const std::vector<std::string> &args)
+int Command::Help(const std::vector<std::string> &args)
 {
     AddConsoleLine("");
     if(args.size() == 1)
@@ -42,6 +42,7 @@ void Command::Help(const std::vector<std::string> &args)
             }
         }
         AddConsoleLine("");
+        return 1;
     }
     else if(args.size() == 2)
     {
@@ -81,17 +82,18 @@ void Command::Help(const std::vector<std::string> &args)
                     }
                     AddConsoleLine("");
                     
-                    return;
+                    return 1;
                 }
             }
-            
         }
         AddConsoleLine("No HELP found for "+Util::QuoteString(args[1]));
         AddConsoleLine("");
+        return 0;
     }
     else
     {
         AddConsoleLine("Too many Arguments passed to HELP");
         AddConsoleLine("");
+        return 0;
     }
 }
