@@ -33,4 +33,5 @@ extern int currentScreen;
 int Command::EndJamBuild(const std::vector<std::string> &args)
 {
     currentScreen = 5;
+    return 0;
 }

@@ -157,7 +157,17 @@ namespace Game
     void TickIntro();
     void Tick();
     void TickEnd();
-    void RunCommand(const std::string &cmd, bool isQueue = false);
+    
+    struct ShellContext
+    {
+        bool skipping_false_if = false;
+        int nesting_depth = 0;
+        std::map<std::string, std::string> variables;
+    };
+    
+    extern ShellContext rootShellContext;
+    
+    int RunCommand(const std::string &cmd, ShellContext &ctx, bool isQueue = false);
     
     void ClearConsole();
     void AddConsoleLine(std::string_view text);

@@ -139,6 +139,31 @@ void SaveData::SetFolder(std::string_view folder)
     save_ok = true;
 }
 
+void SaveData::SetConsoleVars(std::map<std::string, std::string> &vars)
+{
+    if(!saveData.get_obj().contains("SavedVars"))
+    {
+        saveData.get_obj().insert({"SavedVars", JSON::Object({})});
+    }
+    saveData["SavedVars"].get_obj().clear();
+    for(auto &var : vars)
+    {
+        saveData["SavedVars"].get_obj().insert({var.first, JSON::String(var.second)});
+    }
+    save_ok = true;
+}
+
+std::map<std::string, std::string> SaveData::GetConsoleVars()
+{
+    std::map<std::string, std::string> vars;
+    
+    if(saveData.get_obj().contains("SavedVars")) for(auto &var : saveData["SavedVars"].get_obj())
+    {
+        vars[var.first] = var.second.get_str();
+    }
+    return vars;
+}
+
 void SaveData::GetSave(std::string &savePath, std::vector<SaveData::SaveAction> &actions, std::vector<std::string> &history, std::vector<std::pair<std::string, std::vector<uint8_t>>> &buffer) try
 {
     savePath = saveData["SavedPath"].get_str();

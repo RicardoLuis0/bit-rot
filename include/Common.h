@@ -539,20 +539,36 @@ namespace Util
     {
         size_t offset;
         size_t orig_len;
-        std::variant<std::string_view, std::string> str;
+        std::string str;
         
         std::string_view to_view() const
         {
-            return str.index() == 0 ? std::get<0>(str) : std::get<1>(str);
+            return str;
         }
     };
     
-    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true, bool keep_quotes = false);
+    struct SplitOp
+    {
+        size_t offset;
+        std::string op;
+    };
     
-    std::vector<std::string> SplitString(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true, bool keep_quotes = false);
+    struct SplitQuote
+    {
+        char c; // 0 if not quoted, '\'' if single quote, '"' if double quote
+        std::string str;
+        std::vector<bool> was_escaped; // if any particular char was escaped
+    };
     
-    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty = false, bool use_quotes = true, bool keep_quotes = false);
+    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true, bool keep_quotes = false, const std::vector<std::pair<char,char>> &braces = {});
     
+    std::vector<std::string> SplitString(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true, bool keep_quotes = false, const std::vector<std::pair<char,char>> &braces = {});
+    
+    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty = false, bool use_quotes = true, bool keep_quotes = false, const std::vector<std::pair<char,char>> &braces = {});
+    
+    std::vector<std::variant<SplitOp, SplitPoint>> SplitStringOp(std::string_view str, const std::vector<std::string> &ops);
+    
+    std::vector<SplitQuote> SplitStringQuotes(std::string_view str);
     
     template<typename T>
     auto MapValues(T &&t)

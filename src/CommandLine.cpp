@@ -30,6 +30,8 @@ static const std::string &DirName(const dir_entry& e)
     return e.name;
 }
 
+Game::ShellContext Game::rootShellContext;
+
 void Game::Responder(SDL_Event *e)
 {
     switch(e->type)
@@ -132,7 +134,20 @@ void Game::Responder(SDL_Event *e)
             std::string command = tempCommand;
             tempCommandPos = 0;
             tempCommand = "";
-            RunCommand(command);
+            
+            if(CommandLineDrawPath)
+            {
+                Game::AddConsoleLine(currentDrive + ":" + ((currentFolder.size() > 1) ? currentFolder.substr(0, currentFolder.size() - 1) : currentFolder) + ">" + command);
+            }
+            else
+            {
+                Game::AddConsoleLine(">" + command);
+            }
+            
+            commandHistory.insert(commandHistory.begin(), command);
+            SaveData::PushHistory(command);
+            
+            RunCommand(command, rootShellContext);
             historyPos = -1;
             tempCommandPreHistory = "";
         }
@@ -168,7 +183,16 @@ void Game::Responder(SDL_Event *e)
                         alts = Util::Join(Util::Map(ListFolders(currentFolder), DirName), " ");
                     }
                     lastWasTab = false;
-                    Game::AddConsoleLine(">"+tempCommand);
+                    
+                    if(CommandLineDrawPath)
+                    {
+                        Game::AddConsoleLine(currentDrive + ":" + ((currentFolder.size() > 1) ? currentFolder.substr(0, currentFolder.size() - 1) : currentFolder) + ">" + tempCommand);
+                    }
+                    else
+                    {
+                        Game::AddConsoleLine(">" + tempCommand);
+                    }
+                    
                     Util::ForEach(Util::SplitLines((Input::ShiftPressed() || (e->key.keysym.mod & KMOD_CAPS)) ? alts : Util::StrToLower(alts), 78), (void(*)(std::string_view))Game::AddConsoleLine);
                 }
                 else
@@ -189,7 +213,16 @@ void Game::Responder(SDL_Event *e)
                     {
                         std::string alts = Util::Join(completionAlternatives, " ");
                         lastWasTab = false;
-                        Game::AddConsoleLine(">"+tempCommand);
+                        
+                        if(CommandLineDrawPath)
+                        {
+                            Game::AddConsoleLine(currentDrive + ":" + ((currentFolder.size() > 1) ? currentFolder.substr(0, currentFolder.size() - 1) : currentFolder) + ">" + tempCommand);
+                        }
+                        else
+                        {
+                            Game::AddConsoleLine(">" + tempCommand);
+                        }
+                        
                         Util::ForEach(Util::SplitLines((Input::ShiftPressed() || (e->key.keysym.mod & KMOD_CAPS)) ? alts : Util::StrToLower(alts), 78), (void(*)(std::string_view))Game::AddConsoleLine);
                     }
                     else
@@ -257,7 +290,16 @@ void Game::Responder(SDL_Event *e)
                     {
                         std::string alts = Util::Join(Util::Map(completionAlternatives, DirName), " ");
                         lastWasTab = false;
-                        Game::AddConsoleLine(">"+tempCommand);
+                        
+                        if(CommandLineDrawPath)
+                        {
+                            Game::AddConsoleLine(currentDrive + ":" + ((currentFolder.size() > 1) ? currentFolder.substr(0, currentFolder.size() - 1) : currentFolder) + ">" + tempCommand);
+                        }
+                        else
+                        {
+                            Game::AddConsoleLine(">" + tempCommand);
+                        }
+                        
                         Util::ForEach(Util::SplitLines((Input::ShiftPressed() || (e->key.keysym.mod & KMOD_CAPS)) ? alts : Util::StrToLower(alts), 78), (void(*)(std::string_view))Game::AddConsoleLine);
                     }
                     else
@@ -311,58 +353,360 @@ void Game::Responder(SDL_Event *e)
     }
 }
 
-void Game::RunCommand(const std::string &command, bool isQueue)
+int LastCmd = 0;
+
+using ShellBuiltin = int(*)(Game::ShellContext &ctx, std::vector<std::string> &args, const std::string &rawargs);
+
+std::map<std::string, ShellBuiltin> shellBuiltIns
 {
-    std::vector<std::string> commandQueue = Util::SplitString(command, ';', true, true, true);
+    {"TRUE", [](auto,auto,auto){return 1;}},
+    {"FALSE", [](auto,auto,auto){return 0;}},
+    {"!", [](Game::ShellContext &ctx,auto, const std::string &rawargs) -> int
+    {
+        return !RunCommand(rawargs, ctx, true);
+    }},
+    {"ECHO", [](auto,std::vector<std::string> &args,auto)
+    {
+        args.erase(std::begin(args));
+        Game::AddConsoleLine("");
+        Game::AddConsoleLine(Util::Join(args, " "));
+        Game::AddConsoleLine("");
+        return 1;
+    }},
+};
+
+extern bool RunGame;
+
+int Game::RunCommand(const std::string &command, ShellContext &ctx, bool isQueue)
+{
+    std::vector<std::string> commandQueue = Util::SplitString(command, ";\n", true, true, true, {{'(',')'}}); // split on newline and ';', but keep everything inside () unsplit for subshells
     
     if(commandQueue.size() > 1)
     {
-        commandHistory.insert(commandHistory.begin(), command);
-        SaveData::PushHistory(command);
+        int last = 1;
         
         for(const std::string &cmd : commandQueue)
         {
-            RunCommand(cmd, true);
-            if(currentScreen != 4) break;
+            last = RunCommand(cmd, ctx, true);
+            if(currentScreen != 4 || !RunGame) break;
         }
+        return last;
     }
     else
     {
-        std::vector<std::string> programsList = Game::ListExecutablePrograms();
+        std::vector<std::string> shellops = {"&&", "||", "(", ")"}; //, "$(", "|", "[", "]"};
         
-        std::vector<std::string> args = Util::SplitString(command, ' ', true, true);
-        if(args.size() > 0)
+        std::vector<std::variant<Util::SplitOp, Util::SplitPoint>> ops = Util::SplitStringOp(command, shellops);
+        
+        if(ops.size() == 0)
         {
-            std::string cmd = Util::StrToUpper(args[0]);
-            
-            if(args.size() > 1 || (cmd != "EXIT" && cmd != "666")) // TODO: stop muting 666 after expanding the story
+            Game::AddConsoleLine("");
+            Game::AddConsoleLine("Could not find program ''");
+            Game::AddConsoleLine("");
+            return 0;
+        }
+        else if(!(ops.size() == 1 && std::holds_alternative<Util::SplitPoint>(ops[0])))
+        {
+            int result = 0;
+            std::string op = "";
+            size_t n = ops.size();
+            for(size_t i = 0; i < n; i++)
             {
-                if(CommandLineDrawPath)
+                if(std::holds_alternative<Util::SplitPoint>(ops[i]))
                 {
-                    Game::AddConsoleLine(currentDrive + ":" + ((currentFolder.size() > 1) ? currentFolder.substr(0, currentFolder.size() - 1) : currentFolder) + ">" + command);
+                    if(op == "||" && result) continue; // short circuit
+                    else if(op == "&&" && !result) continue; // short circuit
+                    else
+                    {
+                        int r = RunCommand(std::get<Util::SplitPoint>(ops[i]).str, ctx, true);
+                        if(op == "||")
+                        {
+                            result = result || r;
+                        }
+                        else if(op == "&&")
+                        {
+                            result = result && r;
+                        }
+                        else
+                        {
+                            result = r;
+                        }
+                        op = "";
+                    }
                 }
                 else
                 {
-                    Game::AddConsoleLine(">" + command);
-                }
-                
-                if(!isQueue)
-                {
-                    commandHistory.insert(commandHistory.begin(), command);
-                    SaveData::PushHistory(command);
+                    auto o = std::get<Util::SplitOp>(ops[i]);
+                    
+                    if(o.op == ")")
+                    {
+                        Game::AddConsoleLine("");
+                        Game::AddConsoleLine("Mismatched ')'");
+                        Game::AddConsoleLine("");
+                        
+                        return 0;
+                    }
+                    else if(o.op == "(")
+                    {
+                        //TODO implement subshell
+                        
+                        int depth = 1;
+                        int r = 0;
+                        
+                        size_t begin = 0;
+                        size_t end = 0;
+                        
+                        bool has_begin = false;
+                        
+                        i++;
+                        while(depth > 0 && i < n)
+                        {
+                            if(std::holds_alternative<Util::SplitPoint>(ops[i]))
+                            {
+                                auto &p = std::get<Util::SplitPoint>(ops[i]);
+                                if(!has_begin)
+                                {
+                                    begin = p.offset;
+                                    has_begin = true;
+                                }
+                                end = p.offset + p.orig_len;
+                            }
+                            else
+                            {
+                                auto o2 = std::get<Util::SplitOp>(ops[i]);
+                                if(o2.op == "(")
+                                {
+                                    depth++;
+                                }
+                                else if(o2.op == ")")
+                                {
+                                    depth--;
+                                }
+                                
+                                if(depth > 0)
+                                {
+                                    end = o2.offset + o2.op.length();
+                                }
+                            }
+                            i++;
+                        }
+                        i--;
+                        
+                        
+                        if(op == "||" && result)
+                        {
+                            // short circuit
+                        }
+                        else if(op == "&&" && !result)
+                        {
+                            // short circuit
+                        }
+                        else
+                        {
+                        
+                            if(!has_begin)
+                            {
+                                Game::AddConsoleLine("");
+                                Game::AddConsoleLine("Could not find program ''");
+                                Game::AddConsoleLine("");
+                            }
+                            else
+                            {
+                                ShellContext subctx = ctx;
+                                
+                                std::string tempDrive = currentDrive;
+                                std::string tempFolder = currentFolder;
+                                
+                                r = RunCommand(command.substr(begin, end-begin), subctx, true);
+                                
+                                currentDrive = tempDrive;
+                                currentFolder = tempFolder;
+                                SaveData::SetFolder(currentFolder);
+                            }
+                            
+                            if(op == "||")
+                            {
+                                result = result || r;
+                            }
+                            else if(op == "&&")
+                            {
+                                result = result && r;
+                            }
+                            else
+                            {
+                                result = r;
+                            }
+                            
+                            op = "";
+                        }
+                        
+                        return 0;
+                    }
+                    else
+                    {
+                        if(op != "")
+                        {
+                            Game::AddConsoleLine("");
+                            Game::AddConsoleLine("Unexpected '"+o.op+"' after '"+op+"'");
+                            Game::AddConsoleLine("");
+                            return 0;
+                        }
+                        else
+                        {
+                            op = o.op;
+                        }
+                    }
                 }
             }
             
-            if(std::find(programsList.begin(), programsList.end(), cmd) != programsList.end())
+            return result;
+        }
+        else
+        {
+            std::vector<std::string> programsList = Game::ListExecutablePrograms();
+            
+            std::vector<Util::SplitPoint> argsEx = Util::SplitStringEx(command, ' ', true, true, true);
+            
+            bool firstIsAssign = false;
+            bool firstRead = false;
+            
+            std::vector<std::string> args = Util::Map(argsEx, [&ctx,&firstIsAssign,&firstRead](auto &arg)
             {
-                programs[cmd](args);
+                auto split = Util::SplitStringQuotes(arg.str);
+                
+                std::string str = "";
+                
+                size_t index = 0;
+                
+                for(auto &quote : split)
+                {
+                    if(quote.c == 0)
+                    {
+                        if(quote.str[0] == '$')
+                        { // variable
+                            std::string varname = quote.str.substr(1uz, quote.str.find('=') - 1uz); // '=' is not allowed in var names
+                            
+                            if(varname == "?")
+                            {
+                                str += std::to_string(LastCmd);
+                            }
+                            else
+                            {
+                                const auto &var = ctx.variables.find(varname);
+                                if(var != ctx.variables.end())
+                                {
+                                    str += var->second;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if(!firstRead && quote.str.find('=') != std::string::npos)
+                            {
+                                firstIsAssign = true;
+                            }
+                            str += quote.str;
+                        }
+                    }
+                    else if(quote.c == '\'')
+                    {
+                        str += quote.str;
+                    }
+                    else if(quote.c == '"')
+                    {
+                        size_t pos = 0;
+                        do
+                        {
+                            size_t pos_start = quote.str.find('$', pos);
+                            
+                            if(pos_start == std::string::npos)
+                            {
+                                str += quote.str.substr(pos);
+                                break; // no more vars
+                            }
+                            
+                            if(quote.was_escaped[pos_start]) // is \$ not $, find next
+                            {
+                               pos = pos_start + 1; 
+                            }
+                            else
+                            {
+                                str += quote.str.substr(pos, pos_start - pos);
+                                
+                                size_t s = pos_start + 1;
+                                size_t pos_end = quote.str.find_first_of(std::string(" \n\t=\0", 5), s);
+                                
+                                std::string varname = quote.str.substr(s, pos_end - s);
+                                
+                                if(varname == "?")
+                                {
+                                    str += std::to_string(LastCmd);
+                                }
+                                else
+                                {
+                                    const auto &var = ctx.variables.find(varname);
+                                    if(var != ctx.variables.end())
+                                    {
+                                        str += var->second;
+                                    }
+                                }
+                                
+                                pos = pos_end;
+                            }
+                        }
+                        while(pos < std::string::npos);
+                    }
+                    index++;
+                }
+                
+                firstRead = true;
+                return str;
+            });
+            
+            //unlike bash, single quotes aren't literal, they also process escape chars like double quotes, they just don't process variables
+            
+            if(firstIsAssign)
+            {
+                size_t assignpos = args[0].find('=');
+                std::string varname = args[0].substr(0, assignpos);
+                
+                ctx.variables[varname] = args[0].substr(assignpos + 1);
+                
+                if(&ctx == &rootShellContext)
+                {
+                    SaveData::SetConsoleVars(rootShellContext.variables);
+                }
+                
+                if(args.size() > 1)
+                {
+                    Game::AddConsoleLine("");
+                    Game::AddConsoleLine("Junk at end of assign, expected nothing but got '"+std::string(1, command[argsEx[2].offset])+"'");
+                    Game::AddConsoleLine("");
+                    return 0;
+                }
+                return 1;
             }
-            else
+            else if(args.size() > 0)
             {
-                Game::AddConsoleLine("");
-                Game::AddConsoleLine("Could not find program "+Util::QuoteString(cmd));
-                Game::AddConsoleLine("");
+                std::string cmd = Util::StrToUpper(args[0]);
+                
+                if(std::find(programsList.begin(), programsList.end(), cmd) != programsList.end())
+                {
+                    return LastCmd = programs[cmd](args);
+                }
+                else if(shellBuiltIns.contains(cmd))
+                {
+                    return LastCmd = shellBuiltIns[cmd](ctx, args, args.size() > 1 ? command.substr(argsEx[1].offset, (argsEx.back().offset + argsEx.back().orig_len) - argsEx[1].offset) : "");
+                }
+                else
+                {
+                    Game::AddConsoleLine("");
+                    Game::AddConsoleLine("Could not find program "+Util::QuoteString(cmd));
+                    Game::AddConsoleLine("");
+                    return 0;
+                }
             }
         }
     }
+    return 0;
 }

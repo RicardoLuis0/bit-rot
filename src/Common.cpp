@@ -287,33 +287,86 @@ namespace Util
     }
     
     
-    template<typename FnCheck, typename FnFound>
-    void SplitStringInternal(std::string_view str, bool join_empty, bool use_quotes, bool keep_quotes, FnCheck &&isSpace, FnFound &&found)
+    template<typename FnCheck, typename FnFound, typename FnLen, typename FnFoundQuote>
+    void SplitStringInternal(std::string_view str, bool join_empty, bool use_quotes, bool keep_quotes, bool split_quotes, const std::vector<std::pair<char,char>> &braces, FnCheck &&isSpace, FnFound &&found, FnLen &&spaceLength, FnFoundQuote &&foundQuote)
     {
         size_t i = 0;
         size_t lastSection = 0;
         size_t lastStart = 0;
         char lastQuoteType = 0;
         
+        std::vector<char> brace_starts;
+        std::vector<char> brace_ends;
+        std::vector<bool> was_escaped; // only used if split_quotes
+        
+        brace_starts.resize(braces.size());
+        brace_ends.resize(braces.size());
+        
+        for(auto &brace : braces)
+        {
+            brace_starts.push_back(brace.first);
+            brace_ends.push_back(brace.second);
+        }
+        
         std::string tmp;
         bool has_tmp = false;
         
-        if(join_empty && std::size(str) > 0 && isSpace(str[i])) for(; i < std::size(str) && isSpace(str[i]); i++, lastSection++);
+        if(join_empty && std::size(str) > 0 && isSpace(i))
+        {
+            while(i < std::size(str) && isSpace(i))
+            {
+                int skip = spaceLength(i);
+                i += skip;
+                lastSection += skip;
+            }
+        }
         
         for(; i < std::size(str); i++)
         {
-            if(isSpace(str[i]))
+            if(isSpace(i))
             {
                 found(lastStart, i - lastStart, tmp, str.substr(lastSection, i - lastSection));
-                lastSection = i + 1;
+                i += spaceLength(i);
+                lastSection = i;
                 tmp = "";
                 has_tmp = false;
-                if(join_empty) for(;(i + 1) < std::size(str) && isSpace(str[i + 1]); i++, lastSection++);
-                lastStart = i + 1;
+                if(join_empty)
+                {
+                    while(i < std::size(str) && isSpace(i))
+                    {
+                        int skip = spaceLength(i);
+                        i += skip;
+                        lastSection += skip;
+                    }
+                }
+                lastStart = i;
+                i--;
+            }
+            else if(auto it = std::find(std::begin(brace_starts), std::end(brace_starts), str[i]); it != brace_starts.end())
+            {
+                char begin = *it;
+                char end = brace_ends[std::distance(std::begin(brace_starts), it)];
+                int depth = 1;
+                
+                i++;
+                while(depth > 0 && i < std::size(str))
+                {
+                    if(str[i] == begin)
+                    {
+                        depth++;
+                    }
+                    else if(str[i] == end)
+                    {
+                        depth--;
+                    }
+                    i++;
+                }
+                i--;
             }
             else if(use_quotes && (str[i] == '\'' || str[i] == '"'))
             {
                 bool wasSlash = false;
+                lastQuoteType = str[i];
                 
                 if(keep_quotes)
                 {
@@ -331,9 +384,19 @@ namespace Util
                 }
                 else
                 {
-                    lastQuoteType = str[i];
-                    tmp += str.substr(lastSection, i - lastSection);
-                    has_tmp = true;
+                    if(split_quotes)
+                    {
+                        if(lastSection != i)
+                        {
+                            found(lastStart, i - lastStart, "", str.substr(lastSection, i - lastSection));
+                        }
+                        tmp = "";
+                    }
+                    else
+                    {
+                        tmp += str.substr(lastSection, i - lastSection);
+                        has_tmp = true;
+                    }
                     
                     for(i++;i < std::size(str) && (str[i] != lastQuoteType || wasSlash); i++)
                     {
@@ -344,10 +407,41 @@ namespace Util
                         else
                         {
                             tmp += wasSlash ? unescape(str[i]) : str[i];
+                            
+                            if(split_quotes)
+                            {
+                                was_escaped.push_back(wasSlash);
+                            }
+                            
                             wasSlash = false;
                         }
                     }
-                    lastSection = i + 1;
+                    if(split_quotes)
+                    {
+                        foundQuote(tmp, was_escaped, lastQuoteType);
+                        tmp = "";
+                        was_escaped.clear();
+                        i = i + 1;
+                        lastStart = i;
+                        if(join_empty && isSpace(i))
+                        {
+                            while(i < std::size(str) && isSpace(i))
+                            {
+                                int skip = spaceLength(i);
+                                i += skip;
+                                lastSection += skip;
+                            }
+                        }
+                        else
+                        {
+                            lastSection = i;
+                        }
+                        i--;
+                    }
+                    else
+                    {
+                        lastSection = i + 1;
+                    }
                 }
             }
         }
@@ -358,66 +452,156 @@ namespace Util
         }
         else if(has_tmp)
         { // ended on a quote
-            found(lastStart, i - lastStart, tmp, {});
+            if(split_quotes)
+            {
+                foundQuote(tmp, was_escaped, lastQuoteType);
+            }
+            else
+            {
+                found(lastStart, i - lastStart, tmp, {});
+            }
         }
     }
     
-    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on, bool join_empty, bool use_quotes, bool keep_quotes)
+    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on, bool join_empty, bool use_quotes, bool keep_quotes, const std::vector<std::pair<char,char>> &braces)
     {
         std::vector<SplitPoint> o;
         
-        SplitStringInternal(str, join_empty, use_quotes, keep_quotes,
-        [split_on](char c)
+        SplitStringInternal(str, join_empty, use_quotes, keep_quotes, false, braces,
+        [split_on, str](size_t i)
         {
-            return c == split_on;
+            return str[i] == split_on;
         },
         [&o](size_t start, size_t len, const std::string &tmp, std::string_view str)
         {
-            SplitPoint p {.offset = start, .orig_len = len, .str = std::string_view {}};
+            SplitPoint p {.offset = start, .orig_len = len, .str = ""};
             if(tmp.empty())
             {
-                p.str = str;
+                p.str = std::string(str);
             }
             else
             {
                 p.str = (tmp + std::string(str));
             }
             o.emplace_back(std::move(p));
-        });
+        },
+        [](size_t i){return 1;},
+        [](const std::string &text, const std::vector<bool> &was_escaped, char quoteType){}
+        );
         
         return o;
     }
     
-    std::vector<std::string> SplitString(std::string_view str, char split_on, bool join_empty, bool use_quotes, bool keep_quotes)
+    std::vector<std::variant<SplitOp, SplitPoint>> SplitStringOp(std::string_view str, const std::vector<std::string> &ops)
+    { // shitty pseudo-tokenizer
+        std::vector<std::variant<SplitOp, SplitPoint>> o;
+        
+        SplitStringInternal(str, false, true, true, false, {},
+        [&ops, str](size_t i)
+        {
+            size_t n = ops.size();
+            for(size_t j = 0; j < n; j++)
+            {
+                if(ops[j] == str.substr(i, ops[j].length()))
+                {
+                    return true;
+                }
+            }
+            return false;
+        },
+        [&o](size_t start, size_t len, const std::string &tmp, std::string_view str)
+        {
+            if(len > 0)
+            {
+                SplitPoint p {.offset = start, .orig_len = len, .str = ""};
+                if(tmp.empty())
+                {
+                    p.str = std::string(str);
+                }
+                else
+                {
+                    p.str = (tmp + std::string(str));
+                }
+                o.emplace_back(std::move(p));
+            }
+        },
+        [&ops, str, &o](size_t i)
+        {
+            size_t n = ops.size();
+            for(size_t j = 0; j < n; j++)
+            {
+                if(ops[j] == str.substr(i, ops[j].length()))
+                {
+                    o.push_back(SplitOp{i, ops[j]});
+                    return ops[j].length();
+                }
+            }
+            throw std::runtime_error("logic error, unreachable state");
+        },
+        [](const std::string &text, const std::vector<bool> &was_escaped, char quoteType){}
+        );
+        return o;
+    }
+    
+    std::vector<std::string> SplitString(std::string_view str, char split_on, bool join_empty, bool use_quotes, bool keep_quotes, const std::vector<std::pair<char,char>> &braces)
     {
         std::vector<std::string> o;
         
-        SplitStringInternal(str, join_empty, use_quotes, keep_quotes,
-        [split_on](char c)
+        SplitStringInternal(str, join_empty, use_quotes, keep_quotes, false, braces,
+        [split_on, str](size_t i)
         {
-            return c == split_on;
+            return str[i] == split_on;
         },
         [&o](size_t start, size_t len, const std::string &tmp, std::string_view str)
         {
             o.push_back(tmp + std::string(str));
-        });
+        },
+        [](size_t i){return 1;},
+        [](const std::string &text, const std::vector<bool> &was_escaped, char quoteType){}
+        );
         
         return o;
     }
     
-    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty, bool use_quotes, bool keep_quotes)
+    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty, bool use_quotes, bool keep_quotes, const std::vector<std::pair<char,char>> &braces)
     {
         std::vector<std::string> o;
         
-        SplitStringInternal(str, join_empty, use_quotes, keep_quotes,
-        [&split_on](char c)
+        SplitStringInternal(str, join_empty, use_quotes, keep_quotes, false, braces,
+        [&split_on, str](size_t i)
         {
-            return split_on.contains(c);
+            return split_on.contains(str[i]);
         },
         [&o](size_t start, size_t len, const std::string &tmp, std::string_view str)
         {
             o.push_back(tmp + std::string(str));
-        });
+        },
+        [](size_t i){return 1;},
+        [](const std::string &text, const std::vector<bool> &was_escaped, char quoteType){}
+        );
+        
+        return o;
+    }
+    
+    std::vector<SplitQuote> SplitStringQuotes(std::string_view str)
+    {
+        std::vector<SplitQuote> o;
+        
+        SplitStringInternal(str, true, true, false, true, {},
+        [](size_t i)
+        {
+            return false;
+        },
+        [&o](size_t start, size_t len, const std::string &tmp, std::string_view str)
+        {
+            o.emplace_back(SplitQuote{0, (tmp + std::string(str)), {}});
+        },
+        [](size_t i){return 1;},
+        [&o](const std::string &text, const std::vector<bool> &was_escaped, char quoteType)
+        {
+            o.emplace_back(SplitQuote{quoteType, text, was_escaped});
+        }
+        );
         
         return o;
     }

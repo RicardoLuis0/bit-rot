@@ -234,6 +234,8 @@ void Game::ToGame()
         
         SaveData::GetSave(currentFolder, actions, commandHistory, GameConsoleOutput);
         
+        rootShellContext.variables = SaveData::GetConsoleVars();
+        
         for(auto &action : actions)
         {
             if(action.type == SaveData::INSTALL)

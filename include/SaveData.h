@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Common.h"
+#include <map>
+#include <string>
 
 namespace SaveData
 {
@@ -39,4 +41,7 @@ namespace SaveData
     void ClearBuffer();
     
     void GetSave(std::string &savePath, std::vector<SaveAction> &actions, std::vector<std::string> &history, std::vector<std::pair<std::string, std::vector<uint8_t>>> &buffer);
+    
+    void SetConsoleVars(std::map<std::string, std::string> &vars);
+    std::map<std::string, std::string> GetConsoleVars();
 };
