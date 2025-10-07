@@ -167,7 +167,7 @@ namespace Game
     
     extern ShellContext rootShellContext;
     
-    int RunCommand(const std::string &cmd, ShellContext &ctx, bool isQueue = false);
+    int RunCommand(const std::string &cmd, ShellContext &ctx);
     
     void ClearConsole();
     void AddConsoleLine(std::string_view text);

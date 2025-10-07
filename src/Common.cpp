@@ -286,17 +286,29 @@ namespace Util
         }
     }
     
+    int brace_index(std::string_view str, size_t i, std::vector<std::string> &brace_starts)
+    {
+        size_t n = brace_starts.size();
+        for(size_t j = 0; j < n; j++)
+        {
+            if(brace_starts[j] == str.substr(i, brace_starts[j].length()))
+            {
+                return j;
+            }
+        }
+        return -1;
+    }
     
     template<typename FnCheck, typename FnFound, typename FnLen, typename FnFoundQuote>
-    void SplitStringInternal(std::string_view str, bool join_empty, bool use_quotes, bool keep_quotes, bool split_quotes, const std::vector<std::pair<char,char>> &braces, FnCheck &&isSpace, FnFound &&found, FnLen &&spaceLength, FnFoundQuote &&foundQuote)
+    void SplitStringInternal(std::string_view str, bool join_empty, bool use_quotes, bool keep_quotes, bool split_quotes, const std::vector<std::pair<std::string,std::string>> &braces, FnCheck &&isSpace, FnFound &&found, FnLen &&spaceLength, FnFoundQuote &&foundQuote)
     {
         size_t i = 0;
         size_t lastSection = 0;
         size_t lastStart = 0;
         char lastQuoteType = 0;
         
-        std::vector<char> brace_starts;
-        std::vector<char> brace_ends;
+        std::vector<std::string> brace_starts;
+        std::vector<std::string> brace_ends;
         std::vector<bool> was_escaped; // only used if split_quotes
         
         brace_starts.resize(braces.size());
@@ -342,24 +354,30 @@ namespace Util
                 lastStart = i;
                 i--;
             }
-            else if(auto it = std::find(std::begin(brace_starts), std::end(brace_starts), str[i]); it != brace_starts.end())
+            //else if(auto it = std::find(std::begin(brace_starts), std::end(brace_starts), str[i]); it != brace_starts.end())
+            else if(int it = brace_index(str, i, brace_starts); it >= 0)
             {
-                char begin = *it;
-                char end = brace_ends[std::distance(std::begin(brace_starts), it)];
+                const std::string &begin = brace_starts[it];
+                const std::string &end = brace_ends[it];
                 int depth = 1;
                 
-                i++;
+                i += begin.size();
                 while(depth > 0 && i < std::size(str))
                 {
-                    if(str[i] == begin)
+                    if(str.substr(i, begin.size()) == begin)
                     {
                         depth++;
+                        i += begin.size();
                     }
-                    else if(str[i] == end)
+                    else if(str.substr(i, end.size()) == end)
                     {
                         depth--;
+                        i += end.size();
                     }
-                    i++;
+                    else
+                    {
+                        i++;
+                    }
                 }
                 i--;
             }
@@ -463,7 +481,7 @@ namespace Util
         }
     }
     
-    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on, bool join_empty, bool use_quotes, bool keep_quotes, const std::vector<std::pair<char,char>> &braces)
+    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on, bool join_empty, bool use_quotes, bool keep_quotes, const std::vector<std::pair<std::string,std::string>> &braces)
     {
         std::vector<SplitPoint> o;
         
@@ -492,11 +510,11 @@ namespace Util
         return o;
     }
     
-    std::vector<std::variant<SplitOp, SplitPoint>> SplitStringOp(std::string_view str, const std::vector<std::string> &ops)
+    std::vector<std::variant<SplitOp, SplitPoint>> SplitStringOp(std::string_view str, const std::vector<std::string> &ops, const std::vector<std::pair<std::string,std::string>> &braces)
     { // shitty pseudo-tokenizer
         std::vector<std::variant<SplitOp, SplitPoint>> o;
         
-        SplitStringInternal(str, false, true, true, false, {},
+        SplitStringInternal(str, false, true, true, false, braces,
         [&ops, str](size_t i)
         {
             size_t n = ops.size();
@@ -543,7 +561,7 @@ namespace Util
         return o;
     }
     
-    std::vector<std::string> SplitString(std::string_view str, char split_on, bool join_empty, bool use_quotes, bool keep_quotes, const std::vector<std::pair<char,char>> &braces)
+    std::vector<std::string> SplitString(std::string_view str, char split_on, bool join_empty, bool use_quotes, bool keep_quotes, const std::vector<std::pair<std::string,std::string>> &braces)
     {
         std::vector<std::string> o;
         
@@ -563,7 +581,7 @@ namespace Util
         return o;
     }
     
-    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty, bool use_quotes, bool keep_quotes, const std::vector<std::pair<char,char>> &braces)
+    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty, bool use_quotes, bool keep_quotes, const std::vector<std::pair<std::string,std::string>> &braces)
     {
         std::vector<std::string> o;
         

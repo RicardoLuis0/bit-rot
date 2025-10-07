@@ -363,7 +363,7 @@ std::map<std::string, ShellBuiltin> shellBuiltIns
     {"FALSE", [](auto,auto,auto){return 0;}},
     {"!", [](Game::ShellContext &ctx,auto, const std::string &rawargs) -> int
     {
-        return !RunCommand(rawargs, ctx, true);
+        return !RunCommand(rawargs, ctx);
     }},
     {"ECHO", [](auto,std::vector<std::string> &args,auto)
     {
@@ -377,20 +377,39 @@ std::map<std::string, ShellBuiltin> shellBuiltIns
 
 extern bool RunGame;
 
-int Game::RunCommand(const std::string &command, ShellContext &ctx, bool isQueue)
+static int RunStatementList(const std::vector<std::string> &stmts, Game::ShellContext &ctx)
 {
-    std::vector<std::string> commandQueue = Util::SplitString(command, ";\n", true, true, true, {{'(',')'}}); // split on newline and ';', but keep everything inside () unsplit for subshells
+    int last = 0;
     
-    if(commandQueue.size() > 1)
+    for(const std::string &cmd : stmts)
     {
-        int last = 1;
-        
-        for(const std::string &cmd : commandQueue)
+        std::string cmd_trim = Util::TrimFrontBack(cmd, " \t"); // remove leading/trailing whitespace
+        if(cmd_trim.length() > 0)
         {
-            last = RunCommand(cmd, ctx, true);
+            last = Game::RunCommand(cmd_trim, ctx);
             if(currentScreen != 4 || !RunGame) break;
         }
-        return last;
+    }
+    
+    return last;
+}
+
+struct scriptStatement
+{
+    std::string type;//if/while/for/list
+    size_t offset;
+    size_t len;
+    //TODO
+};
+
+int Game::RunCommand(const std::string &command, ShellContext &ctx)
+{
+    //TODO parse if/then/fi, while/do/done, for/do/done
+    std::vector<std::string> commandQueue = Util::SplitString(command, ";\n", true, true, true, {{"(",")"}}); // split on newline and ';', but keep everything inside () unsplit for subshells
+    
+    if(commandQueue.size() > 1)
+    { // process script
+        return RunStatementList(commandQueue, ctx);
     }
     else
     {
@@ -418,7 +437,7 @@ int Game::RunCommand(const std::string &command, ShellContext &ctx, bool isQueue
                     else if(op == "&&" && !result) continue; // short circuit
                     else
                     {
-                        int r = RunCommand(std::get<Util::SplitPoint>(ops[i]).str, ctx, true);
+                        int r = RunCommand(std::get<Util::SplitPoint>(ops[i]).str, ctx);
                         if(op == "||")
                         {
                             result = result || r;
@@ -517,7 +536,7 @@ int Game::RunCommand(const std::string &command, ShellContext &ctx, bool isQueue
                                 std::string tempDrive = currentDrive;
                                 std::string tempFolder = currentFolder;
                                 
-                                r = RunCommand(command.substr(begin, end-begin), subctx, true);
+                                r = RunCommand(command.substr(begin, end-begin), subctx);
                                 
                                 currentDrive = tempDrive;
                                 currentFolder = tempFolder;

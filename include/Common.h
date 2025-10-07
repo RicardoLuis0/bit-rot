@@ -323,6 +323,21 @@ namespace Util
         }
     };
     
+    inline std::string TrimFrontBack(const std::string &str, std::string chars)
+    {
+        std::string out = str;
+        
+        while(out.size() > 0 && chars.contains(out.front()))
+        {
+            out.erase(0, 1);
+        }
+        while(out.size() > 0 && chars.contains(out.back()))
+        {
+            out.pop_back();
+        }
+        
+        return out;
+    }
     
     template<std::ranges::input_range Ra, ContainerConvertibleTo<typename Ra::value_type> ... Rb>
     std::vector<typename Ra::value_type> Concat(const Ra &ra,const Rb & ... rb)
@@ -560,13 +575,13 @@ namespace Util
         std::vector<bool> was_escaped; // if any particular char was escaped
     };
     
-    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true, bool keep_quotes = false, const std::vector<std::pair<char,char>> &braces = {});
+    std::vector<SplitPoint> SplitStringEx(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true, bool keep_quotes = false, const std::vector<std::pair<std::string,std::string>> &braces = {});
     
-    std::vector<std::string> SplitString(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true, bool keep_quotes = false, const std::vector<std::pair<char,char>> &braces = {});
+    std::vector<std::string> SplitString(std::string_view str, char split_on = ' ', bool join_empty = false, bool use_quotes = true, bool keep_quotes = false, const std::vector<std::pair<std::string,std::string>> &braces = {});
     
-    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty = false, bool use_quotes = true, bool keep_quotes = false, const std::vector<std::pair<char,char>> &braces = {});
+    std::vector<std::string> SplitString(std::string_view str, const std::string &split_on, bool join_empty = false, bool use_quotes = true, bool keep_quotes = false, const std::vector<std::pair<std::string,std::string>> &braces = {});
     
-    std::vector<std::variant<SplitOp, SplitPoint>> SplitStringOp(std::string_view str, const std::vector<std::string> &ops);
+    std::vector<std::variant<SplitOp, SplitPoint>> SplitStringOp(std::string_view str, const std::vector<std::string> &ops, const std::vector<std::pair<std::string,std::string>> &braces = {});
     
     std::vector<SplitQuote> SplitStringQuotes(std::string_view str);
     
