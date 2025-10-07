@@ -45,6 +45,16 @@ int GetMusicVolume();
 
 int lastScreen = 0;
 
+extern "C" 
+{
+  __declspec(dllexport) unsigned long NvOptimusEnablement = 0x00000001;
+}
+
+extern "C"
+{
+  __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+
 int doGame()
 {
     try
