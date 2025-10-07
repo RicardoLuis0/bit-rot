@@ -150,6 +150,8 @@ void Game::Responder(SDL_Event *e)
             commandHistory.insert(commandHistory.begin(), command);
             SaveData::PushHistory(command);
             
+            rootShellContext.clearLocalContext();
+            
             RunCommand(command, rootShellContext);
             historyPos = -1;
             tempCommandPreHistory = "";
@@ -366,7 +368,7 @@ std::map<std::string, ShellBuiltin> shellBuiltIns
     {"FALSE", [](auto,auto,auto){return 0;}},
     {"!", [](Game::ShellContext &ctx,auto, const std::string &rawargs) -> int
     {
-        return !RunCommand(rawargs, ctx, true);
+        return !RunCommand(rawargs, ctx);
     }},
     {"ECHO", [](auto,std::vector<std::string> &args,auto)
     {
@@ -380,26 +382,41 @@ std::map<std::string, ShellBuiltin> shellBuiltIns
 
 extern bool RunGame;
 
-int Game::RunCommand(const std::string &command, ShellContext &ctx, bool isQueue)
+static int RunStatementList(const std::vector<std::string> &stmts, Game::ShellContext &ctx)
 {
-    std::vector<std::string> commandQueue = Util::SplitString(command, ";\n", true, true, true, {{'(',')'}}); // split on newline and ';', but keep everything inside () unsplit for subshells
+    int last = 0;
     
-    if(commandQueue.size() > 1)
+    for(const std::string &cmd : stmts)
     {
-        int last = 1;
-        
-        for(const std::string &cmd : commandQueue)
+        std::string cmd_trim = Util::TrimFrontBack(cmd, " \t"); // remove leading/trailing whitespace
+        if(cmd_trim.length() > 0)
         {
-            last = RunCommand(cmd, ctx, true);
+            last = Game::RunCommand(cmd_trim, ctx);
             if(currentScreen != 4 || !RunGame) break;
         }
-        return last;
+    }
+    
+    return last;
+}
+
+int Game::RunCommand(const std::string &command, ShellContext &ctx)
+{
+    //TODO parse while/do/done, for/do/done
+    std::vector<std::string> commandQueue = Util::SplitString(command, ";\n", true, true, true, {{"(",")"}}); // split on newline and ';', but keep everything inside () unsplit for subshells
+    
+    if(commandQueue.size() > 1)
+    { // process script
+        return RunStatementList(commandQueue, ctx);
     }
     else
     {
         std::vector<std::string> shellops = {"&&", "||", "(", ")"}; //, "$(", "|", "[", "]"};
         
         std::vector<std::variant<Util::SplitOp, Util::SplitPoint>> ops = Util::SplitStringOp(command, shellops);
+        
+        std::vector<Util::SplitPoint> argsEx = Util::SplitStringEx(command, ' ', true, true, true);
+        
+        std::string rawargs = (argsEx.size() > 1 ? command.substr(argsEx[1].offset, (argsEx.back().offset + argsEx.back().orig_len) - argsEx[1].offset) : "");
         
         if(ops.size() == 0)
         {
@@ -408,125 +425,147 @@ int Game::RunCommand(const std::string &command, ShellContext &ctx, bool isQueue
             Game::AddConsoleLine("");
             return 0;
         }
-        else if(!(ops.size() == 1 && std::holds_alternative<Util::SplitPoint>(ops[0])))
+        else if(argsEx[0].str == "if")
         {
-            int result = 0;
-            std::string op = "";
-            size_t n = ops.size();
-            for(size_t i = 0; i < n; i++)
+            if(!ctx.skipping)
             {
-                if(std::holds_alternative<Util::SplitPoint>(ops[i]))
+                ctx.reading_if++;
+            }
+            else
+            {
+                ctx.if_depth++;
+            }
+            
+            if(!rawargs.empty())
+            {
+                //needs to "run" even if skipping, due to possibly-nested ifs ex. (if if X; then Y; fi; then Z; fi;)
+                return RunCommand(rawargs, ctx);
+            }
+        }
+        else if(argsEx[0].str == "then")
+        {
+            if(!ctx.skipping)
+            {
+                if(ctx.reading_if == 0)
                 {
-                    if(op == "||" && result) continue; // short circuit
-                    else if(op == "&&" && !result) continue; // short circuit
-                    else
-                    {
-                        int r = RunCommand(std::get<Util::SplitPoint>(ops[i]).str, ctx, true);
-                        if(op == "||")
-                        {
-                            result = result || r;
-                        }
-                        else if(op == "&&")
-                        {
-                            result = result && r;
-                        }
-                        else
-                        {
-                            result = r;
-                        }
-                        op = "";
-                    }
+                    Game::AddConsoleLine("");
+                    Game::AddConsoleLine("'then' without 'if'/'elif'");
+                    Game::AddConsoleLine("");
                 }
                 else
                 {
-                    auto o = std::get<Util::SplitOp>(ops[i]);
-                    
-                    if(o.op == ")")
+                    ctx.reading_if--;
+                    if(LastCmd)
                     {
-                        Game::AddConsoleLine("");
-                        Game::AddConsoleLine("Mismatched ')'");
-                        Game::AddConsoleLine("");
-                        
-                        return 0;
+                        ctx.executing_if++;
+                        if(!rawargs.empty())
+                        {
+                            return RunCommand(rawargs, ctx);
+                        }
                     }
-                    else if(o.op == "(")
+                    else
                     {
-                        //TODO implement subshell
-                        
-                        int depth = 1;
-                        int r = 0;
-                        
-                        size_t begin = 0;
-                        size_t end = 0;
-                        
-                        bool has_begin = false;
-                        
-                        i++;
-                        while(depth > 0 && i < n)
-                        {
-                            if(std::holds_alternative<Util::SplitPoint>(ops[i]))
-                            {
-                                auto &p = std::get<Util::SplitPoint>(ops[i]);
-                                if(!has_begin)
-                                {
-                                    begin = p.offset;
-                                    has_begin = true;
-                                }
-                                end = p.offset + p.orig_len;
-                            }
-                            else
-                            {
-                                auto o2 = std::get<Util::SplitOp>(ops[i]);
-                                if(o2.op == "(")
-                                {
-                                    depth++;
-                                }
-                                else if(o2.op == ")")
-                                {
-                                    depth--;
-                                }
-                                
-                                if(depth > 0)
-                                {
-                                    end = o2.offset + o2.op.length();
-                                }
-                            }
-                            i++;
-                        }
-                        i--;
-                        
-                        
-                        if(op == "||" && result)
-                        {
-                            // short circuit
-                        }
-                        else if(op == "&&" && !result)
-                        {
-                            // short circuit
-                        }
+                        ctx.skipping = true;
+                        ctx.skipping_false_if = true; // a 'true' if executed
+                        ctx.if_depth = 1;
+                    }
+                }
+            }
+        }
+        else if(argsEx[0].str == "elif")
+        {
+            if(!ctx.skipping)
+            {
+                ctx.skipping = true;
+                ctx.skipping_else_if = true; // a 'true' if executed
+                ctx.if_depth = 1;
+            }
+            else if(ctx.skipping_false_if && ctx.if_depth == 1)
+            {
+                ctx.skipping = false;
+                ctx.skipping_false_if = false;
+                ctx.reading_if++;
+            }
+            
+            if(!rawargs.empty())
+            {
+                //needs to "run" even if skipping, due to possibly-nested ifs ex. (if if X; then Y; fi; then Z; fi;)
+                return RunCommand(rawargs, ctx);
+            }
+        }
+        else if(argsEx[0].str == "else")
+        {
+            if(!ctx.skipping)
+            {
+                ctx.skipping = true;
+                ctx.skipping_else_if = true; // a 'true' if executed
+                ctx.if_depth = 1;
+            }
+            else if(ctx.skipping_false_if && ctx.if_depth == 1)
+            {
+                ctx.skipping = false;
+                ctx.skipping_false_if = false;
+                ctx.executing_if++;
+            }
+            
+            if(!rawargs.empty())
+            {
+                //needs to "run" even if skipping, due to possibly-nested ifs ex. (if if X; then Y; fi; then Z; fi;)
+                return RunCommand(rawargs, ctx);
+            }
+        }
+        else if(argsEx[0].str == "fi")
+        {
+            if(ctx.skipping_false_if || ctx.skipping_else_if)
+            {
+                ctx.if_depth--;
+                if(ctx.if_depth == 0)
+                {
+                    ctx.skipping = false;
+                    ctx.skipping_false_if = false;
+                    ctx.skipping_else_if = false;
+                }
+            }
+            
+            
+            if(!ctx.skipping)
+            {
+                if(ctx.executing_if == 0)
+                {
+                    Game::AddConsoleLine("");
+                    Game::AddConsoleLine("'fi' without 'then'");
+                    Game::AddConsoleLine("");
+                }
+                else
+                {
+                    ctx.executing_if--;
+                }
+            }
+            
+            if(!rawargs.empty())
+            {
+                Game::AddConsoleLine("");
+                Game::AddConsoleLine("Junk at end of fi, expected nothing but got '"+rawargs+"'");
+                Game::AddConsoleLine("");
+                return 0;
+            }
+        }
+        else if(!(ctx.skipping))
+        {
+            if(!(ops.size() == 1 && std::holds_alternative<Util::SplitPoint>(ops[0])))
+            {
+                int result = 0;
+                std::string op = "";
+                size_t n = ops.size();
+                for(size_t i = 0; i < n; i++)
+                {
+                    if(std::holds_alternative<Util::SplitPoint>(ops[i]))
+                    {
+                        if(op == "||" && result) continue; // short circuit
+                        else if(op == "&&" && !result) continue; // short circuit
                         else
                         {
-                        
-                            if(!has_begin)
-                            {
-                                Game::AddConsoleLine("");
-                                Game::AddConsoleLine("Could not find program ''");
-                                Game::AddConsoleLine("");
-                            }
-                            else
-                            {
-                                ShellContext subctx = ctx;
-                                
-                                std::string tempDrive = currentDrive;
-                                std::string tempFolder = currentFolder;
-                                
-                                r = RunCommand(command.substr(begin, end-begin), subctx, true);
-                                
-                                currentDrive = tempDrive;
-                                currentFolder = tempFolder;
-                                SaveData::SetFolder(currentFolder);
-                            }
-                            
+                            int r = RunCommand(std::get<Util::SplitPoint>(ops[i]).str, ctx);
                             if(op == "||")
                             {
                                 result = result || r;
@@ -539,107 +578,157 @@ int Game::RunCommand(const std::string &command, ShellContext &ctx, bool isQueue
                             {
                                 result = r;
                             }
-                            
                             op = "";
                         }
-                        
-                        return 0;
                     }
                     else
                     {
-                        if(op != "")
+                        auto o = std::get<Util::SplitOp>(ops[i]);
+                        
+                        if(o.op == ")")
                         {
                             Game::AddConsoleLine("");
-                            Game::AddConsoleLine("Unexpected '"+o.op+"' after '"+op+"'");
+                            Game::AddConsoleLine("Mismatched ')'");
                             Game::AddConsoleLine("");
+                            
+                            return 0;
+                        }
+                        else if(o.op == "(")
+                        {
+                            int depth = 1;
+                            int r = 0;
+                            
+                            size_t begin = 0;
+                            size_t end = 0;
+                            
+                            bool has_begin = false;
+                            
+                            i++;
+                            while(depth > 0 && i < n)
+                            {
+                                if(std::holds_alternative<Util::SplitPoint>(ops[i]))
+                                {
+                                    auto &p = std::get<Util::SplitPoint>(ops[i]);
+                                    if(!has_begin)
+                                    {
+                                        begin = p.offset;
+                                        has_begin = true;
+                                    }
+                                    end = p.offset + p.orig_len;
+                                }
+                                else
+                                {
+                                    auto o2 = std::get<Util::SplitOp>(ops[i]);
+                                    if(o2.op == "(")
+                                    {
+                                        depth++;
+                                    }
+                                    else if(o2.op == ")")
+                                    {
+                                        depth--;
+                                    }
+                                    
+                                    if(depth > 0)
+                                    {
+                                        end = o2.offset + o2.op.length();
+                                    }
+                                }
+                                i++;
+                            }
+                            i--;
+                            
+                            
+                            if(op == "||" && result)
+                            {
+                                // short circuit
+                            }
+                            else if(op == "&&" && !result)
+                            {
+                                // short circuit
+                            }
+                            else
+                            {
+                            
+                                if(!has_begin)
+                                {
+                                    Game::AddConsoleLine("");
+                                    Game::AddConsoleLine("Could not find program ''");
+                                    Game::AddConsoleLine("");
+                                }
+                                else
+                                {
+                                    ShellContext subctx = ctx;
+                                    subctx.clearLocalContext();
+                                    
+                                    std::string tempDrive = currentDrive;
+                                    std::string tempFolder = currentFolder;
+                                    
+                                    r = RunCommand(command.substr(begin, end-begin), subctx);
+                                    
+                                    currentDrive = tempDrive;
+                                    currentFolder = tempFolder;
+                                    SaveData::SetFolder(currentFolder);
+                                }
+                                
+                                if(op == "||")
+                                {
+                                    result = result || r;
+                                }
+                                else if(op == "&&")
+                                {
+                                    result = result && r;
+                                }
+                                else
+                                {
+                                    result = r;
+                                }
+                                
+                                op = "";
+                            }
+                            
                             return 0;
                         }
                         else
                         {
-                            op = o.op;
+                            if(op != "")
+                            {
+                                Game::AddConsoleLine("");
+                                Game::AddConsoleLine("Unexpected '"+o.op+"' after '"+op+"'");
+                                Game::AddConsoleLine("");
+                                return 0;
+                            }
+                            else
+                            {
+                                op = o.op;
+                            }
                         }
                     }
                 }
+                
+                return result;
             }
-            
-            return result;
-        }
-        else
-        {
-            std::vector<std::string> programsList = Game::ListExecutablePrograms();
-            
-            std::vector<Util::SplitPoint> argsEx = Util::SplitStringEx(command, ' ', true, true, true);
-            
-            bool firstIsAssign = false;
-            bool firstRead = false;
-            
-            std::vector<std::string> args = Util::Map(argsEx, [&ctx,&firstIsAssign,&firstRead](auto &arg)
+            else
             {
-                auto split = Util::SplitStringQuotes(arg.str);
+                std::vector<std::string> programsList = Game::ListExecutablePrograms();
                 
-                std::string str = "";
+                bool firstIsAssign = false;
+                bool firstRead = false;
                 
-                size_t index = 0;
-                
-                for(auto &quote : split)
+                std::vector<std::string> args = Util::Map(argsEx, [&ctx,&firstIsAssign,&firstRead](auto &arg)
                 {
-                    if(quote.c == 0)
+                    auto split = Util::SplitStringQuotes(arg.str);
+                    
+                    std::string str = "";
+                    
+                    size_t index = 0;
+                    
+                    for(auto &quote : split)
                     {
-                        if(quote.str[0] == '$')
-                        { // variable
-                            std::string varname = quote.str.substr(1uz, quote.str.find('=') - 1uz); // '=' is not allowed in var names
-                            
-                            if(varname == "?")
-                            {
-                                str += std::to_string(LastCmd);
-                            }
-                            else
-                            {
-                                const auto &var = ctx.variables.find(varname);
-                                if(var != ctx.variables.end())
-                                {
-                                    str += var->second;
-                                }
-                            }
-                        }
-                        else
+                        if(quote.c == 0)
                         {
-                            if(!firstRead && quote.str.find('=') != std::string::npos)
-                            {
-                                firstIsAssign = true;
-                            }
-                            str += quote.str;
-                        }
-                    }
-                    else if(quote.c == '\'')
-                    {
-                        str += quote.str;
-                    }
-                    else if(quote.c == '"')
-                    {
-                        size_t pos = 0;
-                        do
-                        {
-                            size_t pos_start = quote.str.find('$', pos);
-                            
-                            if(pos_start == std::string::npos)
-                            {
-                                str += quote.str.substr(pos);
-                                break; // no more vars
-                            }
-                            
-                            if(quote.was_escaped[pos_start]) // is \$ not $, find next
-                            {
-                               pos = pos_start + 1; 
-                            }
-                            else
-                            {
-                                str += quote.str.substr(pos, pos_start - pos);
-                                
-                                size_t s = pos_start + 1;
-                                size_t pos_end = quote.str.find_first_of(std::string(" \n\t=\0", 5), s);
-                                
-                                std::string varname = quote.str.substr(s, pos_end - s);
+                            if(quote.str[0] == '$')
+                            { // variable
+                                std::string varname = quote.str.substr(1uz, quote.str.find('=') - 1uz); // '=' is not allowed in var names
                                 
                                 if(varname == "?")
                                 {
@@ -653,60 +742,113 @@ int Game::RunCommand(const std::string &command, ShellContext &ctx, bool isQueue
                                         str += var->second;
                                     }
                                 }
-                                
-                                pos = pos_end;
+                            }
+                            else
+                            {
+                                if(!firstRead && quote.str.find('=') != std::string::npos)
+                                {
+                                    firstIsAssign = true;
+                                }
+                                str += quote.str;
                             }
                         }
-                        while(pos < std::string::npos);
+                        else if(quote.c == '\'')
+                        {
+                            str += quote.str;
+                        }
+                        else if(quote.c == '"')
+                        {
+                            size_t pos = 0;
+                            do
+                            {
+                                size_t pos_start = quote.str.find('$', pos);
+                                
+                                if(pos_start == std::string::npos)
+                                {
+                                    str += quote.str.substr(pos);
+                                    break; // no more vars
+                                }
+                                
+                                if(quote.was_escaped[pos_start]) // is \$ not $, find next
+                                {
+                                   pos = pos_start + 1; 
+                                }
+                                else
+                                {
+                                    str += quote.str.substr(pos, pos_start - pos);
+                                    
+                                    size_t s = pos_start + 1;
+                                    size_t pos_end = quote.str.find_first_of(std::string(" \n\t=\0", 5), s);
+                                    
+                                    std::string varname = quote.str.substr(s, pos_end - s);
+                                    
+                                    if(varname == "?")
+                                    {
+                                        str += std::to_string(LastCmd);
+                                    }
+                                    else
+                                    {
+                                        const auto &var = ctx.variables.find(varname);
+                                        if(var != ctx.variables.end())
+                                        {
+                                            str += var->second;
+                                        }
+                                    }
+                                    
+                                    pos = pos_end;
+                                }
+                            }
+                            while(pos < std::string::npos);
+                        }
+                        index++;
                     }
-                    index++;
-                }
+                    
+                    firstRead = true;
+                    return str;
+                });
                 
-                firstRead = true;
-                return str;
-            });
-            
-            //unlike bash, single quotes aren't literal, they also process escape chars like double quotes, they just don't process variables
-            
-            if(firstIsAssign)
-            {
-                size_t assignpos = args[0].find('=');
-                std::string varname = args[0].substr(0, assignpos);
+                //unlike bash, single quotes aren't literal, they also process escape chars like double quotes, they just don't process variables
                 
-                ctx.variables[varname] = args[0].substr(assignpos + 1);
-                
-                if(&ctx == &rootShellContext)
+                if(firstIsAssign)
                 {
-                    SaveData::SetConsoleVars(rootShellContext.variables);
+                    size_t assignpos = args[0].find('=');
+                    std::string varname = args[0].substr(0, assignpos);
+                    
+                    ctx.variables[varname] = args[0].substr(assignpos + 1);
+                    
+                    if(&ctx == &rootShellContext)
+                    {
+                        SaveData::SetConsoleVars(rootShellContext.variables);
+                    }
+                    
+                    if(!rawargs.empty())
+                    {
+                        Game::AddConsoleLine("");
+                        Game::AddConsoleLine("Junk at end of assign, expected nothing but got '"+rawargs+"'");
+                        Game::AddConsoleLine("");
+                        return 0;
+                    }
+                    return 1;
                 }
-                
-                if(args.size() > 1)
+                else if(args.size() > 0)
                 {
-                    Game::AddConsoleLine("");
-                    Game::AddConsoleLine("Junk at end of assign, expected nothing but got '"+std::string(1, command[argsEx[2].offset])+"'");
-                    Game::AddConsoleLine("");
-                    return 0;
-                }
-                return 1;
-            }
-            else if(args.size() > 0)
-            {
-                std::string cmd = Util::StrToUpper(args[0]);
-                
-                if(std::find(programsList.begin(), programsList.end(), cmd) != programsList.end())
-                {
-                    return LastCmd = programs[cmd](args);
-                }
-                else if(shellBuiltIns.contains(cmd))
-                {
-                    return LastCmd = shellBuiltIns[cmd](ctx, args, args.size() > 1 ? command.substr(argsEx[1].offset, (argsEx.back().offset + argsEx.back().orig_len) - argsEx[1].offset) : "");
-                }
-                else
-                {
-                    Game::AddConsoleLine("");
-                    Game::AddConsoleLine("Could not find program "+Util::QuoteString(cmd));
-                    Game::AddConsoleLine("");
-                    return 0;
+                    std::string cmd = Util::StrToUpper(args[0]);
+                    
+                    if(std::find(programsList.begin(), programsList.end(), cmd) != programsList.end())
+                    {
+                        return LastCmd = programs[cmd](args);
+                    }
+                    else if(shellBuiltIns.contains(cmd))
+                    {
+                        return LastCmd = shellBuiltIns[cmd](ctx, args, rawargs);
+                    }
+                    else
+                    {
+                        Game::AddConsoleLine("");
+                        Game::AddConsoleLine("Could not find program "+Util::QuoteString(cmd));
+                        Game::AddConsoleLine("");
+                        return 0;
+                    }
                 }
             }
         }

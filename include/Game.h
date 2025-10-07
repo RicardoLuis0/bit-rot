@@ -160,14 +160,29 @@ namespace Game
     
     struct ShellContext
     {
+        int reading_if = 0;
+        int executing_if = 0;
+        bool skipping = false;
         bool skipping_false_if = false;
-        int nesting_depth = 0;
+        bool skipping_else_if = false;
+        int if_depth = 0;
+        
+        inline void clearLocalContext()
+        {
+            reading_if = 0;
+            executing_if = 0;
+            skipping = false;
+            skipping_false_if = false;
+            skipping_else_if = false;
+            if_depth = 0;
+        }
+        
         std::map<std::string, std::string> variables;
     };
     
     extern ShellContext rootShellContext;
     
-    int RunCommand(const std::string &cmd, ShellContext &ctx, bool isQueue = false);
+    int RunCommand(const std::string &cmd, ShellContext &ctx);
     
     void ClearConsole();
     void AddConsoleLine(std::string_view text);
