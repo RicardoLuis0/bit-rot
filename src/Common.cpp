@@ -311,8 +311,8 @@ namespace Util
         std::vector<std::string> brace_ends;
         std::vector<bool> was_escaped; // only used if split_quotes
         
-        brace_starts.resize(braces.size());
-        brace_ends.resize(braces.size());
+        brace_starts.reserve(braces.size());
+        brace_ends.reserve(braces.size());
         
         for(auto &brace : braces)
         {
