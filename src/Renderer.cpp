@@ -152,22 +152,18 @@ constexpr int transparentKeyU = 3;
 constexpr int timeU = 7;
 constexpr int textColorU = 8;
 constexpr int bloomStrengthU = 3;
-constexpr int crtCurveU = 5;
-constexpr int crtScanlinesU = 6;
-constexpr int crtCAU = 7;
-constexpr int crtVignetteU = 8;
 
 void Renderer::UpdateBloomStrength()
 {
-    bloomProgram.setFloat(bloomStrengthU, sqrt(Config::getIntOr("BloomStrength", 100) / 100.0) * 0.85);
+    bloomProgram.setFloat("bloomStrength", sqrt(Config::getIntOr("BloomStrength", 100) / 100.0) * 0.85);
 }
 
 void Renderer::UpdateCrt()
 {
-    crtProgram.setFloat(crtCurveU, sqrt(Config::getIntOr("CrtCurve", 100) / 100.0));
-    crtProgram.setInt(crtScanlinesU, Config::getIntOr("CrtScanlinesEnabled", 1));
-    crtProgram.setInt(crtCAU, Config::getIntOr("CrtCAEnabled", 1));
-    crtProgram.setInt(crtVignetteU, Config::getIntOr("CrtVignetteEnabled", 0));
+    crtProgram.setFloat("crtCurve", sqrt(Config::getIntOr("CrtCurve", 100) / 100.0));
+    crtProgram.setInt("crtScanlines", Config::getIntOr("CrtScanlinesEnabled", 1));
+    crtProgram.setInt("crtCA", Config::getIntOr("CrtCAEnabled", 1));
+    crtProgram.setInt("crtVignette", Config::getIntOr("CrtVignetteEnabled", 0));
 }
 
 
@@ -214,15 +210,15 @@ void Renderer::Compile()
     phosphorProgram.setInt(0, 0);
     phosphorProgram.setFloat(1, Config::getIntOr("PhosphorEnabled", 1) ? DefaultPhosphorStrength : 0.0);
     
-    crtProgram.setInt(1, window_width, window_height);
-    crtProgram.setInt(0, 0);
-    crtProgram.setInt(3, 8 * max_screen_width, 8 *max_screen_height); // fake out 8-width chars for CRT shader, looks bad otherwise for high-res fonts
+    crtProgram.setInt("frameBuffer", 0);
+    crtProgram.setInt("windowResolution", window_width, window_height);
+    crtProgram.setInt("frameBufferResolution", 8 * max_screen_width, 8 *max_screen_height); // fake out 8-width chars for CRT shader, looks bad otherwise for high-res fonts
     UpdateCrt();
     
     SetTextColor(Config::getEnumOr("TextColor", textColorNames, ETextColor::AMBER));
     
-    bloomProgram.setInt(0, 0);
-    bloomProgram.setInt(1, window_width, window_height);
+    bloomProgram.setInt("frameBuffer", 0);
+    bloomProgram.setInt("windowResolution", window_width, window_height);
     UpdateBloomStrength();
     
     LogDebug(firstCompile ? "Shaders Compiled" : "Shaders Recompiled");
@@ -265,7 +261,8 @@ void Renderer::Compile()
     textFrameBuffer4.Init(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
     frameBuffer.Init(window_width, window_height);
     
-    blurProgram.setInt(1, textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
+    blurProgram.setInt("frameBuffer", 0);
+    blurProgram.setInt("windowResolution", textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
     
     mainArea.Gen(std::array { &crtProgram, &bloomProgram } ,-1.0, -1.0, 1.0, 1.0);
     
@@ -423,8 +420,8 @@ void Renderer::UpdateResolution(uint32_t width, uint32_t height)
     
     calcWidthHeight(width, height);
     
-    crtProgram.setInt(1, width, height);
-    bloomProgram.setInt(1, width, height);
+    crtProgram.setInt("windowResolution", width, height);
+    bloomProgram.setInt("windowResolution", width, height);
     frameBuffer.Resize(width, height);
 }
 

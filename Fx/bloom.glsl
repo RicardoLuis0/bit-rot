@@ -4,9 +4,9 @@ out vec4 fragColor;
 
 in vec2 texCoord;
 
-layout (location = 0) uniform sampler2D frameBuffer;
-layout (location = 1) uniform ivec2 windowResolution; // 1,2
-layout (location = 3) uniform float bloomStrength;
+uniform sampler2D frameBuffer;
+uniform ivec2 windowResolution; // 1,2
+uniform float bloomStrength;
 
 #define bloomPower 0.0025
 #define bloomContrast 0.5

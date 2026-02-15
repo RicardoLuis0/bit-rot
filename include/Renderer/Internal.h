@@ -68,20 +68,41 @@ namespace Renderer::Internal
         glCheckErrorsInternal(msg);
     }
     
+    template<typename T>
+    inline void glCheckErrorsLine(std::string_view fn_namespace, std::string_view fn_name, std::string_view file_name, int line, T func)
+    {
+        std::string msg = "";
+        if(fn_namespace.size() > 0)
+        {
+            assert(fn_name.size() > 0);
+            msg += "[" + std::string(fn_namespace) + "::" + std::string(fn_name) + "] ";
+        }
+        else if(fn_name.size() > 0)
+        {
+            msg += "[" + std::string(fn_name) + "] ";
+        }
+        
+        if(file_name.size() > 0)
+        {
+            msg += "[" + std::string(file_name) + ":" + std::to_string(line) + "] ";
+        }
+        glCheckErrorsInternal(msg + "\"" + func() + "\" ");
+    }
+    
     
     #ifdef _MSC_VER
-        #define glCheckErrors()\
-            glCheckErrorsLine(std::string_view(__FUNCSIG__ + namespace_start(__FUNCSIG__) , namespace_len(__FUNCSIG__)), std::string_view(__FUNCSIG__ + funcname_start(__FUNCSIG__) , funcname_len(__FUNCSIG__)), std::string_view(__FILE__ + filename_start(__FILE__)) , __LINE__)
+        #define glCheckErrors(...)\
+            glCheckErrorsLine(std::string_view(__FUNCSIG__ + namespace_start(__FUNCSIG__) , namespace_len(__FUNCSIG__)), std::string_view(__FUNCSIG__ + funcname_start(__FUNCSIG__) , funcname_len(__FUNCSIG__)), std::string_view(__FILE__ + filename_start(__FILE__)) , __LINE__ __VA_OPT__(,) __VA_ARGS__)
     #elif defined(__GNUC__)
-        #define glCheckErrors()\
-            glCheckErrorsLine(std::string_view(__PRETTY_FUNCTION__ + namespace_start(__PRETTY_FUNCTION__) , namespace_len(__PRETTY_FUNCTION__)), std::string_view(__PRETTY_FUNCTION__ + funcname_start(__PRETTY_FUNCTION__) , funcname_len(__PRETTY_FUNCTION__)), std::string_view(__FILE__ + filename_start(__FILE__)) , __LINE__)
+        #define glCheckErrors(...)\
+            glCheckErrorsLine(std::string_view(__PRETTY_FUNCTION__ + namespace_start(__PRETTY_FUNCTION__) , namespace_len(__PRETTY_FUNCTION__)), std::string_view(__PRETTY_FUNCTION__ + funcname_start(__PRETTY_FUNCTION__) , funcname_len(__PRETTY_FUNCTION__)), std::string_view(__FILE__ + filename_start(__FILE__)) , __LINE__ __VA_OPT__(,) __VA_ARGS__)
     #else
-        #define glCheckErrors()\
-            glCheckErrorsLine({}, std::string_view(__func__), std::string_view(__FILE__ + filename_start(__FILE__)) , __LINE__)
+        #define glCheckErrors(...)\
+            glCheckErrorsLine({}, std::string_view(__func__), std::string_view(__FILE__ + filename_start(__FILE__)) , __LINE__ __VA_OPT__(,) __VA_ARGS__)
     #endif
     
     #ifdef NDEBUG
-        #define glCheckErrorsDebug()
+        #define glCheckErrorsDebug(...)
     #else
         #define glCheckErrorsDebug glCheckErrors
     #endif

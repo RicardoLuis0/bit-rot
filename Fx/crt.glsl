@@ -4,13 +4,13 @@ out vec4 fragColor;
 
 in vec2 texCoord;
 
-layout (location = 0) uniform sampler2D frameBuffer;
-layout (location = 1) uniform ivec2 windowResolution;
-layout (location = 3) uniform ivec2 frameBufferResolution;
-layout (location = 5) uniform float crtCurve = 1.0;
-layout (location = 6) uniform bool crtScanlines = false;
-layout (location = 7) uniform bool crtCA = false;
-layout (location = 8) uniform bool crtVignette = false;
+uniform sampler2D frameBuffer;
+uniform ivec2 windowResolution;
+uniform ivec2 frameBufferResolution;
+uniform float crtCurve = 1.0;
+uniform bool crtScanlines = false;
+uniform bool crtCA = false;
+uniform bool crtVignette = false;
 
 //#define CURVATURE 3.5
 #define CURVATURE 3.5

@@ -4,8 +4,8 @@ out vec4 fragColor;
 
 in vec2 texCoord;
 
-layout (location = 0) uniform sampler2D frameBuffer;
-layout (location = 1) uniform ivec2 windowResolution;
+uniform sampler2D frameBuffer;
+uniform ivec2 windowResolution;
 
 #define blurPower 0.0025
 #define blurStrenght1 0.5
