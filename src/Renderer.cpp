@@ -155,15 +155,15 @@ constexpr int bloomStrengthU = 3;
 
 void Renderer::UpdateBloomStrength()
 {
-    bloomProgram.setFloat("bloomStrength", sqrt(Config::getIntOr("BloomStrength", 100) / 100.0) * 0.85);
+    bloomProgram.setFloat("bloomStrength", sqrt(Config::getIntOr("BloomStrength", DefaultBloomStrength) / 100.0) * 0.85);
 }
 
 void Renderer::UpdateCrt()
 {
-    crtProgram.setFloat("crtCurve", sqrt(Config::getIntOr("CrtCurve", 100) / 100.0));
-    crtProgram.setInt("crtScanlines", Config::getIntOr("CrtScanlinesEnabled", 1));
-    crtProgram.setInt("crtCA", Config::getIntOr("CrtCAEnabled", 1));
-    crtProgram.setInt("crtVignette", Config::getIntOr("CrtVignetteEnabled", 0));
+    crtProgram.setFloat("crtCurve", sqrt(Config::getIntOr("CrtCurve", DefaultCrtCurve) / 100.0));
+    crtProgram.setInt("crtScanlines", Config::getBoolOr("CrtScanlinesEnabled", DefaultCrtScanlinesEnabled));
+    crtProgram.setInt("crtCA", Config::getBoolOr("CrtCAEnabled", DefaultCrtCAEnabled));
+    crtProgram.setInt("crtVignette", Config::getBoolOr("CrtVignetteEnabled", DefaultCrtVignetteEnabled));
 }
 
 
@@ -208,7 +208,7 @@ void Renderer::Compile()
     textDrawerGame.setFloat(transparentKeyU, 1.0, 0.0, 1.0, 1.0);
     
     phosphorProgram.setInt(0, 0);
-    phosphorProgram.setFloat(1, Config::getIntOr("PhosphorEnabled", 1) ? DefaultPhosphorStrength : 0.0);
+    phosphorProgram.setFloat(1, Config::getBoolOr("PhosphorEnabled", DefaultPhosphorEnabled) ? DefaultPhosphorStrength : 0.0);
     
     crtProgram.setInt("frameBuffer", 0);
     crtProgram.setInt("windowResolution", window_width, window_height);

@@ -110,6 +110,31 @@ int64_t Config::getIntOr(const std::string &key, int64_t alternative)
     }
 }
 
+bool Config::getBoolOr(const std::string &key, bool alternative)
+{
+    if(configData.contains(key))
+    {
+        auto &data = configData[key];
+        if(data.is_str())
+        {
+            std::string lower = Util::StrToLower(data.get_str());
+            return lower == "yes" || lower == "true";
+        }
+        else if(data.is_int())
+        {
+            return data.get_int();
+        }
+        else // if(data.is_bool())
+        {
+            return data.get_bool();
+        }
+    }
+    else
+    {
+        return alternative;
+    }
+}
+
 std::string_view Config::setString(const std::string &key, std::string_view newValue)
 {
     configData.set(key, std::string(newValue));
@@ -125,5 +150,11 @@ std::string_view Config::setScriptString(const std::string &key, std::string_vie
 int64_t Config::setInt(const std::string &key, int64_t newValue)
 {
     configData.set(key, newValue);
+    return newValue;
+}
+
+bool Config::setBool(const std::string &key, bool newValue)
+{
+    configData.set(key, !!newValue);
     return newValue;
 }

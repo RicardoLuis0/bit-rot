@@ -13,21 +13,141 @@
 extern int currentScreen;
 extern bool InGame;
 
-int currentSettingsMenuItem = 0;
-
-constexpr int DefaultGlobalVolume = 50;
-constexpr int DefaultBloomStrength = 100;
-constexpr int DefaultCrtCurve = 100;
-constexpr int DefaultSoundVolume = 100;
-constexpr int DefaultMusicVolume = 100;
-
 struct SettingItem
 {
     virtual ~SettingItem() = default;
     virtual std::string_view getName() const = 0;
     virtual std::string getValue() const = 0;
+    virtual void Select() { ToggleUp(); }
     virtual void ToggleUp() = 0;
     virtual void ToggleDown() = 0;
+    virtual bool hasValue() { return true; }
+};
+
+struct SettingButton : SettingItem
+{
+    std::string name;
+    
+    std::function<void()> onSelect;
+    
+    SettingButton(const std::string &_name, std::function<void()> _onSelect)
+    : name(_name),
+      onSelect(_onSelect)
+    {}
+    
+    virtual std::string_view getName() const override
+    {
+        return name;
+    }
+    
+    virtual std::string getValue() const override
+    {
+        return "";
+    }
+    
+    virtual void Select()
+    {
+        onSelect();
+    }
+    
+    virtual void ToggleUp() {};
+    virtual void ToggleDown() {};
+    
+    virtual bool hasValue() { return false; }
+};
+
+struct SettingItemYesNo : SettingItem
+{
+    std::string name;
+    std::string configName;
+    
+    std::function<void(bool)> onUpdate;
+    
+    bool defaultValue;
+    bool invertValue;
+    
+    SettingItemYesNo(const std::string &_name, const std::string &_configName, std::function<void(bool)> _onUpdate, bool _defaultValue, bool _invertValue = false)
+    : name(_name),
+      configName(_configName),
+      onUpdate(_onUpdate),
+      defaultValue(_defaultValue),
+      invertValue(_invertValue)
+    {}
+    
+    virtual std::string_view getName() const override
+    {
+        return name;
+    }
+    
+    virtual std::string getValue() const override
+    {
+        return (Config::getBoolOr(configName, defaultValue) != invertValue) ? "Yes" : "No";
+    }
+    
+    inline void Toggle()
+    {
+        bool newValue = !Config::getBoolOr(configName, defaultValue);
+        Config::setBool(configName, newValue);
+        onUpdate(newValue);
+    }
+    
+    virtual void ToggleUp() override { Toggle(); }
+    virtual void ToggleDown() override { Toggle(); }
+};
+
+struct SettingItemSlider : SettingItem
+{
+    std::string name;
+    std::string configName;
+    
+    std::function<void(int)> onUpdate;
+    
+    int defaultValue;
+    int minValue;
+    int maxValue;
+    int stepValue;
+    
+    bool invertStep;
+    bool isPercent;
+    
+    SettingItemSlider(const std::string &_name, const std::string &_configName, std::function<void(bool)> _onUpdate, int _defaultValue, int _minValue, int _maxValue, int _stepValue, bool _isPercent = true, bool _invertStep = false)
+    : name(_name),
+      configName(_configName),
+      onUpdate(_onUpdate),
+      defaultValue(_defaultValue),
+      minValue(_minValue),
+      maxValue(_maxValue),
+      stepValue(_stepValue),
+      invertStep(_invertStep),
+      isPercent(_isPercent)
+    {}
+    
+    virtual std::string_view getName() const override
+    {
+        return name;
+    }
+    
+    virtual std::string getValue() const override
+    {
+        return std::to_string(Config::getIntOr(configName, defaultValue)) + (isPercent ? "%" : "");
+    }
+    
+    inline void doStep(bool direction)
+    {
+        int newValue = std::clamp<int>(Config::getIntOr(configName, defaultValue) + (direction? stepValue : -stepValue), minValue, maxValue);
+        Config::setInt(configName, newValue);
+        onUpdate(newValue);
+    }
+    
+    virtual void ToggleUp() override
+    {
+        doStep(!invertStep);
+    }
+    
+    virtual void ToggleDown() override
+    {
+        doStep(invertStep);
+    }
 };
 
 int GetSoundVolume()
@@ -41,7 +161,7 @@ int GetSoundVolume()
 
 int GetMusicVolume()
 {
-    if(Config::getIntOr("MuteMusic", 0)) return 0;
+    if(Config::getBoolOr("MuteMusic", DefaultMuteMusic)) return 0;
     
     double globalVol = Config::getIntOr("Volume", DefaultGlobalVolume) / 100.0;
     double musicVol = Config::getIntOr("VolumeMusic", DefaultMusicVolume) / 100.0;
@@ -50,29 +170,70 @@ int GetMusicVolume()
     return (vol * vol) * 64; // limit "max" volume to 50% of absolute max
 }
 
-extern std::vector<SettingItem*> settings;
+extern std::vector<SettingItem*> mainSettings;
+
+std::vector<std::vector<SettingItem*>*> currentSettings;
+std::vector<int> currentItem;
+std::vector<int> currentScroll;
+
+int maxSettings = 15;
+
+constexpr int SettingsColumn1Width = 26;
+constexpr int SettingsColumn2Width = 51;
 
 void Menu::SettingsMenuResponder(SDL_Event *e)
 {
+    if(currentSettings.size() == 0)
+    {
+        currentSettings.push_back(&mainSettings);
+        currentItem.push_back(0);
+        currentScroll.push_back(0);
+    }
+    
+    int &currentSettingsMenuItem = currentItem.back();
+    int &currentSettingsMenuScroll = currentScroll.back();
+    std::vector<SettingItem*> &settings = *currentSettings.back();
+    
     switch(e->type)
     {
     case SDL_KEYDOWN:
         if(e->key == SDLK_ESCAPE)
         {
-            currentScreen = InGame ? 2 : 0; // 2 = pause menu, 0 = main menu
+            if(currentSettings.size() <= 1)
+            {
+                currentScreen = InGame ? 2 : 0; // 2 = pause menu, 0 = main menu
+            }
+            else
+            {
+                currentItem.pop_back();
+                currentSettings.pop_back();
+                currentScroll.pop_back();
+            }
         }
-        else if(e->key == SDLK_UP)
+        else if(e->key == SDLK_UP || e->key == SDLK_DOWN)
         {
-            Renderer::ResetTimer();
-            currentSettingsMenuItem--;
-            if(currentSettingsMenuItem < 0) currentSettingsMenuItem = (settings.size() - 1);
+            if(e->key == SDLK_UP)
+            {
+                Renderer::ResetTimer();
+                currentSettingsMenuItem--;
+                if(currentSettingsMenuItem < 0) currentSettingsMenuItem = (settings.size() - 1);
+            }
+            else if(e->key == SDLK_DOWN)
+            {
+                Renderer::ResetTimer();
+                currentSettingsMenuItem = (currentSettingsMenuItem + 1) % settings.size();
+            }
+            
+            if(currentSettingsMenuScroll > (currentSettingsMenuItem - 2)) currentSettingsMenuScroll = std::max(0, currentSettingsMenuItem - 2);
+            if((currentSettingsMenuScroll + (maxSettings - 3)) <= currentSettingsMenuItem) currentSettingsMenuScroll = std::min<int>(currentSettingsMenuItem - (maxSettings - 3), settings.size() - maxSettings);
+            
+            LogDebug("currentSettingsMenuScroll = "+std::to_string(currentSettingsMenuScroll)+" currentSettingsMenuItem = "+std::to_string(currentSettingsMenuItem));
         }
-        else if(e->key == SDLK_DOWN)
+        else if(e->key == SDLK_RETURN)
         {
-            Renderer::ResetTimer();
-            currentSettingsMenuItem = (currentSettingsMenuItem + 1) % settings.size();
+            settings[currentSettingsMenuItem]->Select();
         }
-        else if(e->key == SDLK_RETURN || e->key == SDLK_RIGHT)
+        else if(e->key == SDLK_RIGHT)
         {
             settings[currentSettingsMenuItem]->ToggleUp();
         }
@@ -80,28 +241,85 @@ void Menu::SettingsMenuResponder(SDL_Event *e)
         {
             settings[currentSettingsMenuItem]->ToggleDown();
         }
+        
         break;
     }
 }
 
-void DrawSetting(bool selected, std::string_view name, std::string_view value, int &y, bool start, bool end, int width1 = 26, int width2 = 51)
+void DrawSetting(bool selected, std::string_view name, std::string_view value, int &y, bool start, bool end, bool hasValue, bool prevHasValue, int width1, int width2)
 {
     int fullWidth = (width1 + width2) - 1;
-    int x = ((80 - fullWidth) / 2);
+    //int x = ((80 - fullWidth) / 2);
+    int x = 3;
     
     if(start)
     {
-        Menu::DrawHalfLine(x, y - 1, width1 - 1, BorderTop[0], BorderTop[1], 0);
-        Menu::DrawLine(x + (width1 - 1), y - 1, width2, BorderTopEnd[0], BorderTopEnd[1], BorderTopEnd[2], 0);
+        if(hasValue)
+        {
+            // ┌─────
+            //       ┬────────────┐
+            // ┌─────┬────────────┐
+            Menu::DrawHalfLine(x, y - 1, width1 - 1, BorderTop[0], BorderTop[1], 0);
+            Menu::DrawLine(x + (width1 - 1), y - 1, width2, BorderTopEnd[0], BorderTopEnd[1], BorderTopEnd[2], 0);
+        }
+        else
+        {
+            // ┌──────────────────┐
+            Menu::DrawLine(x, y - 1, fullWidth, BorderTop[0], BorderTop[1], BorderTop[2], 0);
+        }
     }
     else
     {
-        Menu::DrawHalfLine(x, y - 1, width1 - 1, BorderSep[0], BorderSep[1], 0);
-        Menu::DrawLine(x + (width1 - 1), y - 1, width2, BorderSepEnd[0], BorderSepEnd[1], BorderSepEnd[2], 0);
+        if(hasValue)
+        {
+            if(prevHasValue)
+            {
+                // ├─────
+                //       ┼────────────┤
+                // ├─────┼────────────┤
+                Menu::DrawHalfLine(x, y - 1, width1 - 1, BorderSep[0], BorderSep[1], 0);
+                Menu::DrawLine(x + (width1 - 1), y - 1, width2, BorderSepEnd[0], BorderSepEnd[1], BorderSepEnd[2], 0);
+            }
+            else
+            {
+                // ├─────
+                //       ┬────────────┤
+                // ├─────┬────────────┤
+                Menu::DrawHalfLine(x, y - 1, width1 - 1, BorderSep[0], BorderSep[1], 0);
+                Menu::DrawLine(x + (width1 - 1), y - 1, width2, BorderTopEnd[0], BorderSepEnd[1], BorderSepEnd[2], 0);
+            }
+        }
+        else
+        {
+            if(prevHasValue)
+            {
+                // ├─────
+                //       ┴────────────┤
+                // ├─────┴────────────┤
+                Menu::DrawHalfLine(x, y - 1, width1 - 1, BorderSep[0], BorderSep[1], 0);
+                Menu::DrawLine(x + (width1 - 1), y - 1, width2, BorderBottomEnd[0], BorderSepEnd[1], BorderSepEnd[2], 0);
+            }
+            else
+            {
+                // ├──────────────────┤
+                Menu::DrawLine(x, y - 1, fullWidth, BorderSep[0], BorderSep[1], BorderSep[2], 0);
+            }
+        }
     }
     
-    Menu::DrawHalfLine(x, y, width1 - 1, BorderMid[0], BorderMid[1], 0);
-    Menu::DrawLine(x + (width1 - 1), y, width2, BorderMid[0], BorderMid[1], BorderMid[2], 0);
+    if(hasValue)
+    {
+        // │     
+        //       │            │
+        // │     │            │
+        Menu::DrawHalfLine(x, y, width1 - 1, BorderMid[0], BorderMid[1], 0);
+        Menu::DrawLine(x + (width1 - 1), y, width2, BorderMid[0], BorderMid[1], BorderMid[2], 0);
+    }
+    else
+    {
+        // │                  │
+        Menu::DrawLine(x, y, fullWidth, BorderMid[0], BorderMid[1], BorderMid[2], 0);
+    }
     
     int name_x = x + 4;
     int value_x = x + width1 + 2;
@@ -120,20 +338,40 @@ void DrawSetting(bool selected, std::string_view name, std::string_view value, i
     
     if(end)
     {
-        Menu::DrawHalfLine(x, y + 1, width1 - 1, BorderBottom[0], BorderBottom[1], 0);
-        Menu::DrawLine(x + (width1 - 1), y + 1, width2, BorderBottomEnd[0], BorderBottomEnd[1], BorderBottomEnd[2], 0);
+        if(hasValue)
+        {
+            // └─────
+            //       ┴────────────┘
+            // └─────┴────────────┘
+            Menu::DrawHalfLine(x, y + 1, width1 - 1, BorderBottom[0], BorderBottom[1], 0);
+            Menu::DrawLine(x + (width1 - 1), y + 1, width2, BorderBottomEnd[0], BorderBottomEnd[1], BorderBottomEnd[2], 0);
+        }
+        else
+        {
+            // └──────────────────┘
+            Menu::DrawLine(x, y + 1, fullWidth, BorderBottom[0], BorderBottom[1], BorderBottom[2], 0);
+            
+        }
     }
     
     y += 2;
 }
 
-void DrawSettings(unsigned selection, const std::vector<SettingItem*> &settings, int width1 = 16, int width2 = 61)
+void DrawSettings(unsigned selection, const std::vector<SettingItem*> &settings, size_t start, size_t maxDraw, int width1, int width2)
 {
-    unsigned last = settings.size() - 1;
+    //size_t last = settings.size() - 1;
     int y = 9;
-    for(unsigned i = 0; i < settings.size(); i++)
+    bool prevHasValue = false;
+    
+    int end = std::min(settings.size(), start + maxDraw);
+    
+    size_t last = end - 1;
+    
+    for(size_t i = start; i < end; i++)
     {
-        DrawSetting(i == selection, settings[i]->getName(), settings[i]->getValue(), y, i == 0, i == last);
+        DrawSetting(i == selection, settings[i]->getName(), settings[i]->getValue(), y, i == start, i == last, settings[i]->hasValue(), prevHasValue, width1, width2);
+        
+        prevHasValue = settings[i]->hasValue();
     }
 }
 
@@ -161,236 +399,33 @@ struct : SettingItem
     virtual void ToggleDown() override { Renderer::CycleVSyncDown(); }
 } VSyncSetting;
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "Compress Saves"; }
-    virtual std::string getValue() const override { return (Config::getStringOr("CompressSaves", "yes") == "yes") ? "Yes" : "No"; }
-    virtual void ToggleUp() override
-    {
-        if(Config::getStringOr("CompressSaves", "yes") == "yes")
-        {
-            Config::setString("CompressSaves", "no");
-        }
-        else
-        {
-            Config::setString("CompressSaves", "yes");
-        }
-    }
-    virtual void ToggleDown() override { ToggleUp(); }
-} CompressSavesSetting;
+SettingItemYesNo CompressSavesSetting("Compress Saves", "CompressSaves", [](bool){}, DefaultCompressSaves);
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "Global Volume"; }
-    virtual std::string getValue() const override { return std::to_string(Config::getIntOr("Volume", DefaultGlobalVolume)); }
-    
-    virtual void ToggleUp() override
-    {
-        Config::setInt("Volume", std::clamp<int>(Config::getIntOr("Volume", DefaultGlobalVolume) + 10, 0, 100));
-        Mix_MasterVolume(GetSoundVolume());
-        Mix_VolumeMusic(GetMusicVolume());
-    }
-    
-    virtual void ToggleDown() override
-    {
-        Config::setInt("Volume", std::clamp<int>(Config::getIntOr("Volume", DefaultGlobalVolume) - 10, 0, 100));
-        Mix_MasterVolume(GetSoundVolume());
-        Mix_VolumeMusic(GetMusicVolume());
-    }
-} VolumeSetting;
+SettingItemSlider VolumeSetting("Global Volume", "Volume", [](int){Mix_MasterVolume(GetSoundVolume()); Mix_VolumeMusic(GetMusicVolume());}, DefaultGlobalVolume, 0, 100, 10);
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "Sound Volume"; }
-    virtual std::string getValue() const override { return std::to_string(Config::getIntOr("VolumeSound", DefaultSoundVolume)); }
-    
-    virtual void ToggleUp() override
-    {
-        Config::setInt("VolumeSound", std::clamp<int>(Config::getIntOr("VolumeSound", DefaultSoundVolume) + 10, 0, 100));
-        Mix_MasterVolume(GetSoundVolume());
-    }
-    
-    virtual void ToggleDown() override
-    {
-        Config::setInt("VolumeSound", std::clamp<int>(Config::getIntOr("VolumeSound", DefaultSoundVolume) - 10, 0, 100));
-        Mix_MasterVolume(GetSoundVolume());
-    }
-} VolumeSoundSetting;
+SettingItemSlider VolumeSoundSetting("Sound Volume", "VolumeSound", [](int){Mix_MasterVolume(GetSoundVolume());}, DefaultSoundVolume, 0, 100, 10);
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "Music Volume"; }
-    virtual std::string getValue() const override { return std::to_string(Config::getIntOr("VolumeMusic", DefaultMusicVolume)); }
-    
-    virtual void ToggleUp() override
-    {
-        Config::setInt("VolumeMusic", std::clamp<int>(Config::getIntOr("VolumeMusic", DefaultMusicVolume) + 10, 0, 100));
-        Mix_VolumeMusic(GetMusicVolume());
-    }
-    
-    virtual void ToggleDown() override
-    {
-        Config::setInt("VolumeMusic", std::clamp<int>(Config::getIntOr("VolumeMusic", DefaultMusicVolume) - 10, 0, 100));
-        Mix_VolumeMusic(GetMusicVolume());
-    }
-} VolumeMusicSetting;
+SettingItemSlider VolumeMusicSetting("Music Volume", "VolumeMusic", [](int){Mix_VolumeMusic(GetMusicVolume());}, DefaultMusicVolume, 0, 100, 10);
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "Music"; }
-    virtual std::string getValue() const override { return Config::getIntOr("MuteMusic", 0) ? "No" : "Yes"; }
-    
-    virtual void ToggleUp() override
-    {
-        Config::setInt("MuteMusic", !Config::getIntOr("MuteMusic", 0));
-        Mix_VolumeMusic(GetMusicVolume());
-    }
-    
-    virtual void ToggleDown() override
-    {
-        Config::setInt("MuteMusic", !Config::getIntOr("MuteMusic", 0));
-        Mix_VolumeMusic(GetMusicVolume());
-    }
-} MusicMuteSetting;
+SettingItemYesNo MusicMuteSetting("Music", "MuteMusic", [](bool){Mix_VolumeMusic(GetMusicVolume());}, DefaultMuteMusic, true);
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "Bloom Strength"; }
-    virtual std::string getValue() const override { return std::to_string(Config::getIntOr("BloomStrength", DefaultBloomStrength)); }
-    
-    virtual void ToggleUp() override
-    {
-        Config::setInt("BloomStrength", std::clamp<int>(Config::getIntOr("BloomStrength", DefaultBloomStrength) + 10, 0, 100));
-        Renderer::UpdateBloomStrength();
-    }
-    
-    virtual void ToggleDown() override
-    {
-        Config::setInt("BloomStrength", std::clamp<int>(Config::getIntOr("BloomStrength", DefaultBloomStrength) - 10, 0, 100));
-        Renderer::UpdateBloomStrength();
-    }
-} BloomStrengthSetting;
+SettingItemSlider BloomStrengthSetting("Bloom Strength", "BloomStrength", [](int){Renderer::UpdateBloomStrength();}, DefaultBloomStrength, 0, 100, 10);
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "CRT Curve"; }
-    virtual std::string getValue() const override { return std::to_string(Config::getIntOr("CrtCurve", DefaultCrtCurve)); }
-    
-    virtual void ToggleUp() override
-    {
-        Config::setInt("CrtCurve", std::clamp<int>(Config::getIntOr("CrtCurve", DefaultCrtCurve) + 25, 0, 300));
-        Renderer::UpdateCrt();
-    }
-    
-    virtual void ToggleDown() override
-    {
-        Config::setInt("CrtCurve", std::clamp<int>(Config::getIntOr("CrtCurve", DefaultCrtCurve) - 25, 0, 300));
-        Renderer::UpdateCrt();
-    }
-} CrtCurveSetting;
+SettingItemSlider CrtCurveSetting("CRT Curve", "CrtCurve", [](int){Renderer::UpdateCrt();}, DefaultCrtCurve, 0, 300, 25);
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "Phosphor Effect"; }
-    virtual std::string getValue() const override { return Config::getIntOr("PhosphorEnabled", 1) ? "Yes" : "No"; }
-    
-    virtual void ToggleUp() override
-    {
-        bool yes = !Config::getIntOr("PhosphorEnabled", 1);
-        Config::setInt("PhosphorEnabled", yes);
-        Renderer::PhosphorEnabled(yes);
-    }
-    
-    virtual void ToggleDown() override
-    {
-        bool yes = !Config::getIntOr("PhosphorEnabled", 1);
-        Config::setInt("PhosphorEnabled", yes);
-        Renderer::PhosphorEnabled(yes);
-    }
-} PhosphorEnabledSetting;
+SettingItemYesNo PhosphorEnabledSetting("Phosphor Effect", "PhosphorEnabled", [](bool yes){Renderer::PhosphorEnabled(yes);}, DefaultPhosphorEnabled);
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "Scanlines Effect"; }
-    virtual std::string getValue() const override { return Config::getIntOr("CrtScanlinesEnabled", 1) ? "Yes" : "No"; }
-    
-    virtual void ToggleUp() override
-    {
-        bool yes = !Config::getIntOr("CrtScanlinesEnabled", 1);
-        Config::setInt("CrtScanlinesEnabled", yes);
-        Renderer::UpdateCrt();
-    }
-    
-    virtual void ToggleDown() override
-    {
-        bool yes = !Config::getIntOr("CrtScanlinesEnabled", 1);
-        Config::setInt("CrtScanlinesEnabled", yes);
-        Renderer::UpdateCrt();
-    }
-} CrtScanlinesEnabledSetting;
+SettingItemYesNo CrtScanlinesEnabledSetting("Scanlines Effect", "CrtScanlinesEnabled", [](bool){Renderer::UpdateCrt();}, DefaultCrtScanlinesEnabled);
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "Chromatic Aberration"; }
-    virtual std::string getValue() const override { return Config::getIntOr("CrtCAEnabled", 1) ? "Yes" : "No"; }
-    
-    virtual void ToggleUp() override
-    {
-        bool yes = !Config::getIntOr("CrtCAEnabled", 1);
-        Config::setInt("CrtCAEnabled", yes);
-        Renderer::UpdateCrt();
-    }
-    
-    virtual void ToggleDown() override
-    {
-        bool yes = !Config::getIntOr("CrtCAEnabled", 1);
-        Config::setInt("CrtCAEnabled", yes);
-        Renderer::UpdateCrt();
-    }
-} CrtCAEnabledSetting;
+SettingItemYesNo CrtCAEnabledSetting("Chromatic Aberration", "CrtCAEnabled", [](bool){Renderer::UpdateCrt();}, DefaultCrtCAEnabled);
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "Vignette Effect"; }
-    virtual std::string getValue() const override { return Config::getIntOr("CrtVignetteEnabled", 0) ? "Yes" : "No"; }
-    
-    virtual void ToggleUp() override
-    {
-        bool yes = !Config::getIntOr("CrtVignetteEnabled", 0);
-        Config::setInt("CrtVignetteEnabled", yes);
-        Renderer::UpdateCrt();
-    }
-    
-    virtual void ToggleDown() override
-    {
-        bool yes = !Config::getIntOr("CrtVignetteEnabled", 0);
-        Config::setInt("CrtVignetteEnabled", yes);
-        Renderer::UpdateCrt();
-    }
-} CrtVignetteEnabledSetting;
+SettingItemYesNo CrtVignetteEnabledSetting("Vignette Effect", "CrtVignetteEnabled", [](bool){Renderer::UpdateCrt();}, DefaultCrtVignetteEnabled);
 
-struct : SettingItem
-{
-    virtual std::string_view getName() const override { return "Show Path in Prompt"; }
-    virtual std::string getValue() const override { return Config::getIntOr("CommandLineDrawPath", 1) ? "Yes" : "No"; }
-    
-    virtual void ToggleUp() override
-    {
-        bool yes = !Config::getIntOr("CommandLineDrawPath", 1);
-        Config::setInt("CommandLineDrawPath", yes);
-        Game::CommandLineDrawPath = yes;
-    }
-    
-    virtual void ToggleDown() override
-    {
-        bool yes = !Config::getIntOr("CommandLineDrawPath", 1);
-        Config::setInt("CommandLineDrawPath", yes);
-        Game::CommandLineDrawPath = yes;
-    }
-} CommandLineDrawPathSetting;
+SettingItemYesNo CommandLineDrawPathSetting("Show Path in Prompt", "CommandLineDrawPath", [](bool yes){Game::CommandLineDrawPath = yes;}, DefaultCommandLineDrawPath);
 
+//SettingButton ButtonTestSetting("Test Button Long String Test Test Test", [](){});
 
-std::vector<SettingItem*> settings
+std::vector<SettingItem*> mainSettings
 {
     &FontSetting,
     &ColorSetting,
@@ -409,10 +444,14 @@ std::vector<SettingItem*> settings
     &CrtVignetteEnabledSetting,
 };
 
-int maxSettings = 15;
-
 void Menu::DrawSettingsMenu()
 {
+    if(currentSettings.size() == 0) return;
+    
+    int &currentSettingsMenuItem = currentItem.back();
+    int &currentSettingsMenuScroll = currentScroll.back();
+    std::vector<SettingItem*> &settings = *currentSettings.back();
+    
     Renderer::CurrentBuffer = &Renderer::MenuText;
     
     Renderer::MenuText.DrawClear();
@@ -421,7 +460,37 @@ void Menu::DrawSettingsMenu()
     
     Renderer::MenuText.DrawText(16, 1, TitleSettings);
     
-    Renderer::MenuText.DrawLineText(2, 8, SettingsTop);
+    bool scroll = (settings.size() > maxSettings);
     
-    DrawSettings(currentSettingsMenuItem, settings);
+    int width2 = scroll ? SettingsColumn2Width - 3 : SettingsColumn2Width;
+    
+    DrawSettings(currentSettingsMenuItem, settings, currentSettingsMenuScroll, maxSettings, SettingsColumn1Width, width2);
+    
+    if(scroll)
+    {
+        DrawBorderSingle(0, 76, 8, 3, 31);
+        //24, arrow up
+        if(currentSettingsMenuScroll > 0) Renderer::CurrentBuffer->DrawChar(77, 8, 24, 0);
+        //25, arrow down
+        if(currentSettingsMenuScroll < (settings.size() - maxSettings)) Renderer::CurrentBuffer->DrawChar(77, 38, 25, 0);
+        
+        int startList = 0;
+        int endList = settings.size();
+        int startView = currentSettingsMenuScroll;
+        int endView = currentSettingsMenuScroll + maxSettings;
+        
+        int barSize = 29;
+        double barPos = double(currentSettingsMenuScroll) / settings.size();
+        double barPercent = double(maxSettings) / settings.size();
+        
+        int indicatorPos = std::max(9, int(barSize * barPos) + 9);
+        int indicatorSize = std::min(int(barSize * barPercent), 28);
+        int indicatorEnd = std::min(indicatorPos + indicatorSize, 37);
+        
+        //219, filled
+        for(int y = indicatorPos; y <= indicatorEnd; y++)
+        {
+            Renderer::CurrentBuffer->DrawChar(77, y, 219, 0);
+        }
+    }
 }

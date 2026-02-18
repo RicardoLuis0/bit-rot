@@ -85,7 +85,7 @@ void SaveData::Quit()
 {
     if(save_ok)
     {
-        if(Config::getStringOr("CompressSaves", "yes") == "yes")
+        if(Config::getBoolOr("CompressSaves", DefaultCompressSaves))
         {
             Util::WriteFileBinary(saveFileCompressed, Util::Compress(saveData.to_json_min()));
         }

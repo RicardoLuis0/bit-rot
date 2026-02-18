@@ -5,8 +5,22 @@
 
 #include "Common.h"
 
+constexpr bool DefaultCompressSaves = true;
+constexpr int DefaultGlobalVolume = 50;
+constexpr int DefaultBloomStrength = 100;
+constexpr int DefaultCrtCurve = 100;
+constexpr int DefaultSoundVolume = 100;
+constexpr int DefaultMusicVolume = 100;
+constexpr bool DefaultMuteMusic = false;
+constexpr bool DefaultPhosphorEnabled = true;
+constexpr bool DefaultCrtScanlinesEnabled = true;
+constexpr bool DefaultCrtCAEnabled = true;
+constexpr bool DefaultCrtVignetteEnabled = false;
+constexpr bool DefaultCommandLineDrawPath = true;
+
 namespace Config
 {
+    
     void Init();
     void Quit();
     
@@ -27,11 +41,15 @@ namespace Config
     
     int64_t getIntOr(const std::string &key, int64_t alternative);
     
+    bool getBoolOr(const std::string &key, bool alternative);
+    
     std::string_view setString(const std::string &key, std::string_view newValue);
     
     std::string_view setScriptString(const std::string &key, std::string_view newValue);
     
     int64_t setInt(const std::string &key, int64_t newValue);
+    
+    bool setBool(const std::string &key, bool newValue);
     
     template<typename T, Util::ContainerComparableTo<std::string> C>
     T getEnumOr(const std::string &key, C &&values, T alternative)

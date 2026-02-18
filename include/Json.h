@@ -49,10 +49,10 @@ namespace JSON {
         return json_except_format("",expected,is);
     }
     
-    class JSON_Exception : public std::runtime_error {
+    class JSON_Exception : public TracedError {
     public:
         std::string msg_top;
-        JSON_Exception(const std::string &s):runtime_error("JSON: "+s),msg_top(s){}
+        JSON_Exception(const std::string &s):TracedError("JSON: "+s),msg_top(s){}
         
         JSON_Exception(const std::string &pre,const std::string &expected,const std::string &is):
             JSON_Exception(json_except_format(pre,expected,is)){}

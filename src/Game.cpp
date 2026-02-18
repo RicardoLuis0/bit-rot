@@ -33,7 +33,7 @@ void Game::Init()
     LoadData();
     LoadIntro();
     
-    CommandLineDrawPath = Config::getIntOr("CommandLineDrawPath", 1);
+    CommandLineDrawPath = Config::getBoolOr("CommandLineDrawPath", DefaultCommandLineDrawPath);
 }
 
 std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string path, bool allow_hidden)
