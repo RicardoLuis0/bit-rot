@@ -22,6 +22,7 @@ struct SettingItem
     virtual void ToggleUp() = 0;
     virtual void ToggleDown() = 0;
     virtual bool hasValue() { return true; }
+    virtual bool isSeparator() { return false; }
 };
 
 struct SettingButton : SettingItem
@@ -54,6 +55,32 @@ struct SettingButton : SettingItem
     virtual void ToggleDown() {};
     
     virtual bool hasValue() { return false; }
+};
+
+
+struct SettingSeparator : SettingItem
+{
+    std::string name;
+    
+    SettingSeparator(const std::string &_name)
+    : name(_name)
+    {}
+    
+    virtual std::string_view getName() const override
+    {
+        return name;
+    }
+    
+    virtual std::string getValue() const override
+    {
+        return "";
+    }
+    
+    virtual void ToggleUp() {};
+    virtual void ToggleDown() {};
+    
+    virtual bool hasValue() { return false; }
+    virtual bool isSeparator() { return true; }
 };
 
 struct SettingItemYesNo : SettingItem
@@ -176,17 +203,17 @@ std::vector<std::vector<SettingItem*>*> currentSettings;
 std::vector<int> currentItem;
 std::vector<int> currentScroll;
 
-int maxSettings = 15;
+size_t maxSettings = 15;
 
-constexpr int SettingsColumn1Width = 26;
-constexpr int SettingsColumn2Width = 51;
+constexpr int SettingsColumn1Width = 28;
+constexpr int SettingsColumn2Width = 49;
 
 void Menu::SettingsMenuResponder(SDL_Event *e)
 {
     if(currentSettings.size() == 0)
     {
         currentSettings.push_back(&mainSettings);
-        currentItem.push_back(0);
+        currentItem.push_back(1);
         currentScroll.push_back(0);
     }
     
@@ -202,9 +229,15 @@ void Menu::SettingsMenuResponder(SDL_Event *e)
             if(currentSettings.size() <= 1)
             {
                 currentScreen = InGame ? 2 : 0; // 2 = pause menu, 0 = main menu
+                
+                Renderer::ResetTimer();
+                currentItem.pop_back();
+                currentSettings.pop_back();
+                currentScroll.pop_back();
             }
             else
             {
+                Renderer::ResetTimer();
                 currentItem.pop_back();
                 currentSettings.pop_back();
                 currentScroll.pop_back();
@@ -215,17 +248,25 @@ void Menu::SettingsMenuResponder(SDL_Event *e)
             if(e->key == SDLK_UP)
             {
                 Renderer::ResetTimer();
-                currentSettingsMenuItem--;
-                if(currentSettingsMenuItem < 0) currentSettingsMenuItem = (settings.size() - 1);
+                do
+                {
+                    currentSettingsMenuItem--;
+                    if(currentSettingsMenuItem < 0) currentSettingsMenuItem = (settings.size() - 1);
+                }
+                while(settings[currentSettingsMenuItem]->isSeparator());
             }
             else if(e->key == SDLK_DOWN)
             {
                 Renderer::ResetTimer();
-                currentSettingsMenuItem = (currentSettingsMenuItem + 1) % settings.size();
+                do
+                {
+                    currentSettingsMenuItem = (currentSettingsMenuItem + 1) % settings.size();
+                }
+                while(settings[currentSettingsMenuItem]->isSeparator());
             }
             
             if(currentSettingsMenuScroll > (currentSettingsMenuItem - 2)) currentSettingsMenuScroll = std::max(0, currentSettingsMenuItem - 2);
-            if((currentSettingsMenuScroll + (maxSettings - 3)) <= currentSettingsMenuItem) currentSettingsMenuScroll = std::min<int>(currentSettingsMenuItem - (maxSettings - 3), settings.size() - maxSettings);
+            if((currentSettingsMenuScroll + int(maxSettings - 3)) <= currentSettingsMenuItem) currentSettingsMenuScroll = std::min<int>(currentSettingsMenuItem - (maxSettings - 3), settings.size() - maxSettings);
             
             LogDebug("currentSettingsMenuScroll = "+std::to_string(currentSettingsMenuScroll)+" currentSettingsMenuItem = "+std::to_string(currentSettingsMenuItem));
         }
@@ -246,15 +287,19 @@ void Menu::SettingsMenuResponder(SDL_Event *e)
     }
 }
 
-void DrawSetting(bool selected, std::string_view name, std::string_view value, int &y, bool start, bool end, bool hasValue, bool prevHasValue, int width1, int width2)
+void DrawSetting(bool selected, std::string_view name, std::string_view value, int &y, bool start, bool end, bool hasValue, bool prevHasValue, bool isSeparator, bool prevWasSeparator, int width1, int width2)
 {
     int fullWidth = (width1 + width2) - 1;
     //int x = ((80 - fullWidth) / 2);
     int x = 3;
     
-    if(start)
+    if(start || prevWasSeparator)
     {
-        if(hasValue)
+        if(isSeparator)
+        {
+            // nothing
+        }
+        else if(hasValue)
         {
             // ┌─────
             //       ┬────────────┐
@@ -266,6 +311,26 @@ void DrawSetting(bool selected, std::string_view name, std::string_view value, i
         {
             // ┌──────────────────┐
             Menu::DrawLine(x, y - 1, fullWidth, BorderTop[0], BorderTop[1], BorderTop[2], 0);
+        }
+    }
+    else if(isSeparator)
+    {
+        if(prevWasSeparator)
+        {
+            // nothing
+        }
+        if(prevHasValue)
+        {
+            // └─────
+            //       ┴────────────┘
+            // └─────┴────────────┘
+            Menu::DrawHalfLine(x, y - 1, width1 - 1, BorderBottom[0], BorderBottom[1], 0);
+            Menu::DrawLine(x + (width1 - 1), y - 1, width2, BorderBottomEnd[0], BorderBottomEnd[1], BorderBottomEnd[2], 0);
+        }
+        else
+        {
+            // └──────────────────┘
+            Menu::DrawLine(x, y - 1, fullWidth, BorderBottom[0], BorderBottom[1], BorderBottom[2], 0);
         }
     }
     else
@@ -307,7 +372,11 @@ void DrawSetting(bool selected, std::string_view name, std::string_view value, i
         }
     }
     
-    if(hasValue)
+    if(isSeparator)
+    {
+        // nothing
+    }
+    else if(hasValue)
     {
         // │     
         //       │            │
@@ -336,7 +405,7 @@ void DrawSetting(bool selected, std::string_view name, std::string_view value, i
         Renderer::MenuText.DrawLineText(value_x, y, value);
     }
     
-    if(end)
+    if(end && !isSeparator)
     {
         if(hasValue)
         {
@@ -350,7 +419,6 @@ void DrawSetting(bool selected, std::string_view name, std::string_view value, i
         {
             // └──────────────────┘
             Menu::DrawLine(x, y + 1, fullWidth, BorderBottom[0], BorderBottom[1], BorderBottom[2], 0);
-            
         }
     }
     
@@ -362,16 +430,18 @@ void DrawSettings(unsigned selection, const std::vector<SettingItem*> &settings,
     //size_t last = settings.size() - 1;
     int y = 9;
     bool prevHasValue = false;
+    bool prevWasSeparator = false;
     
-    int end = std::min(settings.size(), start + maxDraw);
+    size_t end = std::min(settings.size(), start + maxDraw);
     
     size_t last = end - 1;
     
     for(size_t i = start; i < end; i++)
     {
-        DrawSetting(i == selection, settings[i]->getName(), settings[i]->getValue(), y, i == start, i == last, settings[i]->hasValue(), prevHasValue, width1, width2);
+        DrawSetting(i == selection, settings[i]->getName(), settings[i]->getValue(), y, i == start, i == last, settings[i]->hasValue(), prevHasValue, settings[i]->isSeparator(), prevWasSeparator, width1, width2);
         
         prevHasValue = settings[i]->hasValue();
+        prevWasSeparator = settings[i]->isSeparator();
     }
 }
 
@@ -401,6 +471,9 @@ struct : SettingItem
 
 SettingItemYesNo CompressSavesSetting("Compress Saves", "CompressSaves", [](bool){}, DefaultCompressSaves);
 
+SettingSeparator SoundSettingsTitle("Sound Settings");
+SettingSeparator VolumeSettingsTitle("Volume");
+
 SettingItemSlider VolumeSetting("Global Volume", "Volume", [](int){Mix_MasterVolume(GetSoundVolume()); Mix_VolumeMusic(GetMusicVolume());}, DefaultGlobalVolume, 0, 100, 10);
 
 SettingItemSlider VolumeSoundSetting("Sound Volume", "VolumeSound", [](int){Mix_MasterVolume(GetSoundVolume());}, DefaultSoundVolume, 0, 100, 10);
@@ -408,6 +481,26 @@ SettingItemSlider VolumeSoundSetting("Sound Volume", "VolumeSound", [](int){Mix_
 SettingItemSlider VolumeMusicSetting("Music Volume", "VolumeMusic", [](int){Mix_VolumeMusic(GetMusicVolume());}, DefaultMusicVolume, 0, 100, 10);
 
 SettingItemYesNo MusicMuteSetting("Music", "MuteMusic", [](bool){Mix_VolumeMusic(GetMusicVolume());}, DefaultMuteMusic, true);
+
+std::vector<SettingItem*> soundSettings
+{
+    &VolumeSettingsTitle,
+    &VolumeSetting,
+    &VolumeSoundSetting,
+    &VolumeMusicSetting,
+};
+
+SettingButton SoundSettingsMenu("Volume", [](){
+    Renderer::ResetTimer();
+    currentSettings.push_back(&soundSettings);
+    currentItem.push_back(1);
+    currentScroll.push_back(0);
+});
+
+
+SettingSeparator MiscSettingsTitle("Misc Settings");
+
+SettingSeparator VideoSettingsTitle("Video Settings");
 
 SettingItemSlider BloomStrengthSetting("Bloom Strength", "BloomStrength", [](int){Renderer::UpdateBloomStrength();}, DefaultBloomStrength, 0, 100, 10);
 
@@ -421,27 +514,47 @@ SettingItemYesNo CrtCAEnabledSetting("Chromatic Aberration", "CrtCAEnabled", [](
 
 SettingItemYesNo CrtVignetteEnabledSetting("Vignette Effect", "CrtVignetteEnabled", [](bool){Renderer::UpdateCrt();}, DefaultCrtVignetteEnabled);
 
-SettingItemYesNo CommandLineDrawPathSetting("Show Path in Prompt", "CommandLineDrawPath", [](bool yes){Game::CommandLineDrawPath = yes;}, DefaultCommandLineDrawPath);
+SettingItemYesNo CrtPauseBlurEnabledSetting("Transparent Pause Menu", "CrtPauseBlurEnabled", [](bool){Renderer::UpdateCrt();}, DefaultCrtPauseBlurEnabled);
 
-//SettingButton ButtonTestSetting("Test Button Long String Test Test Test", [](){});
+SettingSeparator GraphicsSettingsTitle("Graphics Settings");
 
-std::vector<SettingItem*> mainSettings
+std::vector<SettingItem*> graphicsSettings
 {
-    &FontSetting,
-    &ColorSetting,
-    &CommandLineDrawPathSetting,
-    &MusicMuteSetting,
-    &VolumeSetting,
-    &VolumeSoundSetting,
-    &VolumeMusicSetting,
-    &VSyncSetting,
-    &CompressSavesSetting,
+    &GraphicsSettingsTitle,
     &BloomStrengthSetting,
     &PhosphorEnabledSetting,
     &CrtCurveSetting,
     &CrtScanlinesEnabledSetting,
     &CrtCAEnabledSetting,
     &CrtVignetteEnabledSetting,
+    &CrtPauseBlurEnabledSetting,
+};
+
+SettingButton GraphicsSettingsMenu("Graphics Settings", [](){
+    Renderer::ResetTimer();
+    currentSettings.push_back(&graphicsSettings);
+    currentItem.push_back(1);
+    currentScroll.push_back(0);
+});
+
+SettingItemYesNo CommandLineDrawPathSetting("Show Path in Prompt", "CommandLineDrawPath", [](bool yes){Game::CommandLineDrawPath = yes;}, DefaultCommandLineDrawPath);
+
+//SettingButton ButtonTestSetting("Test Button Long String Test Test Test", [](){});
+
+
+std::vector<SettingItem*> mainSettings
+{
+    &SoundSettingsTitle,
+    &MusicMuteSetting,
+    &SoundSettingsMenu,
+    &VideoSettingsTitle,
+    &FontSetting,
+    &ColorSetting,
+    &VSyncSetting,
+    &GraphicsSettingsMenu, 
+    &MiscSettingsTitle,
+    &CommandLineDrawPathSetting,
+    &CompressSavesSetting,
 };
 
 void Menu::DrawSettingsMenu()
@@ -472,12 +585,7 @@ void Menu::DrawSettingsMenu()
         //24, arrow up
         if(currentSettingsMenuScroll > 0) Renderer::CurrentBuffer->DrawChar(77, 8, 24, 0);
         //25, arrow down
-        if(currentSettingsMenuScroll < (settings.size() - maxSettings)) Renderer::CurrentBuffer->DrawChar(77, 38, 25, 0);
-        
-        int startList = 0;
-        int endList = settings.size();
-        int startView = currentSettingsMenuScroll;
-        int endView = currentSettingsMenuScroll + maxSettings;
+        if(currentSettingsMenuScroll < (int(settings.size()) - int(maxSettings))) Renderer::CurrentBuffer->DrawChar(77, 38, 25, 0);
         
         int barSize = 29;
         double barPos = double(currentSettingsMenuScroll) / settings.size();

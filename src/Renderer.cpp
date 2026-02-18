@@ -158,12 +158,16 @@ void Renderer::UpdateBloomStrength()
     bloomProgram.setFloat("bloomStrength", sqrt(Config::getIntOr("BloomStrength", DefaultBloomStrength) / 100.0) * 0.85);
 }
 
+bool DrawMenuTransparent = false;
+
 void Renderer::UpdateCrt()
 {
     crtProgram.setFloat("crtCurve", sqrt(Config::getIntOr("CrtCurve", DefaultCrtCurve) / 100.0));
     crtProgram.setInt("crtScanlines", Config::getBoolOr("CrtScanlinesEnabled", DefaultCrtScanlinesEnabled));
     crtProgram.setInt("crtCA", Config::getBoolOr("CrtCAEnabled", DefaultCrtCAEnabled));
     crtProgram.setInt("crtVignette", Config::getBoolOr("CrtVignetteEnabled", DefaultCrtVignetteEnabled));
+    
+    DrawMenuTransparent = Config::getBoolOr("CrtPauseBlurEnabled", DefaultCrtPauseBlurEnabled);
 }
 
 
@@ -572,10 +576,16 @@ void Renderer::Render()
             firstRender = false;
         }
         
-        if(DrawMenu && DrawGame)
+        if(DrawMenu && DrawGame && DrawMenuTransparent)
         {
             textDrawerMenu.setInt(useBackgroundTextureU, 1);
             textAreaGameMenu.Render(std::array {&textFrameBuffer, &textFrameBuffer2, &textFrameBuffer3, &textFrameBuffer4});
+            mainArea.Render(std::array {&frameBuffer, (GLFrameBuffer*)nullptr});
+        }
+        else if(DrawMenu)
+        {
+            textDrawerMenu.setInt(useBackgroundTextureU, 0);
+            textAreaMenu.Render(std::array {&textFrameBuffer3, &textFrameBuffer4});
             mainArea.Render(std::array {&frameBuffer, (GLFrameBuffer*)nullptr});
         }
         else if(DrawGame)
@@ -583,11 +593,9 @@ void Renderer::Render()
             textAreaGame.Render(std::array {&textFrameBuffer3, &textFrameBuffer4});
             mainArea.Render(std::array {&frameBuffer, (GLFrameBuffer*)nullptr});
         }
-        else // if(drawMenu)
+        else
         {
-            textDrawerMenu.setInt(useBackgroundTextureU, 0);
-            textAreaMenu.Render(std::array {&textFrameBuffer3, &textFrameBuffer4});
-            mainArea.Render(std::array {&frameBuffer, (GLFrameBuffer*)nullptr});
+            throw TracedError("Invalid state, neither DrawMenu nor DrawGame enabled");
         }
         
         glCheckErrors();
