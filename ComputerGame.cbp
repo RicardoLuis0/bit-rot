@@ -49,15 +49,34 @@
 			<Add option="-Wno-inline" />
 			<Add option="-fno-omit-frame-pointer" />
 			<Add option="-Wno-maybe-uninitialized" />
+			<Add option="-DGLEW_STATIC" />
 			<Add directory="include" />
 		</Compiler>
 		<Linker>
-			<Add option="-lSDL2" />
-			<Add option="-lbacktrace" />
-			<Add option="-lglew32" />
-			<Add option="-lopengl32" />
-			<Add option="-lglu32" />
-			<Add option="-lz" />
+			<Add option="-static-libstdc++" />
+			<Add option="-static-libgcc" />
+			<Add option="-static" />
+			<Add library="backtrace" />
+			<Add library="glew32" />
+			<Add library="z" />
+			<Add library="mingw32" />
+			<Add library="SDL2" />
+			<Add library="glu32" />
+			<Add library="opengl32" />
+			<Add library="m" />
+			<Add library="dinput8" />
+			<Add library="dxguid" />
+			<Add library="dxerr8" />
+			<Add library="user32" />
+			<Add library="gdi32" />
+			<Add library="winmm" />
+			<Add library="imm32" />
+			<Add library="ole32" />
+			<Add library="oleaut32" />
+			<Add library="shell32" />
+			<Add library="setupapi" />
+			<Add library="version" />
+			<Add library="uuid" />
 		</Linker>
 		<Unit filename="ComputerGame.rc">
 			<Option compilerVar="WINDRES" />
