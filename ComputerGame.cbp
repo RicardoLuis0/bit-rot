@@ -50,6 +50,7 @@
 			<Add option="-fno-omit-frame-pointer" />
 			<Add option="-Wno-maybe-uninitialized" />
 			<Add option="-DGLEW_STATIC" />
+			<Add option="-DZIP_STATIC" />
 			<Add directory="include" />
 		</Compiler>
 		<Linker>
@@ -58,6 +59,12 @@
 			<Add option="-static" />
 			<Add library="backtrace" />
 			<Add library="glew32" />
+			<Add library="zip" />
+			<Add library="advapi32" />
+			<Add library="bz2" />
+			<Add library="lzma" />
+			<Add library="zstd" />
+			<Add library="bcrypt" />
 			<Add library="z" />
 			<Add library="mingw32" />
 			<Add library="SDL2" />
@@ -78,11 +85,21 @@
 			<Add library="version" />
 			<Add library="uuid" />
 		</Linker>
+		<ExtraCommands>
+			<Add before="dozip.bat" />
+		</ExtraCommands>
 		<Unit filename="ComputerGame.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
+		<Unit filename="Fx/bloom.glsl" />
+		<Unit filename="Fx/bloom_simple.glsl" />
+		<Unit filename="Fx/blur.glsl" />
+		<Unit filename="Fx/crt.glsl" />
+		<Unit filename="Fx/phosphor.glsl" />
 		<Unit filename="Fx/text.glsl" />
 		<Unit filename="Fx/vertex.glsl" />
+		<Unit filename="GameData/data.json" />
+		<Unit filename="GameData/intro.lua" />
 		<Unit filename="include/Bitmap.h" />
 		<Unit filename="include/Command.h" />
 		<Unit filename="include/Common.h" />
@@ -92,6 +109,7 @@
 		</Unit>
 		<Unit filename="include/Font.h" />
 		<Unit filename="include/Game.h" />
+		<Unit filename="include/GameData.h" />
 		<Unit filename="include/Input.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

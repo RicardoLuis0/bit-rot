@@ -15,6 +15,7 @@
 #include "Sound.h"
 #include "SaveData.h"
 #include "SDL2Util.h"
+#include "GameData.h"
 
 #undef main
 
@@ -63,6 +64,7 @@ int doGame()
     {
         UseSubsystem(System);
         UseSubsystem(Log);
+        UseSubsystem(GameData);
         
         try
         {

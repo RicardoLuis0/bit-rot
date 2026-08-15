@@ -1,6 +1,7 @@
 #include "Renderer/GLProgram.h"
 
 #include "Common.h"
+#include "GameData.h"
 #include <map>
 #include <stdexcept>
 
@@ -100,7 +101,7 @@ namespace Renderer
         }
         else
         {
-            std::string vertexShaderSource = Util::ReadFile(vertexFilePath);
+            std::string vertexShaderSource = GameData::ReadFile(vertexFilePath);
             
             LogDebug("Vertex Shader Source Fetched from Disk ("+Util::QuoteString(vertexFilePath)+")");
             
@@ -144,7 +145,7 @@ namespace Renderer
         }
         else
         {
-            std::string fragShaderSource = Util::ReadFile(fragmentFilePath);
+            std::string fragShaderSource = GameData::ReadFile(fragmentFilePath);
             
             LogDebug("Fragment Shader Fetched from Disk ("+Util::QuoteString(fragmentFilePath)+")");
             

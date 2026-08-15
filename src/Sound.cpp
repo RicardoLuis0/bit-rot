@@ -1,5 +1,6 @@
 #include "Sound.h"
 #include "Common.h"
+#include "GameData.h"
 
 #include "SDL2Util.h"
 #include "SDL_mixer.h"
@@ -10,6 +11,9 @@
 
 std::vector<Mix_Music *> loaded_music;
 std::vector<Mix_Chunk *> loaded_sfx;
+
+std::vector<std::vector<std::byte>> loaded_music_data;
+std::vector<std::vector<std::byte>> loaded_sfx_data;
 
 std::map<std::string, int> music_names;
 std::map<std::string, int> sfx_names;
@@ -33,6 +37,41 @@ static void chanDone(int chan, int interrupted)
     }
 }
 
+void LoadFile(std::string filepath)
+{
+    std::filesystem::path path(filepath);
+    std::string extension = Util::StrToLower(path.extension().string());
+    if(extension == ".ogg")
+    {
+        std::string name = Util::StrToLower(path.stem().string());
+        if(music_names.find(name) != music_names.end()) return;
+        
+        LogDebug("Loading Music "+Util::QuoteString(name)+" From File: "+Util::QuoteString(path.string()));
+        
+        int dataindex = loaded_music_data.size();
+        
+        loaded_music_data.push_back(GameData::ReadFileBinary(filepath));
+        
+        Mix_Music * mus = Mix_LoadMUS_RW(SDL_RWFromMem(loaded_music_data[dataindex].data(), loaded_music_data[dataindex].size()), 1);
+        music_names.insert({name, loaded_music.size()});
+        loaded_music.push_back(mus);
+    }
+    else if(extension == ".wav")
+    {
+        std::string name = Util::StrToLower(path.stem().string());
+        if(sfx_names.find(name) != sfx_names.end()) return;
+        
+        LogDebug("Loading Sample "+Util::QuoteString(name)+" From File: "+Util::QuoteString(path.string()));
+        
+        int dataindex = loaded_sfx_data.size();
+        
+        loaded_sfx_data.push_back(GameData::ReadFileBinary(filepath));
+        
+        Mix_Chunk * sfx = Mix_LoadWAV_RW(SDL_RWFromMem(loaded_sfx_data[dataindex].data(), loaded_sfx_data[dataindex].size()), 1);
+        sfx_names.insert({name, loaded_sfx.size()});
+        loaded_sfx.push_back(sfx);
+    }
+}
 
 void Sound::Init()
 {
@@ -51,32 +90,33 @@ void Sound::Init()
         throw FatalError(errMsg());
     }
     
-    auto it = std::filesystem::recursive_directory_iterator("Data");
-    
-    for(const std::filesystem::directory_entry &entry : it)
+    try
     {
-        if(entry.is_regular_file())
+        auto it = std::filesystem::recursive_directory_iterator("Data");
+        
+        for(const std::filesystem::directory_entry &entry : it)
         {
-            std::string extension = Util::StrToLower(entry.path().extension().string());
-            if(extension == ".ogg")
+            try
             {
-                std::string filepath = entry.path().string();
-                std::string name = Util::StrToLower(entry.path().stem().string());
-                LogDebug("Loading Music "+Util::QuoteString(name)+" From File: "+Util::QuoteString(entry.path().string()));
-                Mix_Music * mus = Mix_LoadMUS(filepath.c_str());
-                music_names.insert({name, loaded_music.size()});
-                loaded_music.push_back(mus);
+                if(entry.is_regular_file())
+                {
+                    LoadFile(entry.path().string());
+                }
             }
-            else if(extension == ".wav")
+            catch(std::filesystem::filesystem_error&)
             {
-                std::string filepath = entry.path().string();
-                std::string name = Util::StrToLower(entry.path().stem().string());
-                LogDebug("Loading Sample "+Util::QuoteString(name)+" From File: "+Util::QuoteString(entry.path().string()));
-                Mix_Chunk * sfx = Mix_LoadWAV(filepath.c_str());
-                sfx_names.insert({name, loaded_sfx.size()});
-                loaded_sfx.push_back(sfx);
             }
         }
+    }
+    catch(std::filesystem::filesystem_error&)
+    {
+    }
+    
+    auto builtin_audio = Util::Filter(GameData::ListEmbeddedFiles(), [](const std::string &f){return f.starts_with("Data/");});
+    
+    for(auto &f : builtin_audio)
+    {
+        LoadFile(f);
     }
     
     Mix_ChannelFinished(chanDone);

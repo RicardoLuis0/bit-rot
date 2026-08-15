@@ -296,7 +296,7 @@ namespace Util
         */
     
     template<typename T>
-    std::vector<uint32_t> ReadBitmap(const std::string &filename, const std::vector<std::byte> &rawData, const bitmap_header_t * file_header, const T * header, uint32_t &width, uint32_t &height)
+    std::vector<uint32_t> ReadBitmapInternal(const std::string &filename, const std::vector<std::byte> &rawData, const bitmap_header_t * file_header, const T * header, uint32_t &width, uint32_t &height)
     {
         if constexpr(!std::is_same_v<T, bitmap_header_v0_t>)
         {
@@ -347,11 +347,16 @@ namespace Util
             {\
                 throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : EOF");\
             }\
-            return ReadBitmap(filename, rawData, hdr, &hdr->v##ver, width, height);
+            return ReadBitmapInternal(filename, rawData, hdr, &hdr->v##ver, width, height);
     
     std::vector<uint32_t> ReadFileBitmap(const std::string &filename, uint32_t &width, uint32_t &height)
     {
         std::vector<std::byte> rawData = ReadFileBinary(filename);
+        return ReadBitmap(filename, rawData, width, height);
+    }
+    
+    std::vector<uint32_t> ReadBitmap(const std::string &filename, const std::vector<std::byte> &rawData, uint32_t &width, uint32_t &height)
+    {
         if(rawData.size() < (sizeof(bitmap_file_header_t) + 4))
         {
             throw FatalError("Failed to open bitmap "+Util::QuoteString(filename)+" : EOF");

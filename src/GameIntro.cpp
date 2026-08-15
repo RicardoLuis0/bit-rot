@@ -6,6 +6,7 @@
 #include "SDL2Util.h"
 #include "Menu.h"
 #include "SaveData.h"
+#include "GameData.h"
 
 #include "Scripting/Lua/lua.h"
 #include "Scripting/Lua/lualib.h"
@@ -46,7 +47,8 @@ void Game::LoadIntro()
     {
         IntroVM = luaL_newstate();
         luaL_openlibs(IntroVM);
-        if(luaL_loadfile(IntroVM, "GameData/intro.lua") != LUA_OK)
+        std::string script = GameData::ReadFile("GameData/intro.lua");
+        if(luaL_loadbuffer(IntroVM, script.c_str(), script.length(), "GameData/intro.lua") != LUA_OK)
         {
             throw std::runtime_error(lua_tostring(IntroVM, -1));
         }

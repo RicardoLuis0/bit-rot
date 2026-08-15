@@ -5,6 +5,238 @@
 #include "Renderer.h"
 #include "SDL2Util.h"
 #include "Command.h"
+#include "GameData.h"
+#include <memory>
+#include <filesystem>
+
+
+#ifdef _WIN32
+#include "zip.h"
+
+unsigned char gamedatazip[]
+{
+    #embed "../gamedata.zip"
+};
+#endif
+
+
+constexpr const char * fontInfoFile = "Fonts/FontInfo.json";
+
+std::string fontInfo;
+std::map<std::string, std::unique_ptr<GameData::ImageData>> font_files;
+
+
+#ifdef _WIN32
+zip_source_t * zip_source;
+zip_t * zip_archive;
+
+bool zip_file_exists(std::string filename)
+{
+    return zip_name_locate(zip_archive, filename.c_str(), ZIP_FL_NOCASE) >= 0;
+}
+
+std::string read_zip_file(std::string filename)
+{
+    zip_stat_t stat;
+    zip_stat_init(&stat);
+    if(zip_stat(zip_archive, filename.c_str(), ZIP_FL_NOCASE, &stat) != 0)
+    {
+        throw FatalError(std::string("failed to stat ")+filename+" in embedded resources: "+zip_strerror(zip_archive));
+    }
+    else if(!(stat.valid&ZIP_STAT_SIZE))
+    {
+        throw FatalError(std::string("size not available for ")+filename+" in embedded resources");
+    }
+    else
+    {
+        zip_file_t * f = zip_fopen_index(zip_archive, stat.index, 0);
+        if(f)
+        {
+            std::string r;
+            r.resize(stat.size);
+            zip_fread(f, r.data(), stat.size);
+            zip_fclose(f);
+            return r;
+        }
+        else
+        {
+            throw FatalError(std::string("failed to open ")+filename+" in embedded resources: "+zip_strerror(zip_archive));
+        }
+    }
+}
+
+std::vector<std::byte> read_zip_file_binary(std::string filename)
+{
+    zip_stat_t stat;
+    zip_stat_init(&stat);
+    if(zip_stat(zip_archive, filename.c_str(), ZIP_FL_NOCASE, &stat) != 0)
+    {
+        throw FatalError(std::string("failed to stat ")+filename+" in embedded resources: "+zip_strerror(zip_archive));
+    }
+    else if(!(stat.valid&ZIP_STAT_SIZE))
+    {
+        throw FatalError(std::string("size not available for ")+filename+" in embedded resources");
+    }
+    else
+    {
+        zip_file_t * f = zip_fopen_index(zip_archive, stat.index, 0);
+        if(f)
+        {
+            std::vector<std::byte> r;
+            r.resize(stat.size);
+            zip_fread(f, r.data(), stat.size);
+            zip_fclose(f);
+            return r;
+        }
+        else
+        {
+            throw FatalError(std::string("failed to open ")+filename+" in embedded resources: "+zip_strerror(zip_archive));
+        }
+    }
+}
+
+void open_zip_file()
+{
+    zip_error_t err;
+    zip_error_init(&err);
+    
+    zip_source=zip_source_buffer_create(gamedatazip, sizeof(gamedatazip), 0, &err);
+    
+    if(!zip_source)
+    {
+        throw FatalError(std::string("Failed to open embedded resources: ")+zip_error_strerror(&err));
+    }
+    
+    zip_archive = zip_open_from_source(zip_source, ZIP_RDONLY, &err);
+    
+    if(!zip_archive)
+    {
+        throw FatalError(std::string("Failed to open embedded resources: ")+zip_error_strerror(&err));
+    }
+}
+
+std::vector<std::string> GameData::ListEmbeddedFiles()
+{
+    std::vector<std::string> tmp;
+    int n = zip_get_num_entries(zip_archive, 0);
+    for(int i = 0; i < n; i++)
+    {
+        zip_stat_t stat;
+        zip_stat_init(&stat);
+        if(zip_stat_index(zip_archive, i, 0, &stat) != 0)
+        {
+            throw FatalError("failed to stat index "+std::to_string(i)+" in embedded resources: "+zip_strerror(zip_archive));
+        }
+        tmp.push_back(stat.name);
+    }
+    return tmp;
+}
+
+#else
+#define zip_file_exists(...) false
+#define read_zip_file(...) ""
+#define read_zip_file_binary(...) (std::vector<std::byte>{})
+#define open_zip_file(...)
+
+std::vector<std::string> GameData::ListEmbeddedFiles()
+{
+    return {};
+}
+
+#endif
+
+std::string GameData::GetFontInfo()
+{
+    return fontInfo;
+}
+
+bool GameData::Exists(std::string filename)
+{
+    return std::filesystem::exists(filename) || zip_file_exists(filename);
+}
+
+void GameData::Init()
+{
+    open_zip_file();
+    if(std::filesystem::exists(fontInfoFile))
+    {
+        fontInfo = Util::ReadFile(fontInfoFile);
+    }
+    else if(zip_file_exists(fontInfoFile))
+    {
+        fontInfo = read_zip_file(fontInfoFile);
+    }
+    else
+    {
+        throw FatalError(std::string(fontInfoFile)+" is missing");
+    }
+}
+
+GameData::ImageData* GameData::GetFont(std::string fontName)
+{
+    if(auto it = font_files.find(fontName); it != font_files.end())
+    {
+        return it->second.get();
+    }
+    else if(std::filesystem::exists(fontName))
+    {
+        uint32_t width, height;
+        std::vector<uint32_t> image = Util::ReadFileBitmap(fontName, width, height);
+        ImageData * img = new ImageData {std::move(image), width, height};
+        font_files.emplace(fontName, img);
+        return img;
+    }
+    else if(zip_file_exists(fontName))
+    {
+        auto data = read_zip_file_binary(fontName);
+        uint32_t width, height;
+        std::vector<uint32_t> image = Util::ReadBitmap(fontName, data, width, height);
+        ImageData * img = new ImageData {std::move(image), width, height};
+        font_files.emplace(fontName, img);
+        return img;
+    }
+    else
+    {
+        throw FatalError(std::string(fontInfoFile)+" is missing");
+    }
+}
+
+std::string GameData::ReadFile(std::string filename)
+{
+    if(std::filesystem::exists(filename))
+    {
+        return Util::ReadFile(filename);
+    }
+    else if(zip_file_exists(filename))
+    {
+        return read_zip_file(filename);
+    }
+    else
+    {
+        throw FatalError(std::string("could not find file ")+filename);
+    }
+}
+
+std::vector<std::byte> GameData::ReadFileBinary(std::string filename)
+{
+    if(std::filesystem::exists(filename))
+    {
+        return Util::ReadFileBinary(filename);
+    }
+    else if(zip_file_exists(filename))
+    {
+        return read_zip_file_binary(filename);
+    }
+    else
+    {
+        throw FatalError(std::string("could not find file ")+filename);
+    }
+}
+
+void GameData::Quit()
+{
+    
+}
 
 using enum dir_entry_type;
 using enum hide_type;
@@ -101,7 +333,7 @@ uint32_t numRecoveryTexts;
 
 void Game::LoadData() try
 {
-    JSON::Element e = JSON::Parse(Util::ReadFile(dataFile));
+    JSON::Element e = JSON::Parse(GameData::ReadFile(dataFile));
     
     JSON::Element corruptedfiles = e["CorruptedTextFiles"];
     int corruptedseed = 123;

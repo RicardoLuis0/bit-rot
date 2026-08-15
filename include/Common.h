@@ -530,6 +530,7 @@ namespace Util
     
     //returns rgba8 array
     std::vector<uint32_t> ReadFileBitmap(const std::string &filename, uint32_t &width, uint32_t &height);
+    std::vector<uint32_t> ReadBitmap(const std::string &filename, const std::vector<std::byte> &rawData, uint32_t &width, uint32_t &height);
     
     uint64_t MsTime();
     
