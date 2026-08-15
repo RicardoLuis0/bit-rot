@@ -17,4 +17,4 @@
 #include "windows.h"
 
 1  RT_MANIFEST "ComputerGame.manifest.xml"
-
+MAINICON  ICON "icon.ico"
