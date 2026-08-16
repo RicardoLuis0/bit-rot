@@ -28,7 +28,7 @@
 
 unsigned long long Custom_GetTics();
 
-#define SDL_GetTics Custom_GetTics
+#define SDL_GetTicks Custom_GetTics
 
 #define MIX_INTERNAL_EFFECT__
 #include "effects_internal.h"
