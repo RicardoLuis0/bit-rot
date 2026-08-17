@@ -179,12 +179,12 @@ void Renderer::PhosphorEnabled(bool yes)
 {
     if(yes)
     {
-        phosphorProgram.setFloat(1, DefaultPhosphorStrength);
+        phosphorProgram.setFloat("phosphorStrength", DefaultPhosphorStrength);
         firstRender = true;
     }
     else
     {
-        phosphorProgram.setFloat(1, 0.0);
+        phosphorProgram.setFloat("phosphorStrength", 0.0);
     }
 }
 
@@ -202,17 +202,17 @@ void Renderer::Compile()
     textDrawerGame.CompileAndLink("textDrawerGame", "vertex.glsl", "text.glsl");
     blurProgram.CompileAndLink("blur", "vertex.glsl", "blur.glsl");
     
-    textDrawerMenu.setInt(fontTextureU, 0);
-    textDrawerGame.setInt(fontTextureU, 0);
-    textDrawerMenu.setInt(backgroundTextureU, 1);
-    textDrawerGame.setInt(backgroundTextureU, 1);
-    textDrawerMenu.setInt(useBackgroundTextureU, 0);
-    textDrawerGame.setInt(useBackgroundTextureU, 0);
-    textDrawerMenu.setFloat(transparentKeyU, 1.0, 0.0, 1.0, 1.0);
-    textDrawerGame.setFloat(transparentKeyU, 1.0, 0.0, 1.0, 1.0);
+    textDrawerMenu.setInt("fontTexture", 0);
+    textDrawerGame.setInt("fontTexture", 0);
+    textDrawerMenu.setInt("backgroundTexture", 1);
+    textDrawerGame.setInt("backgroundTexture", 1);
+    textDrawerMenu.setInt("useBackgroundTexture", 0);
+    textDrawerGame.setInt("useBackgroundTexture", 0);
+    textDrawerMenu.setFloat("transparentKey", 1.0, 0.0, 1.0, 1.0);
+    textDrawerGame.setFloat("transparentKey", 1.0, 0.0, 1.0, 1.0);
     
-    phosphorProgram.setInt(0, 0);
-    phosphorProgram.setFloat(1, Config::getBoolOr("PhosphorEnabled", DefaultPhosphorEnabled) ? DefaultPhosphorStrength : 0.0);
+    phosphorProgram.setInt("frameBuffer", 0);
+    phosphorProgram.setFloat("phosphorStrength", Config::getBoolOr("PhosphorEnabled", DefaultPhosphorEnabled) ? DefaultPhosphorStrength : 0.0);
     
     crtProgram.setInt("frameBuffer", 0);
     crtProgram.setInt("windowResolution", window_width, window_height);
@@ -540,11 +540,11 @@ void Renderer::Render()
         
         if(DrawMenu)
         {
-            textDrawerMenu.setUInt(timeU, Util::MsTime() - baseTime);
+            textDrawerMenu.setUInt("time", Util::MsTime() - baseTime);
         }
         else
         {
-            textDrawerGame.setUInt(timeU, Util::MsTime() - baseTime);
+            textDrawerGame.setUInt("time", Util::MsTime() - baseTime);
         }
         
         if(!firstRender)
@@ -554,7 +554,8 @@ void Renderer::Render()
             
             for(unsigned i = 0; i < numPhosphorBuffers; i++)
             {
-                phosphorProgram.setInt(2 + i,1 + ((phosphorBufferIndex + i) % numPhosphorBuffers));
+                int phopsphorBuffers = phosphorProgram.getUniformLocation("phopsphorBuffers");
+                phosphorProgram.setInt(phopsphorBuffers + i,1 + ((phosphorBufferIndex + i) % numPhosphorBuffers));
             }
             
             glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT); // probably not necessary, but...
@@ -567,7 +568,7 @@ void Renderer::Render()
             for(int i = 0; i < n; i++)
             {
                 //only supported in menus
-                textDrawerMenu.setInt(useBackgroundTextureU, 0);
+                textDrawerMenu.setInt("useBackgroundTexture", 0);
                 textAreaMenu.Render(std::array {&textFrameBuffer3, &textFrameBuffer4});
                 phosphorBufferIndex = (i % numPhosphorBuffers);
                 glCopyImageSubData(textFrameBuffer3.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffers[phosphorBufferIndex].index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
@@ -578,13 +579,13 @@ void Renderer::Render()
         
         if(DrawMenu && DrawGame && DrawMenuTransparent)
         {
-            textDrawerMenu.setInt(useBackgroundTextureU, 1);
+            textDrawerMenu.setInt("useBackgroundTexture", 1);
             textAreaGameMenu.Render(std::array {&textFrameBuffer, &textFrameBuffer2, &textFrameBuffer3, &textFrameBuffer4});
             mainArea.Render(std::array {&frameBuffer, (GLFrameBuffer*)nullptr});
         }
         else if(DrawMenu)
         {
-            textDrawerMenu.setInt(useBackgroundTextureU, 0);
+            textDrawerMenu.setInt("useBackgroundTexture", 0);
             textAreaMenu.Render(std::array {&textFrameBuffer3, &textFrameBuffer4});
             mainArea.Render(std::array {&frameBuffer, (GLFrameBuffer*)nullptr});
         }
@@ -681,8 +682,8 @@ void Renderer::SetTextColor(ETextColor color)
     
     currentTextColor = color;
     float *c = textColors[uint8_t(color)];
-    if(textDrawerMenu.program) textDrawerMenu.setFloat(textColorU, c[0], c[1], c[2], c[3]);
-    if(textDrawerGame.program) textDrawerGame.setFloat(textColorU, c[0], c[1], c[2], c[3]);
+    if(textDrawerMenu.program) textDrawerMenu.setFloat("textColor", c[0], c[1], c[2], c[3]);
+    if(textDrawerGame.program) textDrawerGame.setFloat("textColor", c[0], c[1], c[2], c[3]);
     Config::setEnum("TextColor", textColorNames, color);
 }
 

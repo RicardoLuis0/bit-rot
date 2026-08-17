@@ -106,6 +106,11 @@ namespace Renderer
         // named
         // --------------------------------------
         
+        int getUniformLocation(const std::string &name)
+        {
+            return glGetUniformLocation(program, name.c_str());
+        }
+        
         inline void setInt(const std::string &name, int x)
         {
             using namespace Renderer::Internal;

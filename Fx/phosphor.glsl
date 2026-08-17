@@ -1,13 +1,13 @@
-#version 450
+#version 410
 
 out vec4 fragColor;
 in vec2 texCoord;
 
 #define NUM_BUFFERS 10
 
-layout (location = 0) uniform sampler2D frameBuffer;
-layout (location = 1) uniform float phosphorStrength;
-layout (location = 2) uniform sampler2D phopsphorBuffers[NUM_BUFFERS];
+uniform sampler2D frameBuffer;
+uniform float phosphorStrength;
+uniform sampler2D phopsphorBuffers[NUM_BUFFERS];
 
 vec4 toSRGB(vec4 linearRGB)
 {

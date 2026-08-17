@@ -1,14 +1,14 @@
-#version 450
+#version 410
 
 out vec4 fragColor;
 in vec2 texCoord;
 
-layout (location = 0) uniform sampler2D fontTexture;
-layout (location = 1) uniform sampler2D backgroundTexture;
-layout (location = 2) uniform bool useBackgroundTexture;
-layout (location = 3) uniform vec4 transparentKey; // 3,4,5,6
-layout (location = 7) uniform uint time;
-layout (location = 8) uniform vec4 textColor; // 8,9,10,11
+uniform sampler2D fontTexture;
+uniform sampler2D backgroundTexture;
+uniform bool useBackgroundTexture;
+uniform vec4 transparentKey; // 3,4,5,6
+uniform uint time;
+uniform vec4 textColor; // 8,9,10,11
 
 #define CHAR_BLINK_BITS 0x30
 
@@ -36,7 +36,7 @@ uint pos_rand(uint x, uint y)
     return const_rand((x * 80) + y + ((time / RANDCHAR_CYLCE) * 10000));
 }
 
-layout (std140, binding = 0) uniform TextInfo
+layout (std140) uniform TextInfo
 {
     int font_width;
     int font_height;
