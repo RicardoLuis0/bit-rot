@@ -51,12 +51,12 @@ void main()
     acc /= 9.0;
     
     
-	if(lum(acc) > lum(orig))
-	{
-		fragColor = vec4((orig.rgb * (1.0f - bloomStrenght) + acc.rgb * bloomStrenght) * (1.0 + bloomContrast), 1.0);
-	}
-	else
-	{
+    if(lum(acc) > lum(orig))
+    {
+        fragColor = vec4((orig.rgb * (1.0f - bloomStrenght) + acc.rgb * bloomStrenght) * (1.0 + bloomContrast), 1.0);
+    }
+    else
+    {
         fragColor = vec4(orig.rgb *(1.0 + bloomContrast), 1.0);
-	}
+    }
 }

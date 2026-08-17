@@ -54,11 +54,7 @@ GLFrameBuffer textFrameBuffer3;
 GLFrameBuffer textFrameBuffer4;
 GLFrameBuffer frameBuffer;
 
-constexpr size_t numPhosphorBuffers = 10;
-
-size_t phosphorBufferIndex = 0;
-
-GLTexture phosphorBuffers[numPhosphorBuffers];
+GLTexture phosphorBuffer;
 
 TextInfo * textBufferDataMenu;
 TextInfo * textBufferDataGame;
@@ -92,6 +88,7 @@ const char * textColorNames[uint8_t(ETextColor::COUNT)]
 ETextColor currentTextColor = ETextColor::YELLOW;
 
 bool adaptiveOk = true;
+bool vsyncOn = false;
 
 void Renderer::SetVSync(std::string_view VSync)
 {
@@ -99,6 +96,7 @@ void Renderer::SetVSync(std::string_view VSync)
     {
         SDL_GL_SetSwapInterval(0);
         LogDebug("VSync Disabled");
+        vsyncOn = false;
     }
     else if(VSync == "Adaptive")
     {
@@ -111,16 +109,19 @@ void Renderer::SetVSync(std::string_view VSync)
                 VSync = "Off";
                 SDL_GL_SetSwapInterval(0);
                 LogWarn("Failed to enable VSync: " + errMsg());
+                vsyncOn = false;
             }
             else
             {
                 VSync = "On";
                 LogDebug("VSync Enabled");
+                vsyncOn = true;
             }
         }
         else
         {
             LogDebug("Adaptive VSync Enabled");
+            vsyncOn = true;
         }
     }
     else if(VSync == "On")
@@ -129,29 +130,24 @@ void Renderer::SetVSync(std::string_view VSync)
         {
             VSync = "Off";
             LogWarn("Failed to enable VSync: " + errMsg());
+            vsyncOn = false;
         }
         else
         {
             LogDebug("VSync Enabled");
+            vsyncOn = true;
         }
     }
     else
     {
         SetVSync("Off");
+        vsyncOn = false;
         return;
     }
     Config::setString("VSync", VSync);
 }
 
 bool firstCompile = true;
-
-constexpr int fontTextureU = 0;
-constexpr int backgroundTextureU = 1;
-constexpr int useBackgroundTextureU = 2;
-constexpr int transparentKeyU = 3;
-constexpr int timeU = 7;
-constexpr int textColorU = 8;
-constexpr int bloomStrengthU = 3;
 
 void Renderer::UpdateBloomStrength()
 {
@@ -213,6 +209,7 @@ void Renderer::Compile()
     
     phosphorProgram.setInt("frameBuffer", 0);
     phosphorProgram.setFloat("phosphorStrength", Config::getBoolOr("PhosphorEnabled", DefaultPhosphorEnabled) ? DefaultPhosphorStrength : 0.0);
+    phosphorProgram.setInt("phopsphorBuffer", 1);
     
     crtProgram.setInt("frameBuffer", 0);
     crtProgram.setInt("windowResolution", window_width, window_height);
@@ -287,13 +284,10 @@ void Renderer::Compile()
     textAreaGameMenu.addUBO(std::array { &textBufferGame, (GLUniformBuffer*)nullptr, &textBufferMenu});
     textAreaGameMenu.addTexture(std::array { &fontTexture, &textFrameBuffer.colorTexture, &fontTexture, &textFrameBuffer3.colorTexture });
     
-    for(size_t i = 0; i < numPhosphorBuffers; i++)
-    {
-        phosphorBuffers[i].InitNew(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
-        textAreaMenu.addTexture(std::array { (GLTexture*)nullptr, phosphorBuffers + i });
-        textAreaGame.addTexture(std::array { (GLTexture*)nullptr, phosphorBuffers + i });
-        textAreaGameMenu.addTexture(std::array { (GLTexture*)nullptr, (GLTexture*)nullptr, i == 0 ? &textFrameBuffer2.colorTexture : (GLTexture*)nullptr, phosphorBuffers + i });
-    }
+    phosphorBuffer.InitNew(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
+    textAreaMenu.addTexture(std::array { (GLTexture*)nullptr, &phosphorBuffer });
+    textAreaGame.addTexture(std::array { (GLTexture*)nullptr, &phosphorBuffer });
+    textAreaGameMenu.addTexture(std::array { (GLTexture*)nullptr, (GLTexture*)nullptr, &textFrameBuffer2.colorTexture, &phosphorBuffer });
     
     LogDebug(firstCompile ? "Framebuffer Generated" : "Framebuffer Regenerated");
     
@@ -337,6 +331,7 @@ void Renderer::Init()
         throw FatalError(reinterpret_cast<const char *>(glewGetErrorString(err)));
     }
     SetVSync(Config::getStringOr("VSync", "Adaptive"));
+    SetShowFPS(Config::getBoolOr("ShowFPS", false));
     
     
     LogDebug("GLEW Initialized");
@@ -454,12 +449,9 @@ static void ReloadFont()
         textFrameBuffer3.Resize(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
         textFrameBuffer4.Resize(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
         
-        //crtProgram.setInt(3, textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height); // fake out 8-width chars for CRT shader, looks bad otherwise for high-res fonts
+        //crtProgram.setInt("frameBufferResolution", textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height); // fake out 8-width chars for CRT shader, looks bad otherwise for high-res fonts
         
-        for(size_t i = 0; i < numPhosphorBuffers; i++)
-        {
-            phosphorBuffers[i].InitNew(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
-        }
+        phosphorBuffer.InitNew(textBufferDataMenu->char_width * max_screen_width, textBufferDataMenu->char_height * max_screen_height);
     }
     
     fontTexture.UpdateRGBA8(fnt.data(), w, h);
@@ -517,15 +509,46 @@ void Renderer::ResetTimer()
 
 bool Renderer::DrawMenu = true;
 bool Renderer::DrawGame = false;
+bool ShowFPS = false;
+
+void Renderer::SetShowFPS(bool doShowFPS)
+{
+    ShowFPS = doShowFPS;
+}
+
+uint64_t lastRenderTimeUs = 0;
+double fps = 0;
 
 void Renderer::Render()
 {
     uint32_t w = textBufferDataMenu->char_width * max_screen_width;
     uint32_t h = textBufferDataMenu->char_height * max_screen_height;
     
+    uint64_t currentRenderTimeUs = Util::UsTime();
+    
+    double dt = 0;
+    
+    if(!firstRender)
+    {
+        dt = (double(currentRenderTimeUs - lastRenderTimeUs)) / 1000000;
+        fps = 1000000/(double(currentRenderTimeUs - lastRenderTimeUs));
+        lastRenderTimeUs = currentRenderTimeUs;
+    }
+    
+    int fps_len = 0;
+    
+    if(ShowFPS && !firstRender)
+    {
+        //CurrentBuffer->DrawClear(CurrentBuffer->textBufferData->screen_width - 8, 0, 8, 1);
+        char buf[20];
+        fps_len = snprintf(buf, 19, "%.2f fps", fps);
+        std::string fps_s = std::string(buf, fps_len);
+        CurrentBuffer->DrawLineText(CurrentBuffer->textBufferData->screen_width - (fps_len + 1), 0, fps_s, fps_len);
+    }
     
     textBufferDataMenu = nullptr;
     textBufferDataGame = nullptr;
+    
     //flush text
     glUnmapNamedBuffer(textBufferMenu.index);
     glUnmapNamedBuffer(textBufferGame.index);
@@ -549,30 +572,22 @@ void Renderer::Render()
         
         if(!firstRender)
         {
-            phosphorBufferIndex = (phosphorBufferIndex + 1) % numPhosphorBuffers;
-            glCopyImageSubData(textFrameBuffer3.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffers[phosphorBufferIndex].index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
+            LogDebug("Delta Time = %f, fps = %f", dt, fps);
             
-            for(unsigned i = 0; i < numPhosphorBuffers; i++)
-            {
-                int phopsphorBuffers = phosphorProgram.getUniformLocation("phopsphorBuffers");
-                phosphorProgram.setInt(phopsphorBuffers + i,1 + ((phosphorBufferIndex + i) % numPhosphorBuffers));
-            }
+            glCopyImageSubData(textFrameBuffer4.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffer.index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
             
             glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT); // probably not necessary, but...
         }
         
+        phosphorProgram.setFloat("deltaTime", dt);
+        
         if(firstRender)
         { // fill phosphor buffer
-            phosphorBufferIndex = 0;
-            int n = (numPhosphorBuffers * 2);
-            for(int i = 0; i < n; i++)
-            {
-                //only supported in menus
-                textDrawerMenu.setInt("useBackgroundTexture", 0);
-                textAreaMenu.Render(std::array {&textFrameBuffer3, &textFrameBuffer4});
-                phosphorBufferIndex = (i % numPhosphorBuffers);
-                glCopyImageSubData(textFrameBuffer3.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffers[phosphorBufferIndex].index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
-            }
+            
+            //only supported in menus
+            textDrawerMenu.setInt("useBackgroundTexture", 0);
+            textAreaMenu.Render(std::array {&textFrameBuffer3, &textFrameBuffer4});
+            glCopyImageSubData(textFrameBuffer4.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffer.index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
             
             firstRender = false;
         }
@@ -606,6 +621,11 @@ void Renderer::Render()
     
     textBufferDataMenu = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBufferMenu.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
     textBufferDataGame = reinterpret_cast<TextInfo*>(glMapNamedBufferRange(textBufferGame.index, 0, sizeof(TextInfo), GL_MAP_WRITE_BIT | GL_MAP_READ_BIT));
+    
+    if(ShowFPS && !firstRender)
+    {
+        CurrentBuffer->DrawClear(CurrentBuffer->textBufferData->screen_width - (fps_len + 1), 0, fps_len, 1);
+    }
     
     MenuText.textBufferData = textBufferDataMenu;
     GameText.textBufferData = textBufferDataGame;

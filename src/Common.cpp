@@ -691,33 +691,60 @@ namespace Util
 namespace Util
 {
     bool hasFreq = false;
-    uint64_t PerformanceFreq;
+    uint64_t PerformanceFreq = 1;
+    uint64_t PerformanceFreqMs = 1;
+    uint64_t PerformanceFreqUs = 1;
+    
+    static void GetFreq()
+    {
+        #ifdef _WIN32
+            LARGE_INTEGER i;
+            QueryPerformanceFrequency(&i);
+            PerformanceFreq = std::bit_cast<uint64_t>(i.QuadPart);
+            PerformanceFreqMs = PerformanceFreq / 1000;
+            PerformanceFreqUs = PerformanceFreq / 1000000;
+            hasFreq = true;
+        #endif
+    }
+    
     static uint64_t MsTimeRaw()
     {
         #ifdef _WIN32
             LARGE_INTEGER i;
-            if(hasFreq)
-            {
-                QueryPerformanceCounter(&i);
-                return std::bit_cast<uint64_t>(i.QuadPart) / PerformanceFreq;
-            }
-            else
-            {
-                QueryPerformanceFrequency(&i);
-                PerformanceFreq = std::bit_cast<uint64_t>(i.QuadPart) / 1000;
-                hasFreq = true;
-                return MsTime();
-            }
+            assert(hasFreq);
+            
+            QueryPerformanceCounter(&i);
+            return std::bit_cast<uint64_t>(i.QuadPart) / PerformanceFreqMs;
         #else
             return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
         #endif
     }
     
-    uint64_t base = MsTimeRaw();
+    static uint64_t UsTimeRaw()
+    {
+        #ifdef _WIN32
+            LARGE_INTEGER i;
+            assert(hasFreq);
+            
+            QueryPerformanceCounter(&i);
+            return std::bit_cast<uint64_t>(i.QuadPart) / PerformanceFreqUs;
+        #else
+            return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
+        #endif
+    }
+    
+    uint64_t base = (GetFreq(), MsTimeRaw());
+    
+    uint64_t baseUs = (GetFreq(), UsTimeRaw());
     
     uint64_t MsTime()
     {
         return MsTimeRaw() - base;
+    }
+    
+    uint64_t UsTime()
+    {
+        return UsTimeRaw() - baseUs;
     }
     
     extern "C" uint64_t Custom_GetTics()

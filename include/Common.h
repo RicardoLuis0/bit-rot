@@ -533,6 +533,7 @@ namespace Util
     std::vector<uint32_t> ReadBitmap(const std::string &filename, const std::vector<std::byte> &rawData, uint32_t &width, uint32_t &height);
     
     uint64_t MsTime();
+    uint64_t UsTime();
     
     std::vector<std::string_view> SplitLines(std::string_view text, uint32_t maxWidth);
     

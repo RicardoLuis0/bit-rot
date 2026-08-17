@@ -67,11 +67,11 @@ void main()
     {
         fragColor.rgb = texture(frameBuffer, crtUV2).rgb;
     }
-	
-	if(crtVignette)
-	{
-		fragColor.rgb *= edge.x*edge.y;
-	}
+    
+    if(crtVignette)
+    {
+        fragColor.rgb *= edge.x*edge.y;
+    }
     
     if(crtScanlines)
     {

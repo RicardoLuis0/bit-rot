@@ -18,6 +18,7 @@ constexpr bool DefaultCrtCAEnabled = true;
 constexpr bool DefaultCrtVignetteEnabled = false;
 constexpr bool DefaultCrtPauseBlurEnabled = true;
 constexpr bool DefaultCommandLineDrawPath = true;
+constexpr bool DefaultShowFPS = false;
 
 namespace Config
 {

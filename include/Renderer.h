@@ -52,6 +52,8 @@ namespace Renderer
     void CycleVSync();
     void CycleVSyncDown();
     
+    void SetShowFPS(bool);
+    
     void SetTextColor(ETextColor color);
     void SetVSync(std::string_view VSync); // "Off", "On" or "Adaptive"
     

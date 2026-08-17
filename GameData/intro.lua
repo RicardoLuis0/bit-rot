@@ -210,7 +210,7 @@ function drawIntro1()
                 game.Log("2, offsetY = " .. offsetY);
                 
                 local n1 = math.min(numErrors, errorMaxLine1);
-                for  i = 0, n1 - 1 , 1
+                for  i1 = 0, n1 - 1 , 1
                 do
                     screen.DrawLineText(offsetX, offsetY, "ERROR");
                     offsetX = offsetX + 6;
@@ -228,7 +228,7 @@ function drawIntro1()
                     game.Log("4, offsetY = " .. offsetY);
                     
                     local n2 = math.min(numErrors - errorMaxLine1, errorMaxLine2);
-                    for i = 0, n2 - 1, 1
+                    for i2 = 0, n2 - 1, 1
                     do
                         screen.DrawLineText(offsetX, offsetY, "ERROR");
                         offsetX = offsetX + 6;

@@ -516,6 +516,8 @@ SettingItemYesNo CrtVignetteEnabledSetting("Vignette Effect", "CrtVignetteEnable
 
 SettingItemYesNo CrtPauseBlurEnabledSetting("Transparent Pause Menu", "CrtPauseBlurEnabled", [](bool){Renderer::UpdateCrt();}, DefaultCrtPauseBlurEnabled);
 
+SettingItemYesNo ShowFPSSetting("Show FPS", "ShowFPS", [](bool on){Renderer::SetShowFPS(on);}, DefaultShowFPS);
+
 SettingSeparator GraphicsSettingsTitle("Graphics Settings");
 
 std::vector<SettingItem*> graphicsSettings
@@ -555,6 +557,7 @@ std::vector<SettingItem*> mainSettings
     &MiscSettingsTitle,
     &CommandLineDrawPathSetting,
     &CompressSavesSetting,
+    &ShowFPSSetting,
 };
 
 void Menu::DrawSettingsMenu()
