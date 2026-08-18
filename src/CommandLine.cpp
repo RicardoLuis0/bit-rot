@@ -48,14 +48,17 @@ void Game::Responder(SDL_Event *e)
         }
         else if(e->key == SDLK_UP)
         {
-            bool isMax = tempCommandPos == tempCommand.size();
-            if(historyPos == -1)
+            if((historyPos + 1) < commandHistory.size())
             {
-                tempCommandPreHistory = tempCommand;
+                bool isMax = tempCommandPos == tempCommand.size();
+                if(historyPos == -1)
+                {
+                    tempCommandPreHistory = tempCommand;
+                }
+                historyPos++;
+                tempCommand = commandHistory[historyPos];
+                tempCommandPos = isMax ? tempCommand.size() : std::min(tempCommandPos, tempCommand.size());
             }
-            historyPos++;
-            tempCommand = commandHistory[historyPos];
-            tempCommandPos = isMax ? tempCommand.size() : std::min(tempCommandPos, tempCommand.size());
         }
         else if(e->key == SDLK_DOWN)
         {
