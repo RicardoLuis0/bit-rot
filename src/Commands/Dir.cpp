@@ -78,13 +78,13 @@ int Command::Dir(const std::vector<std::string> &args)
     
     if(max == 0)
     {
-        AddConsoleLine("Directory of " + currentDrive + ":" + currentFolder);
+        AddConsoleLine("Directory of " + currentDrive + ":" + folder);
         AddConsoleLine("");
         AddConsoleLine("EMPTY");
     }
     else
     {
-        AddConsoleLine("Directory of " + currentDrive + ":" + currentFolder);
+        AddConsoleLine("Directory of " + currentDrive + ":" + folder);
         AddConsoleLine("");
         
         for(auto &e : list)
