@@ -11,29 +11,31 @@ using enum hide_type;
 int Command::Unlock(const std::vector<std::string> &args)
 {
     AddConsoleLine("");
+    std::string cmdName = Util::StrToUpper(args[0]);
     if(args.size() > 3)
     {
-        AddConsoleLine("Too many Arguments passed to UNLOCK");
+        AddConsoleLine("Too many Arguments passed to "+cmdName);
+        PrintUsage("UNLOCK");
         AddConsoleLine("");
         return 0;
     }
     else if(args.size() <= 2)
     {
-        AddConsoleLine("Too few Arguments passed to UNLOCK");
+        AddConsoleLine("Too few Arguments passed to "+cmdName);
+        PrintUsage("UNLOCK");
         AddConsoleLine("");
         return 0;
     }
     
     std::string filepath;
     dir_entry * entry = nullptr;
-    if(HasAccess(args[1], "UNLOCK", &filepath, &entry, ENTRY_ANY, hide_type(uint8_t(VISIBLE) | uint8_t(CORRUPTED) | uint8_t(ENCRYPTED)), false) && entry)
+    if(HasAccess(args[1], cmdName, &filepath, &entry, ENTRY_ANY, hide_type(uint8_t(VISIBLE) | uint8_t(CORRUPTED) | uint8_t(ENCRYPTED)), false) && entry)
     {
         if(entry->hidden != ENCRYPTED)
         {
             AddConsoleLine(Util::QuoteString(entry->name, '\'', false)+" is not Encrypted");
             AddConsoleLine("");
             return 0;
-
         }
         else if(entry->password != args[2])
         {

@@ -14,12 +14,14 @@ int Command::Read(const std::vector<std::string> &args)
     if(args.size() > 2)
     {
         AddConsoleLine("Too many Arguments passed to "+cmdName);
+        PrintUsage("READ");
         AddConsoleLine("");
         return 0;
     }
     else if(args.size() < 2)
     {
         AddConsoleLine("Too few Arguments passed to "+cmdName);
+        PrintUsage("READ");
         AddConsoleLine("");
         return 0;
     }

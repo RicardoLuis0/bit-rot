@@ -11,22 +11,25 @@ using enum hide_type;
 int Command::Install(const std::vector<std::string> &args)
 {
     AddConsoleLine("");
+    std::string cmdName = Util::StrToUpper(args[0]);
     if(args.size() > 2)
     {
-        AddConsoleLine("Too many Arguments passed to INSTALL");
+        AddConsoleLine("Too many Arguments passed to "+cmdName);
+        PrintUsage("INSTALL");
         AddConsoleLine("");
         return 0;
     }
     else if(args.size() < 2)
     {
-        AddConsoleLine("Too few Arguments passed to INSTALL");
+        AddConsoleLine("Too few Arguments passed to "+cmdName);
+        PrintUsage("INSTALL");
         AddConsoleLine("");
         return 0;
     }
     
     std::string filepath;
     dir_entry * entry = nullptr;
-    if(HasAccess(args[1], "INSTALL", &filepath, &entry, ENTRY_ANY, hide_type(uint8_t(VISIBLE) | uint8_t(CORRUPTED) | uint8_t(ENCRYPTED)), false) && entry)
+    if(HasAccess(args[1], cmdName, &filepath, &entry, ENTRY_ANY, hide_type(uint8_t(VISIBLE) | uint8_t(CORRUPTED) | uint8_t(ENCRYPTED)), false) && entry)
     {
         if(entry->type == PROGRAM)
         {
@@ -34,7 +37,7 @@ int Command::Install(const std::vector<std::string> &args)
             auto bentry = bin.find(entry->name);
             if(bentry != bin.end())
             {
-                AddConsoleLine(Util::QuoteString(entry->name, '\'', false)+" is already Installed");
+                AddConsoleLine("'"+Util::StrToUpper(entry->name)+"' is already Installed");
                 AddConsoleLine("");
                 return 0;
             }
@@ -53,14 +56,20 @@ int Command::Install(const std::vector<std::string> &args)
                     bin.insert({entry->name, {entry->name, PROGRAM}});
                 }
                 
-                AddConsoleLine(Util::QuoteString(entry->name, '\'', false)+" Successfully Installed");
+                AddConsoleLine("'"+Util::StrToUpper(entry->name)+"' Successfully Installed");
                 AddConsoleLine("");
                 return 1;
             }
         }
+        else if(entry->type == FOLDER)
+        {
+            AddConsoleLine("Folder '"+filepath+"' is not a file");
+            AddConsoleLine("");
+            return 0;
+        }
         else
         {
-            AddConsoleLine(Util::QuoteString(entry->name, '\'', false)+" is not a Program");
+            AddConsoleLine("File '"+filepath+"' is not an executable program");
             AddConsoleLine("");
             return 0;
         }

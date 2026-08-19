@@ -7,9 +7,11 @@ extern bool RunGame;
 
 int Command::Exit(const std::vector<std::string> &args)
 {
+    std::string cmdName = Util::StrToUpper(args[0]);
     if(args.size() > 1)
     {
-        AddConsoleLine("Too many Arguments passed to EXIT");
+        AddConsoleLine("Too many Arguments passed to "+cmdName);
+        PrintUsage("EXIT");
         return 0;
     }
     else

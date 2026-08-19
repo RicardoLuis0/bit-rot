@@ -16,4 +16,5 @@ namespace Command
     int Install(const std::vector<std::string> &args);
     int Unlock(const std::vector<std::string> &args);
     int EndJamBuild(const std::vector<std::string> &args);
+    void PrintUsage(const std::string &cmd_name);
 }

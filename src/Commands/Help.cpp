@@ -7,13 +7,37 @@ using namespace Game;
 using enum dir_entry_type;
 using enum hide_type;
 
+void Command::PrintUsage(const std::string &cmd_name)
+{
+    std::vector<std::string> programs = Game::ListExecutablePrograms();
+    std::string command = Util::StrToUpper(cmd_name);
+    if(std::find(programs.begin(), programs.end(), command) != programs.end())
+    {
+        for(const std::pair<const std::vector<std::string>, program_help> &cmd : programHelp)
+        {
+            if(std::find(cmd.first.begin(), cmd.first.end(), command) != cmd.first.end())
+            {
+                AddConsoleLine("Usage:");
+                AddConsoleLine("");
+                for(auto &line : cmd.second.usage)
+                {
+                    std::string start = " \07 ";
+                    
+                    AddConsoleLine(start+line);
+                }
+            }
+        }
+    }
+}
+
 int Command::Help(const std::vector<std::string> &args)
 {
+    std::string cmdName = Util::StrToUpper(args[0]);
     AddConsoleLine("");
     if(args.size() == 1)
     {
         std::vector<std::string> programs = Game::ListExecutablePrograms();
-        AddConsoleLine("Installed Programs: (use HELP <PROGRAM> for usage info)");
+        AddConsoleLine("Installed Programs: (use "+cmdName+" <PROGRAM> for usage info)");
         AddConsoleLine("");
         for(const std::pair<const std::vector<std::string>, program_help> &cmd : programHelp)
         {
@@ -86,13 +110,15 @@ int Command::Help(const std::vector<std::string> &args)
                 }
             }
         }
-        AddConsoleLine("No HELP found for "+Util::QuoteString(args[1]));
+        AddConsoleLine("No "+cmdName+" found for "+Util::QuoteString(args[1]));
+        PrintUsage("HELP");
         AddConsoleLine("");
         return 0;
     }
     else
     {
-        AddConsoleLine("Too many Arguments passed to HELP");
+        AddConsoleLine("Too many Arguments passed to "+cmdName);
+        PrintUsage("HELP");
         AddConsoleLine("");
         return 0;
     }

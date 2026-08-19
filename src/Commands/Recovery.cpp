@@ -11,9 +11,11 @@ using enum hide_type;
 int Command::Recovery(const std::vector<std::string> &args)
 {
     AddConsoleLine("");
+    std::string cmdName = Util::StrToUpper(args[0]);
     if(args.size() > 2)
     {
-        AddConsoleLine("Too many Arguments passed to RECOVERY");
+        AddConsoleLine("Too many Arguments passed to "+cmdName);
+        PrintUsage("RECOVERY");
         AddConsoleLine("");
         return 0;
     }
@@ -22,7 +24,7 @@ int Command::Recovery(const std::vector<std::string> &args)
     
     if(args.size() > 1)
     {
-        if(!HasAccess(args[1], "RECOVERY", &folder, nullptr, FOLDER, VISIBLE, false))
+        if(!HasAccess(args[1], cmdName, &folder, nullptr, FOLDER, VISIBLE, false))
         {
             AddConsoleLine("");
             return 0;

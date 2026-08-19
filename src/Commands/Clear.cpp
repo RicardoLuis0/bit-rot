@@ -10,9 +10,11 @@ using enum hide_type;
 
 int Command::Clear(const std::vector<std::string> &args)
 {
+    std::string cmdName = Util::StrToUpper(args[0]);
     if(args.size() > 1)
     {
-        AddConsoleLine("Too many Arguments passed to CLEAR");
+        AddConsoleLine("Too many Arguments passed to "+cmdName);
+        PrintUsage("CLEAR");
         return 0;
     }
     else

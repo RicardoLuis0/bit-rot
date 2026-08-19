@@ -11,9 +11,11 @@ using enum hide_type;
 int Command::Cd(const std::vector<std::string> &args)
 {
     AddConsoleLine("");
+    std::string cmdName = Util::StrToUpper(args[0]);
     if(args.size() > 2)
     {
-        AddConsoleLine("Too many Arguments passed to CD");
+        AddConsoleLine("Too many Arguments passed to "+cmdName);
+        PrintUsage("CD");
         AddConsoleLine("");
         return 0;
     }

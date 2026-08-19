@@ -53,10 +53,12 @@ int Command::Dir(const std::vector<std::string> &args)
 {
     std::string folder;
     
+    std::string cmdName = Util::StrToUpper(args[0]);
     AddConsoleLine("");
     if(args.size() > 2)
     {
-        AddConsoleLine("Too many Arguments passed to DIR");
+        AddConsoleLine("Too many Arguments passed to "+cmdName);
+        PrintUsage("DIR");
         AddConsoleLine("");
         return 0;
     }
