@@ -3,6 +3,7 @@
 #include "Input.h"
 #include "SaveData.h"
 #include "SDL2Util.h"
+#include <set>
 
 extern int currentScreen;
 
@@ -24,6 +25,7 @@ std::vector<dir_entry> ListFolders(std::string path)
     }
 }
 
+std::set<std::string> silentCommands {"EXIT", "666"};
 
 static const std::string &DirName(const dir_entry& e)
 {
@@ -138,17 +140,20 @@ void Game::Responder(SDL_Event *e)
             tempCommandPos = 0;
             tempCommand = "";
             
-            if(CommandLineDrawPath)
+            if(!silentCommands.contains(Util::StrToUpper(command)))
             {
-                Game::AddConsoleLine(currentDrive + ":" + ((currentFolder.size() > 1) ? currentFolder.substr(0, currentFolder.size() - 1) : currentFolder) + ">" + command);
+                if(CommandLineDrawPath)
+                {
+                    Game::AddConsoleLine(currentDrive + ":" + ((currentFolder.size() > 1) ? currentFolder.substr(0, currentFolder.size() - 1) : currentFolder) + ">" + command);
+                }
+                else
+                {
+                    Game::AddConsoleLine(">" + command);
+                }
+                
+                commandHistory.insert(commandHistory.begin(), command);
+                SaveData::PushHistory(command);
             }
-            else
-            {
-                Game::AddConsoleLine(">" + command);
-            }
-            
-            commandHistory.insert(commandHistory.begin(), command);
-            SaveData::PushHistory(command);
             
             RunCommand(command, rootShellContext);
             historyPos = -1;
