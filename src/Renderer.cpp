@@ -572,8 +572,6 @@ void Renderer::Render()
         
         if(!firstRender)
         {
-            //LogDebug("Delta Time = %f, fps = %f", dt, fps);
-            
             glCopyImageSubData(textFrameBuffer4.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffer.index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
             
             glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT); // probably not necessary, but...
