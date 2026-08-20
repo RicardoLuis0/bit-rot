@@ -82,14 +82,14 @@ void SaveData::FixUpOldSave()
     if(hasMessages)
     {
         PushBuffer("", {});
-        PushBuffer(fixString(U"╔═════════════════════════════════════════════════════════════════════════════╗"), repeat_array<uint8_t, 80, 0x1>());
-        PushBuffer(fixString(U"║                        Since last time you've played:                       ║"), repeat_array<uint8_t, 80, 0x1>());
+        PushBuffer(     fixString(U"╔═════════════════════════════════════════════════════════════════════════════╗"), repeat_array<uint8_t, 80, 0x1>());
+        PushBuffer(     fixString(U"║                        Since last time you've played:                       ║"), repeat_array<uint8_t, 80, 0x1>());
         if(unlockRenamed)
         {
-        PushBuffer(fixString(U"║                                                                             ║"), repeat_array<uint8_t, 80, 0x1>());
-        PushBuffer(fixString(U"║                      UNLOCK has been renamed to DECRYPT                     ║"), repeat_array<uint8_t, 80, 0x1>());
+            PushBuffer( fixString(U"║                                                                             ║"), repeat_array<uint8_t, 80, 0x1>());
+            PushBuffer( fixString(U"║                      UNLOCK has been renamed to DECRYPT                     ║"), repeat_array<uint8_t, 80, 0x1>());
         }
-        PushBuffer(fixString(U"╚═════════════════════════════════════════════════════════════════════════════╝"), repeat_array<uint8_t, 80, 0x1>());
+        PushBuffer(     fixString(U"╚═════════════════════════════════════════════════════════════════════════════╝"), repeat_array<uint8_t, 80, 0x1>());
         PushBuffer("", {});
     }
 }
