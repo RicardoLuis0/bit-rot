@@ -3,3 +3,7 @@ build/
 BitRot
 *.zip
 bin/
+BitRot
+BitRot.exe
+config.json
+saveData.*
