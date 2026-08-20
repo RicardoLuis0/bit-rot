@@ -12,9 +12,9 @@ namespace Command
     int Help(const std::vector<std::string> &args);
     int Read(const std::vector<std::string> &args);
     int Recovery(const std::vector<std::string> &args);
-    int Decrypt(const std::vector<std::string> &args);
+    int CrackEncryption(const std::vector<std::string> &args);
     int Install(const std::vector<std::string> &args);
-    int Unlock(const std::vector<std::string> &args);
+    int Decrypt(const std::vector<std::string> &args);
     int EndJamBuild(const std::vector<std::string> &args);
     void PrintUsage(const std::string &cmd_name);
 }

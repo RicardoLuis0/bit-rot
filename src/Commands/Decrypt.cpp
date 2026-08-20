@@ -8,21 +8,21 @@ using namespace Game;
 using enum dir_entry_type;
 using enum hide_type;
 
-int Command::Unlock(const std::vector<std::string> &args)
+int Command::Decrypt(const std::vector<std::string> &args)
 {
     AddConsoleLine("");
     std::string cmdName = Util::StrToUpper(args[0]);
     if(args.size() > 3)
     {
         AddConsoleLine("Too many Arguments passed to "+cmdName);
-        PrintUsage("UNLOCK");
+        PrintUsage("DECRYPT");
         AddConsoleLine("");
         return 0;
     }
     else if(args.size() <= 2)
     {
         AddConsoleLine("Too few Arguments passed to "+cmdName);
-        PrintUsage("UNLOCK");
+        PrintUsage("DECRYPT");
         AddConsoleLine("");
         return 0;
     }
@@ -46,7 +46,7 @@ int Command::Unlock(const std::vector<std::string> &args)
         else
         {
             SaveData::PushAction(SaveData::UNLOCK, filepath.substr(0, filepath.find_last_of('\\')), entry->password);
-            AddConsoleLine(Util::QuoteString(entry->name, '\'', false) + " Unlocked Successfully");
+            AddConsoleLine(Util::QuoteString(entry->name, '\'', false) + " Decrypted Successfully");
             entry->hidden = VISIBLE;
             AddConsoleLine("");
             return 1;

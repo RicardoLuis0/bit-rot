@@ -21,9 +21,9 @@ int Unimplemented(const std::string &command_name, const std::vector<std::string
     return 0;
 }
 
-int Command::Decrypt(const std::vector<std::string> &args)
+int Command::CrackEncryption(const std::vector<std::string> &args)
 {
-    Unimplemented("DECRYPT", args);
+    Unimplemented("CRACK", args);
     return 0;
     //TODO
 }

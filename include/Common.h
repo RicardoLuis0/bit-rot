@@ -269,6 +269,17 @@ inline consteval unsigned long long int operator ""_G(unsigned long long int n){
     return n*1024_M;
 }
 
+template<typename T, size_t N, T val>
+consteval std::array<T, N> repeat_array()
+{
+    std::array<T, N> arr;
+    for(unsigned i = 0; i < N; i++)
+    {
+        arr[i] = val;
+    }
+    return arr;
+}
+
 struct TracedError : std::runtime_error
 {
     std::string trace;

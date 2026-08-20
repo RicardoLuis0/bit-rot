@@ -255,10 +255,10 @@ std::map<std::string, CommandProc> programs
     {"READ", &Command::Read},
     {"CAT", &Command::Read},
     {"INSTALL", &Command::Install},
-    {"UNLOCK", &Command::Unlock},
+    {"DECRYPT", &Command::Decrypt},
     {"RECOVERY", &Command::Recovery},
     {"EXIT", &Command::Exit},
-    //{"DECRYPT", &Command::Decrypt}, // TODO
+    //{"CRACK", &Command::CrackEncryption}, // TODO
     {"666", &Command::EndJamBuild},
 };
 
@@ -270,7 +270,7 @@ std::map<std::vector<std::string>, program_help> programHelp
     {{"CLS", "CLEAR"}, {"Clear screen", {"CLS", "CLEAR"}}},
     {{"CAT", "READ"}, {"Read text documents", {"CAT <PATH>", "READ <PATH>"}}},
     {{"INSTALL"}, {"Install a program to your \\BIN\\ directory, allowing you to use it anywhere", "INSTALL <PATH>"}},
-    {{"UNLOCK"}, {"Pass it a path and a password to unlock encrypted folders/files", "UNLOCK <PATH> <PASSWORD>"}},
+    {{"DECRYPT"}, {"Pass it a path and a password to unlock encrypted folders/files", "DECRYPT <PATH> <PASSWORD>"}},
     {{"RECOVERY"}, {"This can recover deleted files in the current/the specified folder", {"RECOVERY", "RECOVERY <DIR>"}}},
     {{"EXIT"}, {"Save and Exit", "EXIT"}},
     {{"666"},

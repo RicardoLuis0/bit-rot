@@ -44,4 +44,6 @@ namespace SaveData
     
     void SetConsoleVars(std::map<std::string, std::string> &vars);
     std::map<std::string, std::string> GetConsoleVars();
+    
+    void FixUpOldSave();
 };

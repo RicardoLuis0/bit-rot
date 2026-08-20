@@ -13,6 +13,8 @@ bool save_ok = false;
 constexpr const char * saveFilePlain = "saveData.json";
 constexpr const char * saveFileCompressed = "saveData.bin";
 
+int currentSaveVersion = 1;
+
 void SaveData::Reset()
 {
     saveData = JSON::Object({
@@ -45,6 +47,53 @@ void SaveData::MarkNewGameOk()
     save_ok = (!std::filesystem::exists(saveFilePlain) && !std::filesystem::exists(saveFileCompressed));
 }
 
+void SaveData::FixUpOldSave()
+{
+    int oldVersion = 0;
+    if(saveData.contains("SaveVersion"))
+    {
+        oldVersion = saveData["SaveVersion"].get_int();
+    }
+    
+    bool hasMessages = false;
+    bool unlockRenamed = false;
+    
+    if(oldVersion < 1)
+    {
+        if(saveData.contains("SavedActions"))
+        {
+            if(saveData["SavedActions"].is_arr())
+            {
+                for(auto &saveAction : saveData["SavedActions"].get_arr())
+                {
+                    if(!saveAction.contains("Type") || !saveAction["Type"].is_int() || !saveAction.contains("Info") || !saveAction["Info"].is_str()) continue;
+                    if(saveAction["Type"].get_int() == SaveData::INSTALL && saveAction["Info"].get_str() == "UNLOCK")
+                    {
+                        saveAction.set("Info", "DECRYPT");
+                        unlockRenamed = true;
+                        hasMessages = true;
+                    }
+                }
+            }
+        }
+    }
+    
+    // info messages
+    if(hasMessages)
+    {
+        PushBuffer("", {});
+        PushBuffer(fixString(U"╔═════════════════════════════════════════════════════════════════════════════╗"), repeat_array<uint8_t, 80, 0x1>());
+        PushBuffer(fixString(U"║                        Since last time you've played:                       ║"), repeat_array<uint8_t, 80, 0x1>());
+        if(unlockRenamed)
+        {
+        PushBuffer(fixString(U"║                                                                             ║"), repeat_array<uint8_t, 80, 0x1>());
+        PushBuffer(fixString(U"║                      UNLOCK has been renamed to DECRYPT                     ║"), repeat_array<uint8_t, 80, 0x1>());
+        }
+        PushBuffer(fixString(U"╚═════════════════════════════════════════════════════════════════════════════╝"), repeat_array<uint8_t, 80, 0x1>());
+        PushBuffer("", {});
+    }
+}
+
 //TODO: gzip save data to reduce file size
 void SaveData::Init()
 {
@@ -52,7 +101,7 @@ void SaveData::Init()
     {
         try
         {
-            if(!std::filesystem::exists(saveFilePlain) || std::filesystem::last_write_time(saveFileCompressed) > std::filesystem::last_write_time(saveFilePlain))
+            if(std::filesystem::exists(saveFileCompressed) && (!std::filesystem::exists(saveFilePlain) || std::filesystem::last_write_time(saveFileCompressed) > std::filesystem::last_write_time(saveFilePlain)))
             {
                 saveData = JSON::Parse(Util::Decompress(Util::ReadFileBinary(saveFileCompressed)));
             }
@@ -62,6 +111,8 @@ void SaveData::Init()
             }
             
             saveData.get_obj();
+            FixUpOldSave();
+            saveData.set("SaveVersion", JSON::Int(currentSaveVersion));
         }
         catch(JSON::JSON_Exception &e)
         {
@@ -76,7 +127,8 @@ void SaveData::Init()
             {"SavedPath",    JSON::String("\\")},
             {"SavedActions", JSON::Array({})},
             {"SavedHistory", JSON::Array({})},
-            {"SavedBuffer",  JSON::Array({})}
+            {"SavedBuffer",  JSON::Array({})},
+            {"SaveVersion",  JSON::Int(currentSaveVersion)}
         });
     }
 }
