@@ -572,7 +572,7 @@ void Renderer::Render()
         
         if(!firstRender)
         {
-            LogDebug("Delta Time = %f, fps = %f", dt, fps);
+            //LogDebug("Delta Time = %f, fps = %f", dt, fps);
             
             glCopyImageSubData(textFrameBuffer4.colorTexture.index, GL_TEXTURE_2D, 0, 0, 0, 0, phosphorBuffer.index, GL_TEXTURE_2D, 0, 0, 0, 0, w, h, 1);
             
