@@ -4,6 +4,7 @@
 #include "SaveData.h"
 #include "SDL2Util.h"
 #include <set>
+#include <limits>
 
 extern int currentScreen;
 
@@ -50,7 +51,8 @@ void Game::Responder(SDL_Event *e)
         }
         else if(e->key == SDLK_UP)
         {
-            if((historyPos + 1) < commandHistory.size())
+            assert(commandHistory.size() < std::numeric_limits<ssize_t>::max());
+            if((historyPos + 1) < static_cast<ssize_t>(commandHistory.size()))
             {
                 bool isMax = tempCommandPos == tempCommand.size();
                 if(historyPos == -1)
