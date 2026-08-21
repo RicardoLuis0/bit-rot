@@ -56,7 +56,7 @@ std::vector<std::string> Game::ListProgramsAt(std::string drive, std::string pat
 
 std::vector<std::string> Game::ListExecutablePrograms()
 {
-    return ListProgramsAt("C", "\\BIN\\", true);//Util::ConcatInplace(ListProgramsAt(currentDrive, currentFolder), ListProgramsAt("C", "\\BIN\\", true));
+    return Util::ConcatInplace(ListProgramsAt(currentDrive, currentFolder), ListProgramsAt("C", "\\BIN\\", true));
 }
 
 std::string prevPath(std::string path)
