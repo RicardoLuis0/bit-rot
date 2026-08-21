@@ -471,9 +471,6 @@ struct : SettingItem
 
 SettingItemYesNo CompressSavesSetting("Compress Saves", "CompressSaves", [](bool){}, DefaultCompressSaves);
 
-SettingSeparator SoundSettingsTitle("Sound Settings");
-SettingSeparator VolumeSettingsTitle("Volume");
-
 SettingItemSlider VolumeSetting("Global Volume", "Volume", [](int){Mix_MasterVolume(GetSoundVolume()); Mix_VolumeMusic(GetMusicVolume());}, DefaultGlobalVolume, 0, 100, 10);
 
 SettingItemSlider VolumeSoundSetting("Sound Volume", "VolumeSound", [](int){Mix_MasterVolume(GetSoundVolume());}, DefaultSoundVolume, 0, 100, 10);
@@ -484,7 +481,7 @@ SettingItemYesNo MusicMuteSetting("Music", "MuteMusic", [](bool){Mix_VolumeMusic
 
 std::vector<SettingItem*> soundSettings
 {
-    &VolumeSettingsTitle,
+    new SettingSeparator("Volume Settings"),
     &VolumeSetting,
     &VolumeSoundSetting,
     &VolumeMusicSetting,
@@ -496,11 +493,6 @@ SettingButton SoundSettingsMenu("Volume", [](){
     currentItem.push_back(1);
     currentScroll.push_back(0);
 });
-
-
-SettingSeparator MiscSettingsTitle("Misc Settings");
-
-SettingSeparator VideoSettingsTitle("Video Settings");
 
 SettingItemSlider BloomStrengthSetting("Bloom Strength", "BloomStrength", [](int){Renderer::UpdateBloomStrength();}, DefaultBloomStrength, 0, 100, 10);
 
@@ -518,11 +510,9 @@ SettingItemYesNo CrtPauseBlurEnabledSetting("Transparent Pause Menu", "CrtPauseB
 
 SettingItemYesNo ShowFPSSetting("Show FPS", "ShowFPS", [](bool on){Renderer::SetShowFPS(on);}, DefaultShowFPS);
 
-SettingSeparator GraphicsSettingsTitle("Graphics Settings");
-
 std::vector<SettingItem*> graphicsSettings
 {
-    &GraphicsSettingsTitle,
+    new SettingSeparator("Graphics Settings"),
     &BloomStrengthSetting,
     &PhosphorEnabledSetting,
     &CrtCurveSetting,
@@ -543,21 +533,42 @@ SettingItemYesNo CommandLineDrawPathSetting("Show Path in Prompt", "CommandLineD
 
 //SettingButton ButtonTestSetting("Test Button Long String Test Test Test", [](){});
 
+extern int currentMainMenuItem;
+
+SettingButton ClearSavesButton("Clear Saved Data", [](){
+    SaveData::Clear();
+    Config::setScriptString("SawIntro1", "no");
+    currentMainMenuItem = 0;
+});
+
+std::vector<SettingItem*> debugSettings
+{
+    new SettingSeparator("Debug Settings"),
+    &CompressSavesSetting,
+    &ShowFPSSetting,
+    &ClearSavesButton,
+};
+
+SettingButton DebugSettingsMenu("Debug Settings", [](){
+    Renderer::ResetTimer();
+    currentSettings.push_back(&debugSettings);
+    currentItem.push_back(1);
+    currentScroll.push_back(0);
+});
 
 std::vector<SettingItem*> mainSettings
 {
-    &SoundSettingsTitle,
+    new SettingSeparator("Sound Settings"),
     &MusicMuteSetting,
     &SoundSettingsMenu,
-    &VideoSettingsTitle,
+    new SettingSeparator("Video Settings"),
     &FontSetting,
     &ColorSetting,
     &VSyncSetting,
-    &GraphicsSettingsMenu, 
-    &MiscSettingsTitle,
+    &GraphicsSettingsMenu,
+    new SettingSeparator("Misc Settings"),
     &CommandLineDrawPathSetting,
-    &CompressSavesSetting,
-    &ShowFPSSetting,
+    &DebugSettingsMenu,
 };
 
 void Menu::DrawSettingsMenu()
