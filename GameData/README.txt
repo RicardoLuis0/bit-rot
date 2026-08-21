@@ -1,0 +1,9 @@
+BASIC INFO, SUBJECT TO CHANGE
+
+YOU = Sam
+
+SISTER = Abigail
+FATHER = Blair
+MOTHER = Noelle
+
+UNCLE = Kevin, NICKNAME = Kev
