@@ -14,7 +14,7 @@ std::map<dir_entry_type, std::string> dir_type_strings
     {DATA,          " BIN  "},
     {PROGRAM,       " EXE  "},
     {PROGRAM_ALIAS, "ALIAS "},
-    {DRIVER,        " SYS  "},
+    {DRIVER,        "DRIVER"},
 };
 
 std::vector<dir_entry> Game::ListDir(const std::string &folder, size_t * max_len)

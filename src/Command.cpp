@@ -24,8 +24,8 @@ int Unimplemented(const std::string &command_name, const std::vector<std::string
 int Command::CrackEncryption(const std::vector<std::string> &args)
 {
     Unimplemented("CRACK", args);
-    return 0;
     //TODO
+    return 0;
 }
 
 extern int currentScreen;
