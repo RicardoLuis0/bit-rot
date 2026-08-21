@@ -11,7 +11,7 @@ std::map<dir_entry_type, std::string> dir_type_strings
 {
     {FOLDER,        "FOLDER"},
     {TEXT,          " TEXT "},
-    {DATA,          " BIN  "},
+    {DATA,          "BINARY"},
     {PROGRAM,       " EXE  "},
     {PROGRAM_ALIAS, "ALIAS "},
     {DRIVER,        "DRIVER"},
