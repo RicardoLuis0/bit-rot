@@ -220,6 +220,12 @@ void Game::DoLoad()
     GameIsSave = true;
 }
 
+extern bool InGame;
+
+bool Game::IsInGame()
+{
+    return InGame; // 0 = main menu, 1 = options menu, 2 = pause menu
+}
 
 void Game::ToGame()
 {

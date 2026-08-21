@@ -143,6 +143,8 @@ namespace Game
     void ToIntro();
     void ToGame();
     
+    bool IsInGame();
+    
     std::vector<std::string> ListProgramsAt(std::string drive, std::string path, bool allow_hidden = false);
     std::vector<std::string> ListExecutablePrograms();
     bool HasAccess(const std::string &path_str, const std::string &command_name, std::string *finalPath = nullptr,

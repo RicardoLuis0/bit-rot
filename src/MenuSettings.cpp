@@ -11,7 +11,6 @@
 #include "SDL2Util.h"
 
 extern int currentScreen;
-extern bool InGame;
 
 struct SettingItem
 {
@@ -228,7 +227,7 @@ void Menu::SettingsMenuResponder(SDL_Event *e)
         {
             if(currentSettings.size() <= 1)
             {
-                currentScreen = InGame ? 2 : 0; // 2 = pause menu, 0 = main menu
+                currentScreen = Game::IsInGame() ? 2 : 0; // 2 = pause menu, 0 = main menu
                 
                 Renderer::ResetTimer();
                 currentItem.pop_back();
@@ -549,9 +548,16 @@ std::vector<SettingItem*> debugSettings
     &ClearSavesButton,
 };
 
+std::vector<SettingItem*> debugSettingsInGame
+{
+    new SettingSeparator("Debug Settings"),
+    &CompressSavesSetting,
+    &ShowFPSSetting,
+};
+
 SettingButton DebugSettingsMenu("Debug Settings", [](){
     Renderer::ResetTimer();
-    currentSettings.push_back(&debugSettings);
+    currentSettings.push_back(Game::IsInGame()? &debugSettingsInGame : &debugSettings);
     currentItem.push_back(1);
     currentScroll.push_back(0);
 });
